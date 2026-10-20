@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { fmt } from "@/i18n";
 import { cart } from "@/lib/cart";
+import { useLiveProducts } from "@/lib/live-products";
 import { artClass, artStyle, pounds, productName, productSub } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
 import { useI18n } from "./Providers";
@@ -42,8 +43,9 @@ export function AddButton({ productId, inStock }: { productId: number; inStock: 
   );
 }
 
-export function ShopGrid({ products, initial }: { products: Product[]; initial: Filter }) {
+export function ShopGrid({ products: rendered, initial }: { products: Product[]; initial: Filter }) {
   const { locale, t } = useI18n();
+  const products = useLiveProducts(rendered);
   const [filter, setFilter] = useState<Filter>(initial);
 
   // One filter per category that has pieces, named and ordered as the dashboard sets them.

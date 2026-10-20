@@ -6,6 +6,7 @@ import { cache } from "react";
 import { MiniArt } from "@/components/chrome";
 import { SiteHeader } from "@/components/header-client";
 import { FaqList } from "@/components/home-client";
+import { PdpPrice } from "@/components/PdpPrice";
 import { ProductBuy } from "@/components/ProductBuy";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductTabs } from "@/components/ProductTabs";
@@ -123,32 +124,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
               {maker ? <p className="pdp-maker">{fmt(t.pdp.by, { maker })}</p> : null}
               <h1 className="pdp-name">{name}</h1>
               <p className="pdp-sub">{productSub(p, t)}</p>
-              <div className="pc-price pdp-price">
-                {pounds(p.pricePiastres)}
-                <u>{t.product.egp}</u>
-              </div>
-              {time ? <p className="pdp-note">{fmt(t.pdp.priceNote, { time })}</p> : null}
-
-              {/* What the price is made of: the metal at today's gram price, and the maker's charge. */}
-              <dl className="pdp-break" aria-label={t.pdp.breakdown}>
-                <div>
-                  <dt>
-                    {silver ? t.pdp.metalSilver : t.pdp.metal}
-                    <small>{fmt(t.pdp.metalLine, { w: String(p.weightGrams), gram: money(p.gramPiastres) })}</small>
-                  </dt>
-                  <dd>{money(p.metalPiastres)}</dd>
-                </div>
-                <div>
-                  <dt>{t.pdp.making}</dt>
-                  <dd>{money(p.laborPiastres)}</dd>
-                </div>
-                <div className="pdp-break-total">
-                  <dt>{t.pdp.total}</dt>
-                  <dd>
-                    {pounds(p.pricePiastres)} <small>{t.product.egp}</small>
-                  </dd>
-                </div>
-              </dl>
+              <PdpPrice product={p} note={time ? <p className="pdp-note">{fmt(t.pdp.priceNote, { time })}</p> : null} />
 
               <ProductBuy productId={p.id} inStock={p.inStock !== false} />
               <p className={`pdp-stock${p.inStock === false ? " out" : ""}`}>{p.inStock === false ? t.pdp.soldOut : t.pdp.inStock}</p>
