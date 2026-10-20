@@ -1,0 +1,442 @@
+{
+  "categories": [
+    {
+      "id": "start",
+      "label": "Getting started"
+    },
+    {
+      "id": "prices",
+      "label": "Prices"
+    },
+    {
+      "id": "buy",
+      "label": "Buying"
+    },
+    {
+      "id": "sell",
+      "label": "Selling"
+    },
+    {
+      "id": "money",
+      "label": "Money"
+    },
+    {
+      "id": "account",
+      "label": "Your account"
+    },
+    {
+      "id": "status",
+      "label": "Order status"
+    },
+    {
+      "id": "security",
+      "label": "Security"
+    },
+    {
+      "id": "support",
+      "label": "Support"
+    }
+  ],
+  "items": [
+    {
+      "cat": "start",
+      "q": "What is GoldGram?",
+      "a": [
+        "GoldGram is an Egyptian company selling certified gold bars and coins through an app and at our branch. We connect buyers directly with licensed manufacturers, so the choice — and the price difference between one maker and another — belongs to you. Every piece is sealed and certified, recorded to you, and either collected from our branch or delivered to your door."
+      ]
+    },
+    {
+      "cat": "start",
+      "q": "How do I create an account?",
+      "a": [
+        "Download the app, enter your email and mobile number, and set a password. We send a one-time code to confirm the number. Before your first purchase you verify your identity once, which takes a few minutes."
+      ]
+    },
+    {
+      "cat": "start",
+      "q": "Do I need to verify my identity?",
+      "a": [
+        "Yes. Identity verification is required before you buy or sell precious metals in Egypt. It takes one session at signup with national ID and a selfie, and only needs doing once."
+      ]
+    },
+    {
+      "cat": "start",
+      "q": "Is GoldGram secure?",
+      "a": [
+        "GoldGram is a registered Egyptian joint stock company — commercial register 295852, tax registration 774-088-346 — licensed by the Hallmarking, Assay and Weights Authority under registration 200409. Sign-in is protected by a one-time code, and every piece you buy is recorded to you and invoiced in your name."
+      ]
+    },
+    {
+      "cat": "start",
+      "q": "Is the gold really mine?",
+      "a": [
+        "Yes. Every gram is recorded to you and invoiced in your name, whether you collect it or have it delivered. It is never pooled with anyone else's metal and never lent out."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "How is the gold price set?",
+      "a": [
+        "The price follows the international gold market and the Egyptian pound exchange rate, together with local supply and demand. We publish both sides: what you pay to buy, and what we pay to buy it back."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "Are prices updated automatically?",
+      "a": [
+        "Yes. Prices refresh through the day while we are open, from 11:00 to 21:00. Outside those hours they hold at the last close."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "Why did the price change?",
+      "a": [
+        "Gold trades internationally and moves through the day, and the exchange rate moves with it. Both feed into the price you see."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "Which karats are available?",
+      "a": [
+        "We publish prices for 24K, 21K and 18K per gram. Our bars are 24K at 999.9 fineness; our coins are 21K at 875."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "Why is the selling price different from the buying price?",
+      "a": [
+        "There is a difference between what we sell for and what we buy back, as with any dealer. The buying price includes the making charge, which is the cost of turning raw metal into a finished piece and does not return when you sell."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "What is a making charge?",
+      "a": [
+        "The cost of turning raw metal into a finished bar or coin. It sits on top of the metal value and appears as its own line on your invoice."
+      ]
+    },
+    {
+      "cat": "prices",
+      "q": "Why do prices differ between manufacturers?",
+      "a": [
+        "The metal content is identical at the same weight and purity. The difference is the manufacturer's premium: minting, packaging and certification."
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "How do I buy gold?",
+      "a": [
+        "Choose a weight in the app, check the price on screen, and pay. You then choose whether to collect the piece from our branch or have it delivered sealed to your door."
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "What is the smallest amount I can buy?",
+      "a": [
+        "A quarter of a gram. It is a real certified bar, sealed in its assay card exactly like any larger weight."
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "Can I buy more than one kind of gold?",
+      "a": [
+        "Yes. Bars, coins and bars mounted to be worn can all sit in the same account, in any combination."
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "What price will I pay?",
+      "a": [
+        "The price confirmed on screen at the moment you buy. Prices shown before that are indicative and move with the market."
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "Are there any fees?",
+      "a": [
+        "The making charge is shown separately from the metal on every product and on your invoice, so you can see exactly what you are paying for.",
+        {
+          "tbc": "delivery charges"
+        }
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "Can I cancel a purchase?",
+      "a": [
+        {
+          "tbc": "cancellation window"
+        },
+        "Once an order completes and the metal is recorded to you, it can be sold back at the published buy-back price rather than cancelled."
+      ]
+    },
+    {
+      "cat": "buy",
+      "q": "Can I buy at the branch instead?",
+      "a": [
+        "Yes. Cairo Business Plaza, New Cairo, open 11:00 to 21:00 every day. You can collect an order, sell back in person, or see the stock before you buy."
+      ]
+    },
+    {
+      "cat": "sell",
+      "q": "Can I sell my gold back to GoldGram?",
+      "a": [
+        "Yes. We publish a buy-back price, so you know what your gold is worth before you decide to sell."
+      ]
+    },
+    {
+      "cat": "sell",
+      "q": "How do I sell?",
+      "a": [
+        "Open My Gold in the app, choose the piece, and select Sell Back. The proceeds go to your balance, which you can withdraw to your bank."
+      ]
+    },
+    {
+      "cat": "sell",
+      "q": "What price will I receive?",
+      "a": [
+        "The published buy-back price for that piece at the moment you confirm. It appears on screen before you commit."
+      ]
+    },
+    {
+      "cat": "sell",
+      "q": "Can I sell only part of what I hold?",
+      "a": [
+        "You can sell back any piece individually. A sealed bar is sold whole — to release a smaller amount, sell a smaller piece."
+      ]
+    },
+    {
+      "cat": "sell",
+      "q": "Can I sell gold that was delivered to me?",
+      "a": [
+        "Yes, by bringing it to the branch in its sealed assay card. A piece that has left its packaging is assessed separately before we quote."
+      ]
+    },
+    {
+      "cat": "money",
+      "q": "How do I add money to my account?",
+      "a": [
+        {
+          "tbc": "payment methods at launch"
+        },
+        "Funds appear in your balance once the payment clears."
+      ]
+    },
+    {
+      "cat": "money",
+      "q": "How do I withdraw money?",
+      "a": [
+        "Open Balance in the app, choose Cash Out, and select a verified bank account."
+      ]
+    },
+    {
+      "cat": "money",
+      "q": "Is there a minimum for adding or withdrawing?",
+      "a": [
+        {
+          "tbc": "minimum amounts"
+        }
+      ]
+    },
+    {
+      "cat": "money",
+      "q": "Are there withdrawal fees?",
+      "a": [
+        {
+          "tbc": "withdrawal fees"
+        }
+      ]
+    },
+    {
+      "cat": "money",
+      "q": "How long does a withdrawal take?",
+      "a": [
+        {
+          "tbc": "settlement time"
+        }
+      ]
+    },
+    {
+      "cat": "money",
+      "q": "Why is my withdrawal still pending?",
+      "a": [
+        "Withdrawals are checked and approved before any money leaves. Pending means it has been received and is being processed. If it is taking longer than expected, contact support with the reference number."
+      ]
+    },
+    {
+      "cat": "account",
+      "q": "Where can I see my gold?",
+      "a": [
+        "Your orders in your account show every piece you bought, with its weight, its status and whether it was collected or delivered."
+      ]
+    },
+    {
+      "cat": "account",
+      "q": "Where can I see my balance?",
+      "a": [
+        "Balance shows available funds, anything pending, and your full transaction history."
+      ]
+    },
+    {
+      "cat": "account",
+      "q": "Where can I see past transactions?",
+      "a": [
+        "Balance shows money movements and My Gold shows metal movements. Every entry carries a reference number."
+      ]
+    },
+    {
+      "cat": "account",
+      "q": "Why has my balance not updated?",
+      "a": [
+        "Card and wallet payments usually appear within minutes; bank transfers take longer. If nothing has appeared after a few hours, contact support with the reference."
+      ]
+    },
+    {
+      "cat": "account",
+      "q": "How do I check an order?",
+      "a": [
+        "Deliveries in the app shows each order and its current stage, from confirmation through dispatch to arrival."
+      ]
+    },
+    {
+      "cat": "status",
+      "q": "What does Pending mean?",
+      "a": [
+        "We have the order and it is being processed. Nothing is final yet."
+      ]
+    },
+    {
+      "cat": "status",
+      "q": "What does Completed mean?",
+      "a": [
+        "The order is done. For a purchase, the metal is recorded to you. For a sale, the proceeds are in your balance."
+      ]
+    },
+    {
+      "cat": "status",
+      "q": "What does Cancelled mean?",
+      "a": [
+        "The order did not go through. Anything taken is returned to your balance or to the original payment method."
+      ]
+    },
+    {
+      "cat": "status",
+      "q": "What happens if my order fails?",
+      "a": [
+        "Nothing is taken. Any authorised payment is released, and no metal leaves the vault against a payment that has not cleared."
+      ]
+    },
+    {
+      "cat": "status",
+      "q": "Why can't I place an order?",
+      "a": [
+        "Usually one of three reasons: the market is closed, your identity verification is not complete, or your balance does not cover the order. The app will say which."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "Why does GoldGram need my personal information?",
+      "a": [
+        "Identity verification is required by Egyptian law before buying or selling precious metals. We hold it to meet that requirement and to record the metal in your name."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "I didn't receive my code. What should I do?",
+      "a": [
+        "Wait for the timer, then ask for a new one. Check your signal and that the number on the account is right. If it still does not arrive, call 17937."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "I forgot my password.",
+      "a": [
+        "Choose Forgot Password at sign in. We send a code to your registered email so you can set a new one."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "Can I change my mobile number?",
+      "a": [
+        "Yes, from Account & security in the app. For your protection you verify both the old number and the new one."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "Can I use my account on a new phone?",
+      "a": [
+        "Yes. Sign in on the new device and confirm the one-time code. Your gold and your balance belong to the account, not to the phone."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "Should I share my code with GoldGram staff?",
+      "a": [
+        "Never. Nobody at GoldGram will ask for your one-time code or your password. Anyone who does is not from GoldGram."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "I see a transaction I don't recognise.",
+      "a": [
+        "Call 17937 straight away and change your password. Do not wait to see whether it resolves itself."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "I lost my phone.",
+      "a": [
+        "Call 17937 so we can secure the account. Your gold is recorded to you, not to the device."
+      ]
+    },
+    {
+      "cat": "security",
+      "q": "How do I keep my account secure?",
+      "a": [
+        "Use a password you do not use anywhere else, never share your one-time code, and keep a screen lock on your phone. Look over your transaction history from time to time."
+      ]
+    },
+    {
+      "cat": "support",
+      "q": "The app isn't working.",
+      "a": [
+        "Check your connection, close and reopen the app, and make sure it is up to date. If the problem continues, call 17937 or write to info@goldgram-eg.com."
+      ]
+    },
+    {
+      "cat": "support",
+      "q": "The gold price isn't updating.",
+      "a": [
+        "Prices refresh while we are open, 11:00 to 21:00, and hold at the last close outside those hours. If they are not moving during opening hours, check your connection first."
+      ]
+    },
+    {
+      "cat": "support",
+      "q": "My transaction is stuck.",
+      "a": [
+        "Do not repeat it — that can create a second order. Note the reference number and contact support."
+      ]
+    },
+    {
+      "cat": "support",
+      "q": "How do I contact GoldGram?",
+      "a": [
+        "Hotline 17937, email info@goldgram-eg.com, or the branch at Cairo Business Plaza, New Cairo. We are open 11:00 to 21:00, every day."
+      ]
+    },
+    {
+      "cat": "support",
+      "q": "What should I give support when I call?",
+      "a": [
+        "The reference number of the order or transaction, the date, and the mobile or email on the account. Never send your password or your one-time code."
+      ]
+    },
+    {
+      "cat": "support",
+      "q": "I have a problem with an order.",
+      "a": [
+        "Open the order in the app and note its reference number, then contact support. If it concerns a delivery, have the tracking details to hand."
+      ]
+    }
+  ]
+}

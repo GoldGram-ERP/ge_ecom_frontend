@@ -1,0 +1,88 @@
+/* Ported from "GoldGram — help centre.html". Class names carry an hc- prefix because the
+   prototype reused .q, .qa and .a with different rules from the main site. The header,
+   contact rows (.reach/.rr) and footer are the site's own. */
+.hc-page{ background:var(--beige); min-height:100vh; }
+
+.hc-crown{ background:linear-gradient(160deg,var(--navy) 0%,var(--navy-deep) 100%);
+  color:#fff; position:relative; overflow:hidden; border-radius:0 0 28px 28px; }
+.hc-crown::before,.hc-crown::after{ content:""; position:absolute; left:50%; transform:translateX(-50%);
+  border:1px solid rgba(231,210,160,.14); border-radius:50% 50% 0 0 / 62% 62% 0 0; pointer-events:none; }
+.hc-crown::before{ top:-90px; width:340px; }
+.hc-crown::after{ top:-46px; width:500px; border-color:rgba(231,210,160,.08); }
+/* the arches run to the foot of the band: their bottom edges crossed it as hairlines */
+.hc-crown::before,.hc-crown::after{ bottom:0; border-bottom:0; }
+.hc-crown::before{ border-radius:170px 170px 0 0; }
+.hc-crown::after{ border-radius:250px 250px 0 0; }
+.hc-crown-in{ position:relative; z-index:2; padding-block:var(--s6); }
+.hc-kick{ font-size:9.5px; letter-spacing:3px; text-transform:uppercase; color:var(--gold-l); }
+.hc-crown h1{ color:#fff; font-size:clamp(26px,3.4vw,40px); margin-top:12px; }
+.hc-crown p{ color:#C7D0E6; font-size:14px; margin-top:10px; max-width:54ch; }
+
+.hc-search{ display:flex; align-items:center; gap:12px; margin-top:var(--s4);
+  background:rgba(255,255,255,.07); border:1px solid rgba(231,210,160,.3);
+  border-radius:16px; padding:0 18px; max-width:520px; }
+.hc-search:focus-within{ border-color:var(--gold); background:rgba(255,255,255,.12); }
+.hc-search svg{ width:17px; height:17px; stroke:var(--gold-l); fill:none; stroke-width:1.7; flex:0 0 auto; }
+.hc-search input{ flex:1; min-width:0; border:none; outline:none; background:none; color:#fff;
+  font-family:var(--font-body); font-size:14.5px; padding:15px 0; }
+.hc-search input::placeholder{ color:#8595AE; }
+.hc-search input::-webkit-search-cancel-button{ display:none; }
+.hc-clear{ background:none; border:none; cursor:pointer; color:#8595AE; font-size:17px; }
+
+.hc-pills{ display:flex; gap:8px; flex-wrap:wrap; padding:var(--s4) 0 var(--s3) 0;
+  position:sticky; top:calc(72px + var(--ticker-h,0px)); background:var(--beige); z-index:30; }
+.hc-pill{ font-family:var(--font-body); font-size:12.5px; font-weight:600; cursor:pointer;
+  padding:9px 18px; border-radius:100px; background:var(--white);
+  border:1px solid var(--line); color:var(--navy-deep); }
+.hc-pill:hover{ border-color:var(--gold); }
+/* the chosen chip is the shop's */
+.hc-pill.on{ background:var(--navy-deep); border-color:var(--navy-deep); color:var(--gold-l); }
+
+.hc-count{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); padding-bottom:var(--s2); }
+.hc-count b{ font-family:var(--font-num); font-weight:400; }
+.hc-cat{ font-size:11px; letter-spacing:2.4px; text-transform:uppercase; color:var(--gold-d);
+  font-family:var(--font-body); font-weight:600;
+  display:flex; align-items:center; gap:10px; margin:var(--s6) 0 var(--s1) 0; }
+.hc-cat span{ font-family:var(--font-num); font-size:13px; letter-spacing:0; color:var(--muted); text-transform:none; }
+.hc-cat::after{ content:""; flex:1; height:1px; background:rgba(198,163,98,.35); }
+
+.hc-qa{ border-bottom:1px solid var(--line); }
+.hc-q{ width:100%; text-align:start; background:none; border:none; cursor:pointer;
+  font-family:var(--font-heading); font-size:clamp(16px,1.9vw,19px); color:var(--navy-deep);
+  padding:var(--s3) 0; padding-inline-end:44px; position:relative; line-height:1.35; }
+.hc-q i{ position:absolute; inset-inline-end:2px; top:50%; transform:translateY(-50%);
+  width:26px; height:26px; border-radius:50%; border:1.5px solid var(--navy-deep);
+  display:block; transition:background .18s ease, border-color .18s ease, transform .22s ease; }
+.hc-q i::before,.hc-q i::after{ content:""; position:absolute; left:50%; top:50%; background:var(--navy-deep);
+  transform:translate(-50%,-50%); transition:opacity .18s ease; }
+.hc-q i::before{ width:9px; height:1.5px; }
+.hc-q i::after{ width:1.5px; height:9px; }
+.hc-qa:hover .hc-q i{ border-color:var(--gold); }
+.hc-qa.open .hc-q i{ background:var(--navy-deep); border-color:var(--navy-deep); transform:translateY(-50%) rotate(180deg); }
+.hc-qa.open .hc-q i::before{ background:var(--gold-l); }
+.hc-qa.open .hc-q i::after{ opacity:0; }
+.hc-a{ padding:0 0 var(--s3) 0; padding-inline-end:44px; }
+.hc-a p{ font-size:14.5px; color:var(--muted); max-width:72ch; }
+
+.hc-empty{ padding:var(--s8) 0; }
+.hc-empty b{ font-family:var(--font-heading); font-size:21px; font-weight:400; color:var(--navy-deep); display:block; }
+.hc-empty span{ display:block; font-size:14px; color:var(--muted); margin-top:8px; }
+
+.hc-help{ margin-top:var(--s12); }
+.hc-help h2{ font-size:clamp(22px,2.8vw,30px); }
+.hc-note{ background:var(--white); border:1px solid rgba(198,163,98,.4); border-radius:20px;
+  padding:var(--s4); margin-top:var(--s8); }
+.hc-note h3{ font-size:18px; }
+.hc-note p{ font-size:13.5px; color:var(--muted); margin-top:10px; max-width:76ch; }
+.hc-page footer{ margin-top:var(--s8); }
+.hc-page footer p{ margin-top:0; }
+
+@media (max-width:820px){
+  .hc-crown-in{ padding-block:var(--s4); }
+  /* one row that scrolls: chips land whole, and the row fades where more follows */
+  .hc-pills{ flex-wrap:nowrap; overflow-x:auto; padding:var(--s3); padding-inline-end:48px;
+    margin:0 calc(-1 * var(--s3)); scrollbar-width:none; scroll-snap-type:x proximity; scroll-padding-inline:var(--s3);
+    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent); }
+  html[dir="rtl"] .hc-pills{ -webkit-mask-image:linear-gradient(to left,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(to left,#000 calc(100% - 40px),transparent); }
+  .hc-pill{ white-space:nowrap; scroll-snap-align:start; }
+}

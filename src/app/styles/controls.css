@@ -1,0 +1,187 @@
+/* The storefront's library-drawn controls (components/controls.tsx) and the pieces a browser
+   would otherwise draw itself. Everything here matches the look the pages already have. */
+
+/* ---- select: the field looks like `.f select` did; the list is ours ---- */
+.sel{
+  width:100%; box-sizing:border-box; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  border:1px solid var(--line); border-radius:10px; background:var(--white);
+  padding:13px 13px; font-family:var(--font-body); font-size:13.5px; color:var(--navy-deep);
+  cursor:pointer; outline:none; text-align:start; transition:border-color .16s ease;
+}
+.sel:focus-visible, .sel[data-state="open"]{ border-color:var(--gold); }
+.sel.bad{ border-color:#C0452B; }
+.sel-caret{ flex:0 0 auto; display:grid; place-items:center; color:var(--gold-d); transition:transform .2s cubic-bezier(.32,.72,0,1); }
+.sel[data-state="open"] .sel-caret{ transform:rotate(180deg); }
+
+.sel-list{
+  z-index:60; width:var(--radix-select-trigger-width); max-height:min(var(--radix-select-content-available-height), 320px);
+  overflow:hidden; border:1px solid var(--line); border-radius:12px; background:var(--white);
+  box-shadow:0 18px 40px -18px rgba(14,27,50,.35), 0 2px 6px rgba(14,27,50,.06);
+  transform-origin:var(--radix-select-content-transform-origin);
+  animation:sel-in .2s cubic-bezier(.32,.72,0,1);
+}
+.sel-list[data-state="closed"]{ animation:sel-out .14s ease-in forwards; }
+.sel-view{ padding:6px; max-height:inherit; overflow-y:auto; }
+.sel-item{
+  display:flex; align-items:center; padding:10px 12px; border-radius:8px; outline:none; cursor:pointer;
+  font-family:var(--font-body); font-size:13.5px; color:var(--navy-deep); user-select:none;
+}
+.sel-item[data-highlighted]{ background:var(--warm); }
+.sel-item[data-state="checked"]{ font-weight:600; color:var(--gold-d); }
+@keyframes sel-in{ from{ opacity:0; transform:scale(.96) translateY(-4px); } to{ opacity:1; transform:none; } }
+@keyframes sel-out{ to{ opacity:0; transform:scale(.97) translateY(-2px); } }
+
+/* ---- checkbox: the box of `.chk input`, with a tick that draws itself ---- */
+.chk-box{
+  width:18px; height:18px; flex:0 0 auto; margin:1px 0 0 0; padding:0; display:grid; place-items:center;
+  border:1.5px solid #8A90A0; border-radius:4px; background:var(--white); cursor:pointer; outline:none;
+  transition:background-color .16s ease, border-color .16s ease;
+}
+.chk-box[data-state="checked"]{ background:var(--navy-deep); border-color:var(--navy-deep); }
+.chk-box:focus-visible{ box-shadow:0 0 0 3px rgba(198,163,98,.35); }
+.chk-tick{ width:11px; height:11px; color:var(--gold-l); }
+.chk.bad .chk-box{ border-color:#C0452B; }
+
+/* ---- radio option: the circle of `.opt input`, with a dot that springs in ---- */
+.opt-radio{
+  width:18px; height:18px; flex:0 0 auto; margin-top:2px; padding:0; display:grid; place-items:center;
+  border:1.5px solid #8A90A0; border-radius:50%; background:var(--white); cursor:pointer; outline:none;
+  transition:border-color .16s ease;
+}
+.opt-radio[data-state="checked"]{ border-color:var(--gold-d); }
+.opt-radio:focus-visible{ box-shadow:0 0 0 3px rgba(198,163,98,.35); }
+.opt-dot{ display:block; width:8px; height:8px; border-radius:50%; background:var(--gold-d); }
+
+/* ---- what the browser would draw by itself ---- */
+html{ scrollbar-width:thin; scrollbar-color:#D9CDB6 transparent; }
+::selection{ background:var(--gold-l); color:var(--navy-deep); }
+input, textarea{ caret-color:var(--gold-d); }
+/* the search field's own "clear" cross and magnifier */
+input[type="search"]{ appearance:none; -webkit-appearance:none; }
+input[type="search"]::-webkit-search-cancel-button, input[type="search"]::-webkit-search-decoration{ -webkit-appearance:none; appearance:none; }
+/* a field the browser filled in keeps the page's colours */
+input:-webkit-autofill{ -webkit-text-fill-color:var(--navy-deep); box-shadow:0 0 0 1000px var(--white) inset; }
+
+/* ---- press feedback for links dressed as buttons (real buttons get it from the Button component) ---- */
+a.btn, a.navlink, a.btn-top{ transition:transform .12s ease-out, background-color .16s ease, color .16s ease, border-color .16s ease; }
+a.btn:active, a.navlink:active, a.btn-top:active{ transform:scale(.97); }
+
+/* ---- the cart count answers when something is added ---- */
+@keyframes cart-bump{ 0%{ transform:scale(1); } 35%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
+.cart-chip i.bump{ display:inline-block; animation:cart-bump .36s cubic-bezier(.32,.72,0,1); }
+
+@media (prefers-reduced-motion:reduce){
+  .sel-list, .sel-list[data-state="closed"], .nav-menu, .nav-menu[data-state="closed"], .cart-chip i.bump{ animation:none; }
+  a.btn:active, a.navlink:active, a.btn-top:active{ transform:none; }
+}
+
+/* ---- the cart: a panel that slides in from the side ---- */
+.cart-shade{ position:fixed; inset:0; z-index:70; background:rgba(14,27,50,.45); backdrop-filter:blur(2px); }
+.cart-sheet{
+  z-index:71; width:min(420px, 100vw); display:flex; flex-direction:column; background:var(--off);
+  box-shadow:0 0 60px rgba(14,27,50,.28); font-family:var(--font-body); color:var(--ink); outline:none;
+}
+.cart-head{ display:grid; grid-template-columns:1fr auto; align-items:center; gap:2px 12px; padding:22px 22px 16px; border-bottom:1px solid var(--line); background:var(--white); }
+.cart-title{ margin:0; font:500 22px var(--font-heading); color:var(--navy-deep); }
+.cart-count{ grid-column:1; margin:0; font-size:12px; color:var(--muted); }
+.cart-x{ grid-column:2; grid-row:1 / span 2; width:40px; height:40px; display:grid; place-items:center; border:1px solid var(--line); border-radius:50%; background:var(--white); color:var(--navy-deep); cursor:pointer; transition:background-color .16s ease, transform .12s ease-out; }
+.cart-x:hover{ background:var(--warm); }
+.cart-x:active{ transform:scale(.94); }
+
+.cart-lines{ flex:1; overflow-y:auto; padding:6px 22px; }
+.cart-wait{ padding:28px 0; text-align:center; font-size:13px; color:var(--muted); }
+/* the piece, its name and its price; under them the quantity and "Remove", each big enough to tap */
+.cart-line{ display:grid; grid-template-columns:44px 1fr auto; grid-template-areas:"art what price" "art qty drop"; align-items:center; gap:10px 14px; padding:16px 0; border-bottom:1px solid var(--line); }
+.cart-line:last-child{ border-bottom:0; }
+.cart-art{ grid-area:art; align-self:start; }
+.cart-what{ grid-area:what; }
+.cart-what b{ display:block; font-size:14px; font-weight:600; color:var(--navy-deep); }
+.cart-what span{ display:block; margin-top:2px; font-size:12px; color:var(--muted); }
+.cart-what em{ display:block; margin-top:4px; font-style:normal; font-size:12px; color:#C0452B; }
+.cart-price{ grid-area:price; text-align:end; white-space:nowrap; font:500 16px var(--font-num); color:var(--navy-deep); }
+.cart-qty{ grid-area:qty; justify-self:start; display:flex; align-items:center; border:1px solid var(--line); border-radius:999px; background:var(--white); }
+.cart-qty button{ width:40px; height:40px; display:grid; place-items:center; border:0; border-radius:50%; background:none; color:var(--navy-deep); cursor:pointer; }
+.cart-qty button:hover:not(:disabled){ background:var(--warm); }
+.cart-qty button:disabled{ opacity:.4; cursor:default; }
+.cart-qty output{ min-width:24px; text-align:center; font:500 15px var(--font-num); color:var(--navy-deep); }
+.cart-drop{ grid-area:drop; justify-self:end; }
+
+.cart-foot{ padding:18px 22px calc(22px + env(safe-area-inset-bottom, 0px)); border-top:1px solid var(--line); background:var(--white); }
+.cart-sum{ display:flex; align-items:baseline; justify-content:space-between; }
+.cart-sum span{ font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--gold-d); }
+.cart-sum b{ font:500 24px var(--font-heading); color:var(--navy-deep); }
+.cart-note{ margin:8px 0 16px; font-size:11.5px; line-height:1.55; color:var(--muted); }
+.cart-go{ display:block; }
+.cart-back{ display:block; width:100%; margin-top:10px; padding:12px; border:0; background:none; font-family:var(--font-body); font-size:12.5px; color:var(--navy-deep); cursor:pointer; }
+.cart-back:hover{ text-decoration:underline; text-underline-offset:4px; }
+.cart-empty{ flex:1; display:grid; place-content:center; justify-items:center; gap:18px; padding:32px; text-align:center; }
+.cart-empty p{ margin:0; max-width:28ch; font-size:14px; line-height:1.6; color:var(--muted); }
+html[lang="ar"] .cart-sum span{ letter-spacing:0; }
+/* the header's cart is now a button: it keeps the link's look */
+button.cart-chip{ font-family:inherit; cursor:pointer; }
+
+/* ---- things that open ---- */
+/* the plus is a drawing now; it is the drawing that turns, because the button itself is animated on press */
+.panel .plus svg{ transition:transform .28s cubic-bezier(.32,.72,0,1); }
+.panel.open .plus{ transform:none; }
+.panel.open .plus svg{ transform:rotate(45deg); }
+@keyframes ease-in-body{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+.panel.open .body, .q.open .a, .hc-qa.open .hc-a{ animation:ease-in-body .3s cubic-bezier(.32,.72,0,1); }
+@media (prefers-reduced-motion:reduce){ .panel.open .body, .q.open .a, .hc-qa.open .hc-a{ animation:none; } }
+
+/* On the narrowest phones the guest account header (brand, three links, the cart, the Guest tag
+   and Sign in) is a few pixels too wide: closer spacing keeps the page from scrolling sideways. */
+@media (max-width:400px){
+  .bar{ gap:9px; }
+  .bar .guest-flag{ padding-inline:9px; }
+}
+
+/* ---- order confirmation: what happened, what to pay, what to do next, where to go ---- */
+.done{ max-width:520px; padding:var(--s8) 0 var(--s12); }
+.done .seal{ width:76px; height:76px; border:0; background:radial-gradient(circle at 35% 30%, #F3E3BC, var(--gold) 78%); color:var(--navy-deep);
+  box-shadow:0 14px 30px -14px rgba(156,124,64,.7), inset 0 0 0 1px rgba(255,255,255,.35); }
+.done h2{ margin-top:var(--s4); letter-spacing:-.01em; }
+.done > p{ max-width:44ch; margin-inline:auto; line-height:1.65; }
+.done-card{ margin-top:var(--s4); border:1px solid var(--line); border-radius:16px; background:var(--white); text-align:start; overflow:hidden; }
+.done-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:15px 20px; border-top:1px solid var(--line); }
+.done-row:first-child{ border-top:0; }
+.done-row > span{ font-size:11.5px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold-d); }
+.done-row b{ font:500 19px var(--font-heading); color:var(--navy-deep); }
+.done-row b small{ font:400 11.5px var(--font-body); color:var(--muted); }
+.done-row b.done-pay{ font:600 13.5px var(--font-body); }
+/* the account to pay into: bank, name and IBAN on their own lines, selectable to copy */
+.done-payto{ align-items:flex-start; }
+.done-payto b{ font:500 14px/1.6 var(--font-num); white-space:pre-line; text-align:end; user-select:all; }
+.done-payto p{ font-size:13px; color:var(--muted); text-align:end; max-width:34ch; }
+.done-ref{ display:flex; align-items:center; gap:10px; }
+.done .done-ref .ref{ margin:0; padding:0; border:0; font-size:21px; letter-spacing:.02em; }
+.done-copy{ min-height:36px; padding:0 14px; border:1px solid var(--line); border-radius:999px; background:var(--off); color:var(--navy-deep);
+  font:600 12px var(--font-body); cursor:pointer; transition:background-color .16s ease, border-color .16s ease; }
+.done-copy:hover{ background:var(--warm); border-color:var(--gold); }
+.done-steps{ margin:var(--s4) 0 0; padding:0; list-style:none; counter-reset:step; text-align:start; }
+.done-steps li{ counter-increment:step; position:relative; padding:9px 0 9px 44px; font-size:13.5px; line-height:1.6; color:var(--ink); }
+.done-steps li::before{ content:counter(step); position:absolute; inset-inline-start:0; top:8px; width:28px; height:28px; border-radius:50%;
+  display:grid; place-items:center; background:var(--navy-deep); color:var(--gold-l); font:500 13px var(--font-heading); }
+[dir="rtl"] .done-steps li{ padding:9px 44px 9px 0; }
+/* the transfer screenshot: one quiet button and the line that says where it stands */
+.proof{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:var(--s3); text-align:start; }
+.proof-btn{ min-height:40px; padding:0 16px; border:1px solid var(--gold); border-radius:999px; background:var(--off); color:var(--navy-deep);
+  font:600 13px var(--font-body); cursor:pointer; transition:background-color .16s ease; }
+.proof-btn:hover{ background:var(--warm); }
+.proof-btn:disabled{ opacity:.6; cursor:default; }
+.proof-note{ flex:1 1 220px; font-size:12.5px; line-height:1.5; color:var(--muted); }
+.proof-note.ok{ color:#1F5C39; }
+.proof-note.bad{ color:#8C3722; }
+.orders .proof{ grid-column:1 / -1; margin-top:8px; }
+.orders .proof-note{ grid-column:auto; grid-row:auto; }
+/* a guest's order: the account it could live in, one password away */
+.done-account{ margin-top:var(--s4); padding:var(--s3); border:1px solid rgba(198,163,98,.45); border-radius:14px; background:var(--off); text-align:start; }
+.done-account p{ margin:0 0 var(--s2); font-size:13.5px; line-height:1.6; color:var(--navy-deep); }
+.done-account .gold-btn{ max-width:100%; overflow-wrap:anywhere; }
+.done-acts{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:10px 22px; margin-top:var(--s4); }
+.done-acts .gold-btn{ min-width:200px; }
+.done-link{ font-size:13px; font-weight:600; color:var(--navy-deep); text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold); }
+.done-link:hover{ color:var(--gold-d); }
+html[lang="ar"] .done-row > span{ letter-spacing:0; font-size:13px; }
+.done .done-ref .ref{ white-space:nowrap; }
+@media (max-width:520px){ .done-row{ padding-inline:16px; gap:10px; } .done-row > span{ letter-spacing:.8px; } .done .done-ref .ref{ font-size:19px; } }

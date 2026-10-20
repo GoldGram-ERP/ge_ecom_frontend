@@ -1,0 +1,205 @@
+"use client";
+
+import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { DropdownMenu } from "radix-ui";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/client-api";
+import { CartDrawer } from "./cart-drawer";
+import { Brand, Icon, ICONS } from "./chrome";
+import { useI18n, useSession } from "./Providers";
+import { Button } from "./controls";
+// The sell page and its header link (loaded with the header, so the link's phone rule holds everywhere).
+import "../app/styles/sell.css";
+
+/** The prototype's "Sign in" button. Once signed in it leads to the account instead. */
+export function AccountLink() {
+  const { t, href } = useI18n();
+  const { user } = useSession();
+  return user ? (
+    <Link className="navlink" href={href("/account")}>
+      {t.nav.account}
+    </Link>
+  ) : (
+    <Link className="navlink" href={href("/sign-in")}>
+      {t.nav.signIn}
+    </Link>
+  );
+}
+
+export function SignOutButton() {
+  const { t, href } = useI18n();
+  const { refresh } = useSession();
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function signOut() {
+    setBusy(true);
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch {
+      // the cookie may already be gone; fall through and leave the account screen either way
+    }
+    await refresh();
+    router.push(href("/"));
+    router.refresh();
+  }
+
+  return (
+    <Button className="navlink" type="button" onClick={signOut} disabled={busy}>
+      {t.nav.signOut}
+    </Button>
+  );
+}
+
+/**
+ * The one header every page uses (owner's instruction): the home page's bar, with the cart
+ * and its count always present. `end` replaces the last button on the account screen.
+ * On a phone the bar keeps the shop, the cart and the account; the rest is behind the menu.
+ */
+export function SiteHeader({ end }: { end?: React.ReactNode }) {
+  const { locale, t, href } = useI18n();
+  const [open, setOpen] = useState(false);
+  // The same page in the other language. Each language is named in its own words, whatever the page's language.
+  const other = locale === "en" ? "ar" : "en";
+  const otherName = other === "ar" ? "العربية" : "English";
+  const otherHref = `/${other}${usePathname().slice(locale.length + 1)}`;
+  const router = useRouter();
+  // The query (an account tab, a shop filter) goes along, so the switch lands on exactly this view.
+  const switchLanguage = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (!window.location.search || event.metaKey || event.ctrlKey || event.shiftKey) return;
+    event.preventDefault();
+    router.push(otherHref + window.location.search);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  return (
+    <header>
+      <div className="wrap bar">
+        <Brand locale={locale} />
+        {/* On the home page these scroll; elsewhere they go to the home page's section. */}
+        <Link className="link" href={`/${locale}#included`}>
+          {t.nav.why}
+        </Link>
+        <Link className="link" href={`/${locale}#record`}>
+          {t.nav.record}
+        </Link>
+        <Button
+          className="navlink nav-about"
+          type="button"
+          aria-expanded={open}
+          aria-controls="aboutPanel"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {t.nav.about}
+        </Button>
+        <Link className="navlink nav-prices" href={href("/prices")}>
+          {t.prices.nav}
+        </Link>
+        <Link className="navlink nav-sell" href={href("/sell")}>
+          {t.sell.nav}
+        </Link>
+        <Link className="navlink" href={href("/shop")}>
+          {t.nav.shop}
+        </Link>
+        <CartDrawer />
+        {end ?? <AccountLink />}
+        <Link className="navlink lang-switch" href={otherHref} lang={other} hrefLang={other} onClick={switchLanguage}>
+          {otherName}
+        </Link>
+        <DropdownMenu.Root>
+          <DropdownMenu.Trigger className="nav-more" aria-label={t.nav.menu}>
+            <Icon d={ICONS.menu} size={22} />
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content className="nav-menu" align="end" sideOffset={8}>
+              <DropdownMenu.Item asChild>
+                <Link href={`/${locale}#included`}>{t.nav.why}</Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item asChild>
+                <Link href={`/${locale}#record`}>{t.nav.record}</Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => setOpen(true)}>{t.nav.about}</DropdownMenu.Item>
+              <DropdownMenu.Item asChild>
+                <Link href={href("/prices")}>{t.prices.nav}</Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item asChild>
+                <Link href={href("/sell")}>{t.sell.nav}</Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item asChild>
+                <Link href={href("/help")}>{t.nav.help}</Link>
+              </DropdownMenu.Item>
+              <DropdownMenu.Item asChild>
+                <Link href={otherHref} lang={other} hrefLang={other} onClick={switchLanguage}>
+                  {otherName}
+                </Link>
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
+      </div>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="scrim"
+            className="about-scrim"
+            onClick={() => setOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          />
+        )}
+        {open && (
+          <motion.div
+            key="panel"
+            className="about-panel"
+            id="aboutPanel"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+          >
+            <div className="wrap ap-in">
+              <Button className="ap-x" type="button" aria-label={t.nav.close} onClick={() => setOpen(false)}>
+                <Icon d={ICONS.close} />
+              </Button>
+              <div className="ap-row">
+                <span>{t.about.mission}</span>
+                <p>{t.about.missionText}</p>
+              </div>
+              <div className="ap-row">
+                <span>{t.about.vision}</span>
+                <p>{t.about.visionText}</p>
+              </div>
+              <div className="ap-row">
+                <span>{t.about.promise}</span>
+                <p>{t.about.promiseText}</p>
+              </div>
+              <div className="ap-block">
+                <div className="ap-vlabel">{t.about.values}</div>
+                <div className="ap-values">
+                  {t.about.list.map((v) => (
+                    <div className="ap-value" key={v.t}>
+                      <b>{v.t}</b>
+                      <span>{v.d}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
+  );
+}

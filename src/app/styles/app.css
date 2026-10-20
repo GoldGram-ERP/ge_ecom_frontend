@@ -1,0 +1,331 @@
+/* Loaded after site.css (the English prototype's stylesheet) and ar.css (what the Arabic
+   prototype adds). Nothing here changes the prototypes' layout: it applies the font rule,
+   and styles the states and screens the prototypes did not draw. */
+
+/* ---------- fonts (docs/SPEC.md section 2) ---------- */
+html{
+  --font-heading: var(--font-lora), Georgia, serif;
+  --font-body: var(--font-poppins), system-ui, sans-serif;
+  --font-num: var(--font-lora), Georgia, serif;
+}
+/* Arabic: Almarai for headings and titles, Cairo for text, and Lora for every digit
+   (the digits-only Lora face sits first in both stacks). */
+html[lang="ar"]{
+  --font-heading: var(--font-lora-digits), var(--font-almarai), system-ui, sans-serif;
+  --font-body: var(--font-lora-digits), var(--font-cairo), system-ui, sans-serif;
+  --font-num: var(--font-lora), var(--font-cairo), Georgia, serif;
+}
+
+/* figures and the Latin wordmark stay in Lora in both languages (the Arabic prototype's own list, plus the pure-number cells) */
+.brand span,.store b,.sc-head b,.sc-row b,.sc-row em,.ac-price,.pc-price,.o-total b,.ol em,.cred b,
+.tv-quote,.done .ref,.o-line b,.rate b,.pc i,.nx span,.row .n{ font-family:var(--font-num); }
+/* running Arabic text that the prototype had left in the serif reads as body copy */
+html[lang="ar"] .ap-row p,html[lang="ar"] .sc-row span,html[lang="ar"] .session em,
+html[lang="ar"] .opt div u{ font-family:var(--font-body); }
+/* Almarai has no 500 or 600: headings carry at 700 */
+html[lang="ar"] h1,html[lang="ar"] h2,html[lang="ar"] h3,html[lang="ar"] .lead,html[lang="ar"] .ask,
+html[lang="ar"] blockquote,html[lang="ar"] .login-title,html[lang="ar"] .co-h,html[lang="ar"] .qa .q button,
+html[lang="ar"] .hc-q,html[lang="ar"] .hc-empty b{ font-weight:700; }
+
+/* ---------- needed by the markup, no visual change ---------- */
+.vh{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+button:disabled{ opacity:.6; cursor:default; }
+.brand img{ width:auto; }
+/* the + on a panel is a real button, drawn as the prototype drew it */
+.panel .plus{ border:none; padding:0; cursor:pointer; font-family:var(--font-body); }
+/* the prototype toggled guest mode on <body>; here it is a class on the account page */
+.app-page.is-guest .guest-flag{ display:inline-block; }
+.app-page.is-guest .guest-bar{ display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap; }
+.app-page.is-guest header .shop{ display:none; }
+/* the summary is sticky: keep it below the sticky header instead of under it */
+.order{ top:calc(70px + var(--s3)); }
+
+/* ---------- help centre: its prototype's own bar ---------- */
+.hc-page .bar{ height:72px; }
+.hc-page .brand img{ height:26px; }
+.btn-top{ font-size:12.5px; letter-spacing:.6px; padding:11px 22px;
+  border:1px solid rgba(231,210,160,.45); color:var(--gold-l); }
+.btn-top:hover{ background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
+html[lang="ar"] .hc-kick,html[lang="ar"] .hc-count,html[lang="ar"] .hc-cat,html[lang="ar"] .hc-pill,
+html[lang="ar"] .btn-top{ letter-spacing:0; }
+
+/* ---------- states the prototypes did not draw ---------- */
+.notice{ font-size:12.5px; color:var(--navy-deep); background:var(--warm); border:1px solid rgba(198,163,98,.4);
+  border-radius:11px; padding:11px 13px; margin-top:var(--s3); }
+.alert.ok{ background:#EDF6F0; border-color:#BFDCCB; }
+.alert.ok i{ background:#2F8A55; }
+.alert.ok span{ color:#1F5C39; }
+.session .dot.shut{ background:var(--muted); }
+
+/* ---------- screens with no prototype: 404, error, terms, privacy ---------- */
+.plain{ min-height:100vh; background:var(--beige); }
+.plain-in{ max-width:620px; padding-top:var(--s12); padding-bottom:var(--s12); }
+.plain-in h1{ font-size:clamp(26px,3.4vw,38px); }
+.plain-in p{ font-size:14.5px; color:var(--muted); margin-top:var(--s2); max-width:60ch; }
+.plain-in .place{ width:auto; padding:14px 30px; }
+.plain-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s3); margin-top:var(--s4); }
+.plain-link{ font-size:12.5px; font-weight:600; color:var(--navy-deep); border-bottom:1px solid var(--gold); padding-bottom:2px; }
+.tbc{ color:var(--gold-d); background:var(--warm); border-bottom:1px solid rgba(198,163,98,.5);
+  padding:1px 6px; border-radius:4px; font-size:13.5px; }
+
+/* ---------- top bar: every item has the shape of the "Why us" link (owner's instruction) ---------- */
+.bar .navlink{ font-family:var(--font-body); font-size:13px; color:#B9C2D8; background:none; border:none; padding:0; cursor:pointer; white-space:nowrap; }
+.bar .navlink:hover{ color:var(--gold-l); }
+@media (max-width:900px){ .bar{ gap:var(--s2); } }
+/* on a phone the bar keeps every item on one line: the logo without its wordmark */
+@media (max-width:480px){ .brand span{ display:none; } .bar{ gap:12px; } .bar .navlink{ font-size:12px; } }
+
+/* =====================================================================================
+   After the design review: bugs, polish, and the three screens that were rebuilt.
+   Everything mirrors through logical properties, so Arabic needs no second set.
+   ===================================================================================== */
+
+/* ---------- tokens ---------- */
+:root{
+  --muted:#5C6272;      /* was #7A7F8C, 3:1 on cream; this is 5:1 */
+  --beige:var(--off);   /* one page background everywhere: the home page's light cream */
+  --gold-ink:#806632;   /* gold for small text: 4.5:1 on white and cream */
+}
+
+/* ---------- one look for buttons, chips and money ---------- */
+.gold-btn{ display:inline-block; text-align:center; cursor:pointer; border:0; border-radius:12px; padding:13px 26px;
+  font:700 12.5px/1.5 var(--font-body); letter-spacing:.6px; background:linear-gradient(135deg,#E7D2A0,#9C7C40); color:var(--navy-deep);
+  transition:transform .12s ease-out, filter .16s ease; }
+.gold-btn:hover{ filter:brightness(1.05); }
+.gold-btn:active{ transform:scale(.97); }
+html[lang="ar"] .gold-btn{ letter-spacing:0; font-size:13.5px; }
+/* Cairo's own line height made the Arabic chips and buttons taller than the English ones */
+.fp,.hc-pill,.pc-buy,.place,.login-btn,.guest-btn{ line-height:1.5; }
+/* the unit beside every amount, as the shop card writes it */
+.egp,.pc-price u{ font:500 10px/1 var(--font-body); letter-spacing:1.2px; text-transform:uppercase; text-decoration:none; color:var(--muted); }
+html[lang="ar"] .egp,html[lang="ar"] .pc-price u{ font-size:11.5px; letter-spacing:0; }
+.money{ white-space:nowrap; }
+/* "Remove", the same in the cart and at checkout */
+.drop{ min-height:36px; padding:0 2px; border:0; background:none; cursor:pointer; font:400 12.5px var(--font-body); color:var(--muted);
+  text-decoration:underline; text-underline-offset:3px; }
+.drop:hover{ color:#C0452B; }
+
+/* ---------- header ---------- */
+.brand{ margin-right:0; margin-inline-end:auto; }
+.nav-more{ display:none; place-items:center; width:44px; height:44px; margin-inline-end:-10px; border:0; border-radius:12px; background:none;
+  color:#B9C2D8; cursor:pointer; transition:transform .12s ease-out, color .16s ease; }
+.nav-more:hover,.nav-more[data-state="open"]{ color:var(--gold-l); }
+.nav-more:active{ transform:scale(.94); }
+.nav-menu{ z-index:60; min-width:208px; padding:6px; border:1px solid var(--line); border-radius:14px; background:var(--white);
+  box-shadow:0 18px 40px -18px rgba(14,27,50,.45), 0 2px 6px rgba(14,27,50,.08);
+  transform-origin:var(--radix-dropdown-menu-content-transform-origin); animation:sel-in .2s cubic-bezier(.32,.72,0,1); }
+.nav-menu[data-state="closed"]{ animation:sel-out .14s ease-in forwards; }
+.nav-menu [role="menuitem"]{ display:flex; align-items:center; min-height:44px; padding:0 14px; border-radius:9px; outline:none; cursor:pointer;
+  font-family:var(--font-body); font-size:14px; color:var(--navy-deep); user-select:none; }
+.nav-menu [data-highlighted]{ background:var(--warm); }
+@media (max-width:900px){
+  .nav-more{ display:grid; }
+  .bar .navlink{ display:inline-flex; align-items:center; min-height:44px; }
+  .bar .navlink.nav-about,.bar .navlink.nav-prices{ display:none; }
+  /* on a phone the language switch is in the menu */
+  .bar .navlink.lang-switch{ display:none; }
+}
+.bar .navlink.lang-switch[lang="ar"]{ font-family:var(--font-cairo), var(--font-body); }
+/* the guest account bar is one item too many for a phone; the card under it says "guest" */
+@media (max-width:480px){ .app-page.is-guest .bar .guest-flag{ display:none; } }
+
+/* ---------- what "About us" opens ---------- */
+.about-scrim{ position:absolute; inset-inline:0; top:100%; height:100vh; z-index:44; background:rgba(14,27,50,.38); }
+.about-panel{ max-height:calc(100dvh - 70px); overflow-y:auto; overscroll-behavior:contain; }
+.about-panel .ap-in{ position:relative; padding:40px var(--s4); }
+.ap-x{ position:absolute; top:var(--s2); inset-inline-end:var(--s4); display:grid; place-items:center; width:40px; height:40px;
+  border:1px solid var(--line); border-radius:50%; background:var(--white); color:var(--navy-deep); cursor:pointer; }
+.ap-x:hover{ background:var(--warm); }
+.ap-x + .ap-row{ border-top:none; padding-top:0; }
+.ap-block{ margin-top:0; }
+@media (max-width:900px){
+  .about-panel{ max-height:calc(100dvh - 70px); }
+  .about-panel .ap-in{ padding:var(--s3); }
+  .ap-x{ top:12px; inset-inline-end:var(--s3); width:44px; height:44px; }
+  .ap-x + .ap-row{ padding-inline-end:52px; }
+}
+
+/* ---------- home ---------- */
+.panel h3{ max-width:20ch; }
+/* wide screens: the drawing sits beside the words instead of under a tall empty panel */
+@media (min-width:901px){
+  .panel{ min-height:0; display:grid; grid-template-columns:1fr auto; column-gap:var(--s6); align-items:center;
+    padding:var(--s4); padding-inline-end:calc(var(--s4) + 42px + var(--s6)); }
+  .panel h3,.panel .body{ grid-column:1; }
+  .panel h3{ max-width:32ch; }
+  .panel .art{ grid-column:2; grid-row:1; margin:0; padding:var(--s2) 0; transform:scale(1.25); }
+  .panel.open .art{ grid-row:1 / span 2; }
+  .panel .plus{ top:calc(50% - 21px); }
+}
+/* the hero's price phone on a phone: the sell column stays inside the screen */
+@media (max-width:900px){
+  .sc-table{ padding:0 9px; }
+  .sc-hrow,.sc-row{ grid-template-columns:40px 1fr 1fr; column-gap:5px; }
+  .sc-row b,.sc-row em{ font-size:9.5px; letter-spacing:-.2px; }
+  .sc-unit span u{ display:block; margin:0; }
+  .sc-hrow span{ white-space:nowrap; }
+}
+
+/* ---------- shop ---------- */
+.pc-sub{ font-size:13px; font-weight:500; color:var(--navy-deep); }
+html[lang="ar"] .pc-sub{ font-size:14px; }
+.fcount{ margin-left:0; margin-inline-start:auto; font-size:11.5px; }
+html[lang="ar"] .fcount{ font-size:13px; }
+@media (max-width:900px){ .filters .fcount{ display:block; flex-basis:100%; margin:6px 0 0; } }
+
+/* ---------- forms ---------- */
+.field > span,.f > span{ font-size:11.5px; letter-spacing:1.5px; color:var(--gold-ink); }
+html[lang="ar"] .field > span,html[lang="ar"] .f > span{ font-size:13px; letter-spacing:0; }
+.f > span em{ margin-left:0; margin-inline-start:2px; }
+/* email, phone and national ID are typed left to right; in Arabic they sit where the other values sit */
+html[lang="ar"] input[dir="ltr"]{ text-align:end; }
+.field-hint{ display:block; margin-top:7px; font-size:12px; color:var(--muted); }
+/* a fact, not a field */
+.f-fixed p{ font-size:13.5px; color:var(--muted); }
+
+/* ---------- checkout ---------- */
+.co-steps{ flex-wrap:nowrap; overflow-x:auto; white-space:nowrap; scrollbar-width:none; }
+.co-step i{ margin-right:0; margin-inline-end:7px; }
+@media (max-width:480px){
+  .co-steps{ gap:14px; }
+  .co-step{ letter-spacing:.8px; }
+  .co-step i{ margin-inline-end:4px; }
+}
+.co-grid > div > .co-h:not(:first-child){ margin-top:var(--s6); }
+.co-h:has(+ [role="radiogroup"]){ margin-bottom:0; }
+.co-h + [role="radiogroup"] .opt:first-child{ border-top:0; }
+.opt{ gap:12px; padding:14px 0; }
+.opt > div{ flex:1; display:grid; grid-template-columns:1fr auto; column-gap:var(--s2); align-items:baseline; }
+.opt div b{ font-size:13.5px; }
+.opt div span{ grid-column:1 / -1; grid-row:2; font-size:12.5px; }
+.opt div u{ grid-column:2; grid-row:1; white-space:nowrap; }
+/* the receipt: stays in view beside the form, and scrolls inside itself on a short window */
+/* the column must be as tall as the form for the receipt to have room to stay in view */
+.co-grid > aside{ align-self:stretch; }
+@media (min-width:901px){ .order{ max-height:calc(100dvh - 70px - 2 * var(--s3)); overflow-y:auto; } }
+.ol{ grid-template-columns:44px 1fr auto; gap:0 12px; align-items:center; }
+.ol-art,.cart-art{ width:44px; height:44px; }
+.ol-art{ grid-row:1 / span 2; }
+.ol b{ display:flex; flex-wrap:wrap; column-gap:.3em; }
+.ol-qty{ order:1; }
+.ol em{ grid-column:3; text-align:end; white-space:nowrap; }
+.ol i{ grid-column:2; font-size:12px; }
+.ol .drop{ grid-column:3; justify-self:end; }
+.o-sub{ max-width:none; margin:-5px 0 10px; text-align:end; font-size:11.5px; color:var(--muted); }
+
+/* ---------- auth ---------- */
+.shop-page,.plain,.app-page{ min-height:100dvh; display:flex; flex-direction:column; }
+.shop-page > .wrap,.plain > .wrap,.app-page > .wrap,.app-shell{ width:100%; }
+.plain > main,.app-shell{ flex:1; }
+.login-wrap{ flex:1; min-height:calc(100dvh - 70px); }
+/* the arches are open at the foot: their bottom edges crossed the page as two hairlines */
+.login-wrap::before,.login-wrap::after{ border-bottom:0; }
+@media (max-width:700px){ .login-wrap::before,.login-wrap::after{ display:none; } }
+.login-in{ max-width:1100px; margin:0 auto; }
+.login-in > *{ max-width:460px; }
+@media (min-width:901px){
+  /* the form in the first column, "What happens next" beside it, inside the arch */
+  .login-in{ display:grid; grid-template-columns:minmax(0,460px) minmax(0,420px); justify-content:space-between; align-items:start; }
+  .login-in > *{ grid-column:1; }
+  .login-in > .next-up{ grid-column:2; grid-row:3; margin-top:var(--s6); }
+  .login-wrap::before,.login-wrap::after{ height:auto; bottom:0; left:auto; inset-inline-end:calc(50% - 550px + var(--s4) + 210px); transform:translateX(50%); }
+  html[dir="rtl"] .login-wrap::before,html[dir="rtl"] .login-wrap::after{ transform:translateX(-50%); }
+  /* a round head whatever the height (the percentage radius stretched with it) */
+  .login-wrap::before{ border-radius:260px 260px 0 0; }
+  .login-wrap::after{ border-radius:380px 380px 0 0; }
+}
+
+/* ---------- account ---------- */
+.app-crown{ border-radius:30px; margin-top:var(--s3); }
+.ac-hi{ margin-right:0; margin-inline-end:auto; }
+.ac-icon{ display:grid; place-items:center; }
+.session{ margin-top:0; }
+.session em{ margin-left:0; margin-inline-start:auto; }
+.session-line i{ left:auto; inset-inline-start:0; }
+.session-line u{ margin-left:0; margin-inline-start:-2.5px; }
+/* .q is also the home page's question row, whose rules drew lines on these */
+.quick .q{ border:0; cursor:auto; }
+.quick a.q{ cursor:pointer; }
+.pc i .egp{ font-size:9px; }
+.app-h{ margin:0; }
+.forms3{ margin-top:var(--s2); }
+/* phone: one column, the guest card first; the row of pieces snaps and fades where more follows */
+.app-cols{ display:flex; flex-direction:column; }
+.app-col{ display:contents; }
+.app-cols .guest-bar{ order:-1; margin-top:var(--s4); }
+.pop{ scrollbar-width:none; scroll-snap-type:x proximity; padding-inline-end:36px;
+  -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 36px),transparent); mask-image:linear-gradient(to right,#000 calc(100% - 36px),transparent); }
+html[dir="rtl"] .pop{ -webkit-mask-image:linear-gradient(to left,#000 calc(100% - 36px),transparent); mask-image:linear-gradient(to left,#000 calc(100% - 36px),transparent); }
+.pc{ scroll-snap-align:start; }
+.app-tabs{ position:fixed; inset-inline:0; bottom:0; z-index:35; margin:0; padding:0 var(--s2) env(safe-area-inset-bottom,0px);
+  background:var(--white); border-top:1px solid var(--line); }
+.app-tabs span{ display:grid; place-items:center; min-height:56px; }
+.app-tabs span.on{ box-shadow:inset 0 2px 0 var(--gold-d); }
+.app-page{ padding-bottom:calc(56px + env(safe-area-inset-bottom,0px)); }
+.orders{ list-style:none; margin-top:var(--s1); }
+.orders li{ display:grid; grid-template-columns:1fr auto; gap:2px var(--s2); align-items:baseline; padding:12px 0; border-top:1px solid var(--line); }
+.orders li:first-child{ border-top:0; }
+.orders b{ justify-self:start; font:500 14.5px var(--font-num); color:var(--navy-deep); }
+.orders span{ grid-column:1; grid-row:2; font-size:12px; color:var(--muted); }
+.orders em{ font:400 14.5px var(--font-num); color:var(--navy-deep); text-align:end; white-space:nowrap; }
+.orders .st{ grid-column:2; grid-row:2; text-align:end; font-style:normal; font-size:12px; font-weight:600; color:var(--navy); }
+.orders .st-completed{ color:#1F5C39; }
+.orders .st-cancelled,.orders .st-refund{ color:#8C3722; }
+.orders-none p{ margin:var(--s2) 0; font-size:13px; color:var(--muted); }
+@media (min-width:901px){
+  /* wide screens: the page container, the tabs as a row under the header, two columns under the price card */
+  .app-page{ padding-bottom:0; }
+  .app-shell{ max-width:1100px; }
+  .app-tabs{ position:static; display:flex; gap:var(--s4); padding:0; background:none; border-top:0; border-bottom:1px solid var(--line); }
+  .app-tabs span{ min-height:52px; font-size:13px; }
+  .app-tabs span.on{ box-shadow:inset 0 -2px 0 var(--gold-d); }
+  .app-crown{ margin-top:var(--s4); }
+  .app-cols{ display:grid; grid-template-columns:1fr 1fr; gap:var(--s4); align-items:start; margin-top:var(--s4); }
+  .app-col{ display:block; }
+  .app-col > :first-child{ margin-top:0; }
+  .app-cols .guest-bar{ order:0; }
+  .quick{ background:var(--white); border-radius:26px; padding:var(--s3); box-shadow:0 2px 8px rgba(25,46,93,.06); }
+  .quick .q i{ background:var(--warm); box-shadow:none; }
+  .pop{ overflow:visible; padding-inline-end:0; -webkit-mask-image:none !important; mask-image:none !important; }
+  .pc{ flex:1 1 0; }
+}
+
+/* ---- account tabs: My Gold, Balance, Profile ---- */
+.app-tabs a{ display:block; border-radius:10px; transition:color .16s ease; }
+.app-tabs a:hover span{ color:var(--navy-deep); }
+.app-tabs a:active span{ transform:scale(.97); }
+.app-tabs span{ transition:color .16s ease, transform .1s ease-out; }
+.app-tab{ max-width:760px; padding:var(--s4) 0 var(--s8); }
+.app-tab h1{ font:500 28px var(--font-heading); color:var(--navy-deep); letter-spacing:-.01em; }
+.tiles{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:var(--s3); }
+.tiles > div{ background:var(--off); border:1px solid var(--line); border-radius:16px; padding:14px 16px; }
+.app-tab > .tiles > div{ background:#fff; }
+.tiles b{ display:block; font:500 22px var(--font-num); color:var(--navy-deep); white-space:nowrap; }
+.tiles span{ display:block; margin-top:2px; font-size:12px; color:var(--muted); }
+.tab-note{ margin-top:6px; font-size:12.5px; line-height:1.6; color:var(--muted); }
+.pieces{ list-style:none; margin-top:var(--s2); }
+.pieces li{ display:grid; grid-template-columns:40px 1fr auto; gap:0 12px; align-items:center; padding:10px 0; border-top:1px solid var(--line); }
+.pieces li > :first-child{ grid-row:1 / 3; width:40px; height:40px; }
+.pieces b{ font-size:13.5px; font-weight:600; color:var(--navy-deep); }
+.pieces span{ grid-column:2; grid-row:2; justify-self:start; font:400 12px var(--font-num); color:var(--muted); }
+.pieces em{ grid-row:1 / 3; font:500 14.5px var(--font-num); font-style:normal; color:var(--navy-deep); }
+.facts > div{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; padding:13px 0; border-top:1px solid var(--line); }
+.facts > div:first-child{ border-top:0; padding-top:4px; }
+.facts dt{ font-size:12.5px; color:var(--muted); }
+.facts dd{ font-size:14px; font-weight:600; color:var(--navy-deep); overflow-wrap:anywhere; text-align:end; }
+.profile-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px; margin-top:var(--s3); padding-top:var(--s3); border-top:1px solid var(--line); }
+.profile-acts a{ font-size:13px; font-weight:600; color:var(--navy-deep); text-decoration:underline; text-underline-offset:4px; text-decoration-color:var(--gold); }
+.profile-acts > :last-child{ margin-inline-start:auto; }
+@media (max-width:520px){ .tiles.three{ grid-template-columns:1fr; } }
+@media (min-width:521px){ .tiles.three{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+.profile-acts button{ min-height:40px; padding:0 18px; border:1px solid var(--line); border-radius:999px; background:var(--off); color:#8C3722;
+  font:600 13px var(--font-body); cursor:pointer; transition:background-color .16s ease, border-color .16s ease, transform .1s ease-out; }
+.profile-acts button:hover{ background:var(--warm); border-color:rgba(140,55,34,.4); }
+.profile-acts button:active{ transform:scale(.97); }
+
+/* an order whose new price is above what was paid: the difference, then its upload */
+.proof-due{ grid-column:1 / -1; display:grid; gap:8px; margin-top:8px; }
+.proof-due .proof{ margin-top:0; }
+.orders > li > .proof-note.ok{ grid-column:1 / -1; margin-top:8px; }
+.proof-due p{ font:500 13.5px/1.5 var(--font-body); color:var(--navy-deep); }
+.proof-due p small{ font-size:12px; color:var(--muted); }

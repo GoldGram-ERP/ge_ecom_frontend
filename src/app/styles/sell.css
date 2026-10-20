@@ -1,0 +1,39 @@
+/* ---------- sell to GoldGram: the checkout's frame, with the estimate in the side panel ---------- */
+.sell-lede{ max-width:52ch; margin:var(--s2) 0 0 0; font-size:14px; line-height:1.6; color:#C9D2E1; }
+.sell-steps{ list-style:none; padding:0; margin-bottom:0; }
+
+/* the numbered sections */
+.sell .co-h{ display:flex; align-items:baseline; gap:10px; }
+.sell .co-h i{
+  font-style:normal; font:500 13px/1 var(--font-num); color:var(--gold-d);
+  width:24px; height:24px; flex:0 0 auto; display:inline-grid; place-items:center;
+  border:1px solid var(--gold); border-radius:50%; transform:translateY(-2px);
+}
+.sell-sub{ font:600 8.5px var(--font-body); letter-spacing:2.2px; text-transform:uppercase; color:var(--gold-d); margin:var(--s4) 0 0 0; }
+html[lang="ar"] .sell-sub, html[lang="ar"] .sell .f > span{ font-size:12px; letter-spacing:0; }
+
+.sell-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.sell .sel{ width:100%; }
+.sell-qty{ display:flex; width:100%; justify-content:space-between; }
+.sell-qty output{ flex:1; }
+.sell-err{ display:block; margin-top:6px; font-size:12px; color:#8C3722; }
+
+/* the estimate: one number leads, the lines under it say where it comes from */
+.sell .order{ top:calc(var(--ticker-h, 0px) + 72px + var(--s3)); }
+.sell-big{ font:400 clamp(30px,3.4vw,40px)/1.1 var(--font-num); color:var(--navy-deep); letter-spacing:-.02em; margin-bottom:var(--s3); }
+.sell-big small{ font:600 12px var(--font-body); letter-spacing:.4px; color:var(--muted); }
+.sell-est .o-line span{ font-variant-numeric:tabular-nums; }
+.sell-note{ font-size:12px; line-height:1.6; color:var(--muted); margin:var(--s3) 0 0 0; }
+.sell-info{ margin-top:var(--s3); padding:var(--s3); border-radius:14px; background:var(--warm); border:1px solid rgba(198,163,98,.35); }
+.sell-info b{ display:block; font-size:13px; color:var(--navy-deep); }
+.sell-info p{ margin:6px 0 0 0; font-size:12.5px; line-height:1.6; color:var(--muted); }
+
+.sell-done .sell-done-est b{ font-family:var(--font-num); font-weight:400; font-size:18px; color:var(--navy-deep); }
+.sell-done a{ color:var(--navy-deep); font-weight:600; text-decoration:underline; text-decoration-color:var(--gold); text-underline-offset:3px; }
+
+/* the header's Sell link goes into the menu on small screens, like Prices */
+@media (max-width:900px){
+  .bar .navlink.nav-sell{ display:none; }
+  .sell .order{ position:static; }
+  .sell .ff{ grid-template-columns:1fr; }
+}

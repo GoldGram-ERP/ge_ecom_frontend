@@ -1,0 +1,28 @@
+/* the live price strip: above the header on every page, it stays while the page scrolls */
+:root{ --ticker-h:30px; }
+.ticker{
+  position:sticky; top:0; z-index:41; display:block; height:var(--ticker-h); overflow:hidden;
+  background:#0A1220; border-bottom:1px solid rgba(231,210,160,.14); color:#C9D2E0; text-decoration:none;
+}
+.tk-track{ display:flex; width:max-content; height:100%; animation:tk-run 60s linear infinite; }
+.ticker:hover .tk-track, .ticker:focus-visible .tk-track{ animation-play-state:paused; }
+.ticker:focus-visible{ outline:2px solid var(--gold-l); outline-offset:-2px; }
+.tk-run{ display:flex; align-items:center; flex-shrink:0; }
+.tk-item{ display:inline-flex; align-items:baseline; gap:7px; padding:0 22px; white-space:nowrap; font-size:12px; line-height:var(--ticker-h); }
+.tk-item + .tk-item{ border-inline-start:1px solid rgba(231,210,160,.14); }
+.tk-name{ color:#8FA0BA; font-family:var(--font-body); }
+.tk-item b{ font-family:var(--font-num, var(--font-heading)); font-weight:500; color:#fff; letter-spacing:.2px; }
+.tk-item i{ font-style:normal; font-size:11px; font-weight:600; color:#7FD6A2; }
+.tk-item i.down{ color:#E79A8E; }
+.tk-item i.flat{ color:#8FA0BA; }
+@keyframes tk-run{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+/* Arabic reads from the right, so the strip runs the other way */
+[dir="rtl"] .tk-track{ animation-name:tk-run-rtl; }
+@keyframes tk-run-rtl{ from{ transform:translateX(0); } to{ transform:translateX(50%); } }
+/* no movement when the visitor asks for less: the strip holds still and scrolls by hand */
+@media (prefers-reduced-motion: reduce){
+  .tk-track{ animation:none; }
+  .ticker{ overflow-x:auto; scrollbar-width:none; }
+  .tk-run[aria-hidden="true"]{ display:none; }
+}
+@media print{ .ticker{ display:none; } :root{ --ticker-h:0px; } }
