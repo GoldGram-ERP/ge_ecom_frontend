@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
-import { articleBody, articleTitle, paragraphs } from "@/components/home-sections";
+import { articleBody, articleTitle } from "@/components/home-sections";
 import { hasLocale } from "@/i18n";
 import { cairoDate } from "@/lib/format";
 import { getArticle } from "@/lib/server-api";
@@ -33,10 +33,8 @@ export default async function ArticlePage({ params }: PageProps<"/[locale]/artic
             {article.imageIds.map((imageId) => (
               <Image unoptimized className="art-img" key={imageId} src={`/api/articles/${article.id}/images/${imageId}`} alt="" width={680} height={382} loading="lazy" />
             ))}
-            {/* Plain text only: React escapes it; never rendered as HTML. */}
-            {paragraphs(articleBody(article, locale)).map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
+            {/* Body is sanitized on the server (fixed tag/style allowlist); safe to render. */}
+            <div className="art-html" dangerouslySetInnerHTML={{ __html: articleBody(article, locale) }} />
           </article>
         </div>
       </div>

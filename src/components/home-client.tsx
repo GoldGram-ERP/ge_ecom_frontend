@@ -21,7 +21,8 @@ export function WhyPanels() {
   const toggle = (i: number) => setOpen((state) => state.map((v, n) => (n === i ? !v : v)));
 
   return (
-    <div className="stack">
+    <>
+    <div className="stack why-row">
       {t.why.panels.map((panel, i) => (
         <div className={`panel ${TONES[i]}${open[i] ? " open" : ""}`} key={panel.t} onClick={() => toggle(i)}>
           <Button
@@ -47,6 +48,15 @@ export function WhyPanels() {
         </div>
       ))}
     </div>
+    <div className="why-features">
+      {t.why.features.map((f) => (
+        <div key={f.t}>
+          <b>{f.t}</b>
+          <span>{f.d}</span>
+        </div>
+      ))}
+    </div>
+    </>
   );
 }
 

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { DropdownMenu } from "radix-ui";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client-api";
 import { CartDrawer } from "./cart-drawer";
 import { Brand, Icon, ICONS } from "./chrome";
@@ -25,18 +25,49 @@ function NavMenuItem({ item }: { item: NavItem }) {
   );
 }
 
-/** A header link that opens a small menu of links. */
-function NavDropdown({ label, items, className }: { label: string; items: NavItem[]; className: string }) {
+/**
+ * A header entry with a submenu. When `href` is set the label is a link (click goes there,
+ * e.g. "Shop" opens the full shop) and the submenu opens on hover; without it the label is a
+ * button that opens the submenu on click.
+ */
+function NavDropdown({ label, items, className, href }: { label: string; items: NavItem[]; className: string; href?: string }) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openNow = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setOpen(true);
+  };
+  const closeSoon = () => {
+    timer.current = setTimeout(() => setOpen(false), 120);
+  };
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger className={`navlink ${className}`}>{label} <span aria-hidden="true">▾</span></DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content className="nav-menu" align="start" sideOffset={8}>
-          {items.map((item) => (
-            <NavMenuItem key={item.label} item={item} />
-          ))}
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
+    <DropdownMenu.Root open={open} onOpenChange={setOpen} modal={false}>
+      <span className="nav-dd-wrap" onPointerEnter={href ? openNow : undefined} onPointerLeave={href ? closeSoon : undefined}>
+        <DropdownMenu.Trigger asChild>
+          {href ? (
+            <Link className={`navlink ${className}`} href={href} onClick={() => setOpen(false)}>
+              {label} <span aria-hidden="true">▾</span>
+            </Link>
+          ) : (
+            <button type="button" className={`navlink ${className}`}>
+              {label} <span aria-hidden="true">▾</span>
+            </button>
+          )}
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            className="nav-menu"
+            align="start"
+            sideOffset={8}
+            onPointerEnter={href ? openNow : undefined}
+            onPointerLeave={href ? closeSoon : undefined}
+          >
+            {items.map((item) => (
+              <NavMenuItem key={item.label} item={item} />
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </span>
     </DropdownMenu.Root>
   );
 }
@@ -101,13 +132,14 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     router.push(otherHref + window.location.search);
   };
 
-  // Shop filters use the shop page's own query: category slug (c), metal (m), size (w).
+  // Shop filters use the shop page's own query: category slug (c: bar/coin/wear), size (w), metal (m).
+  // Ingots and bars are both the "bar" category, told apart by size; coins and wearables by category.
   // shortcut: "Making charge" and "GoldGram app" have no page of their own yet; they lead to help and the home hero.
   const shopItems: NavItem[] = [
-    { label: t.nav.ingots, href: href("/shop") + "?m=gold&w=small" },
+    { label: t.nav.ingots, href: href("/shop") + "?c=bar&w=small" },
     { label: t.nav.coins, href: href("/shop") + "?c=coin" },
     { label: t.nav.wearable, href: href("/shop") + "?c=wear" },
-    { label: t.nav.bars, href: href("/shop") + "?m=gold&w=large" },
+    { label: t.nav.bars, href: href("/shop") + "?c=bar&w=large" },
     { label: t.nav.silver, href: href("/shop") + "?m=silver" },
   ];
   const serviceItems: NavItem[] = [
@@ -141,7 +173,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
         <Link className="navlink nav-prices" href={href("/prices")}>
           {t.prices.nav}
         </Link>
-        <NavDropdown className="nav-shop" label={t.nav.shop} items={shopItems} />
+        <NavDropdown className="nav-shop" label={t.nav.shop} items={shopItems} href={href("/shop")} />
         <NavDropdown className="nav-dd" label={t.nav.service} items={serviceItems} />
         <NavDropdown className="nav-dd" label={t.nav.about} items={aboutItems} />
         <CartDrawer />

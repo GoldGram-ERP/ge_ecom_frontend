@@ -4,7 +4,11 @@ import type { Locale } from "@/i18n";
 import type { Dict } from "@/i18n";
 import { artClass, artStyle, cairoDate, pounds, productName, productSub } from "@/lib/format";
 import type { Article, Product } from "@/lib/types";
+import { CarouselScroller } from "./carousel-scroller";
 import { AddButton } from "./ShopGrid";
+
+/** Article bodies are HTML; this flattens one to plain text for a card excerpt. */
+const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
 export const articleTitle = (a: Article, locale: Locale) => (locale === "ar" ? a.titleAr : a.titleEn);
 export const articleBody = (a: Article, locale: Locale) => (locale === "ar" ? a.bodyAr : a.bodyEn);
@@ -18,7 +22,7 @@ export function starterProducts(products: Product[]): Product[] {
 /** Horizontal scroll-snap row of the shop's product cards. */
 export function StarterCarousel({ products, locale, t }: { products: Product[]; locale: Locale; t: Dict }) {
   return (
-    <div className="carousel" role="region" aria-label={t.starter.title} tabIndex={0}>
+    <CarouselScroller label={t.starter.title} locale={locale}>
       {products.map((p) => {
         const photo = p.imageIds?.[0];
         return (
@@ -47,7 +51,7 @@ export function StarterCarousel({ products, locale, t }: { products: Product[]; 
           </article>
         );
       })}
-    </div>
+    </CarouselScroller>
   );
 }
 
@@ -58,7 +62,7 @@ export function ArticleCards({ articles, locale, t }: { articles: Article[]; loc
   return (
     <div className="art-grid">
       {articles.map((a) => {
-        const first = paragraphs(articleBody(a, locale))[0] ?? "";
+        const first = stripHtml(articleBody(a, locale));
         const photo = a.imageIds?.[0];
         return (
           <Link className="art-card" key={a.id} href={`/${locale}/articles/${a.id}`}>

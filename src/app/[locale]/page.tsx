@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ContactRows, StoreButtons } from "@/components/chrome";
 import { SiteHeader } from "@/components/header-client";
 import { FaqList, WhyPanels } from "@/components/home-client";
+import { BrandsStrip, HowToBuy, SellCta } from "@/components/home-extra";
 import { Phones } from "@/components/phones";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
@@ -65,6 +66,26 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </div>
 
+      {products.length > 0 && (
+        <div className="band-white">
+          <div className="wrap">
+            <Reveal as="section" id="brands">
+              <h2 className="ask">{t.brands.title}</h2>
+              <BrandsStrip products={products} locale={locale} t={t} />
+            </Reveal>
+          </div>
+        </div>
+      )}
+
+      <div className="band-off">
+        <div className="wrap">
+          <Reveal as="section" id="how">
+            <h2 className="ask">{t.howToBuy.title}</h2>
+            <HowToBuy t={t} />
+          </Reveal>
+        </div>
+      </div>
+
       {starter.length > 0 && (
         <div className="band-white">
           <div className="wrap">
@@ -86,6 +107,14 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
           </div>
         </div>
       )}
+
+      <div className="band-navy">
+        <div className="wrap">
+          <Reveal as="section" id="sell-cta">
+            <SellCta t={t} locale={locale} />
+          </Reveal>
+        </div>
+      </div>
 
       <div className="band-white">
         <div className="wrap">

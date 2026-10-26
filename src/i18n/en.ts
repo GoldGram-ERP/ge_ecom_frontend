@@ -39,6 +39,16 @@ export const en = {
     register: "Register",
   },
   starter: { title: "Starter choices" },
+  brands: { title: "Available brands", pieces: "{n} pieces" },
+  howToBuy: {
+    title: "How to buy from GoldGram",
+    steps: [
+      { t: "Choose your bar", d: "Compare weights, karats and makers — the price is live on every piece." },
+      { t: "Pay and lock the price", d: "Your price is confirmed at order time and won't change after." },
+      { t: "Collect it or keep it", d: "From the branch, or delivered to your door." },
+    ],
+  },
+  sellCta: { title: "Got gold? Sell it to us at a published price", sub: "A published buy-back price, so you know what your gold is worth before you decide.", button: "See our buy-back prices" },
   articles: { title: "Before you buy", all: "All articles", read: "Read more", back: "Back to articles", empty: "No articles yet." },
 
   about: {
@@ -109,6 +119,12 @@ export const en = {
         t: "Sell it back whenever you want",
         d: "A published buy-back price, so you know what your gold is worth before you decide to sell.",
       },
+    ],
+    features: [
+      { t: "Guaranteed buy-back", d: "We buy your gold back anytime at the day's published price." },
+      { t: "Transparent making charge", d: "The making charge is shown separately from the metal value." },
+      { t: "Secure handover", d: "From the branch or an insured courier to your door." },
+      { t: "Registered ownership", d: "Every gram in your name with an official invoice." },
     ],
   },
   faq: {
