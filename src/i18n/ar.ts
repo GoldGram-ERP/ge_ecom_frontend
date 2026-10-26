@@ -40,7 +40,7 @@ export const ar: Dict = {
     branches: "الفروع وتواصل معنا",
     register: "إنشاء حساب",
   },
-  starter: { title: "اختيارات للبداية" },
+  starter: { title: "اختيارات للبداية", all: "كل السبائك والعملات" },
   brands: { title: "العلامات المتوفرة", pieces: "{n} قطعة" },
   howToBuy: {
     title: "كيف تشتري من جولد جرام",

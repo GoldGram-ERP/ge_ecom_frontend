@@ -925,6 +925,17 @@ html[lang="ar"] .pr-main h2,html[lang="ar"] .pr-calc h2{ letter-spacing:0; }
 .art-html img{ max-width:100%; height:auto; border-radius:12px; margin:var(--s3) 0; }
 .art-html a{ color:var(--link,#0e1b32); text-decoration:underline; }
 .nav-dd-wrap{ display:inline-flex; align-items:center; }
+/* Why cards: all shown at once, one background, a small icon badge. Overrides the old open/close panels. */
+.why-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s3); margin-top:var(--s4); }
+.why-row .panel{ background:#fff; border:1px solid rgba(14,27,50,.08); border-radius:16px; padding:var(--s4); display:block; height:auto; max-height:none; overflow:visible; cursor:default; position:relative; }
+.why-row .panel .why-ico{ display:inline-grid; place-items:center; width:42px; height:42px; border-radius:12px; background:#efe4c7; color:#0e1b32; }
+.why-row .panel h3{ margin:var(--s2) 0 var(--s1); font-size:1rem; }
+.why-row .panel p{ margin:0; max-height:none; overflow:visible; color:var(--muted); font-size:.9rem; line-height:1.65; }
+@media (max-width:900px){ .why-row{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:520px){ .why-row{ grid-template-columns:1fr; } }
+.starter-head{ display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3); flex-wrap:wrap; }
+.starter-all{ color:var(--ink,#0e1b32); font-weight:600; text-decoration:underline; white-space:nowrap; }
+.starter-all:hover{ color:#9a7b2d; }
 .art-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3); margin-top:var(--s4); }
 .art-card{ display:flex; flex-direction:column; background:var(--white); border:1px solid var(--line); border-radius:18px; padding:var(--s3); color:inherit; text-decoration:none; }
 .art-card:hover{ border-color:rgba(198,163,98,.55); }

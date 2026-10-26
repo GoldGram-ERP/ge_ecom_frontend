@@ -136,10 +136,10 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
   // Ingots and bars are both the "bar" category, told apart by size; coins and wearables by category.
   // shortcut: "Making charge" and "GoldGram app" have no page of their own yet; they lead to help and the home hero.
   const shopItems: NavItem[] = [
-    { label: t.nav.ingots, href: href("/shop") + "?c=bar&w=small" },
+    { label: t.nav.ingots, href: href("/shop") + "?c=ingot" },
     { label: t.nav.coins, href: href("/shop") + "?c=coin" },
     { label: t.nav.wearable, href: href("/shop") + "?c=wear" },
-    { label: t.nav.bars, href: href("/shop") + "?c=bar&w=large" },
+    { label: t.nav.bars, href: href("/shop") + "?c=bar&m=gold" },
     { label: t.nav.silver, href: href("/shop") + "?m=silver" },
   ];
   const serviceItems: NavItem[] = [

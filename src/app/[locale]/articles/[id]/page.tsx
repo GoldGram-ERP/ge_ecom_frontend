@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -30,9 +29,7 @@ export default async function ArticlePage({ params }: PageProps<"/[locale]/artic
             <Link href={`/${locale}/articles`}>{t.articles.back}</Link>
             <h1>{articleTitle(article, locale)}</h1>
             <time dateTime={article.publishedAt}>{cairoDate(article.publishedAt, locale)}</time>
-            {article.imageIds.map((imageId) => (
-              <Image unoptimized className="art-img" key={imageId} src={`/api/articles/${article.id}/images/${imageId}`} alt="" width={680} height={382} loading="lazy" />
-            ))}
+            {/* Images live inline inside the body; no separate gallery, so nothing shows twice. */}
             {/* Body is sanitized on the server (fixed tag/style allowlist); safe to render. */}
             <div className="art-html" dangerouslySetInnerHTML={{ __html: articleBody(article, locale) }} />
           </article>

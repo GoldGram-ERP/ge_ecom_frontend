@@ -38,7 +38,7 @@ export const en = {
     branches: "Branches & contact",
     register: "Register",
   },
-  starter: { title: "Starter choices" },
+  starter: { title: "Starter choices", all: "All ingots and coins" },
   brands: { title: "Available brands", pieces: "{n} pieces" },
   howToBuy: {
     title: "How to buy from GoldGram",
