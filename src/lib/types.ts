@@ -168,3 +168,16 @@ export interface ApiErrorBody {
   message: string;
   details?: unknown;
 }
+
+export type Article = {
+  id: number;
+  titleEn: string;
+  titleAr: string;
+  type: "financial" | "educational" | "news" | "guide";
+  bodyEn: string;
+  bodyAr: string;
+  publishedAt: string;
+  imageIds: number[];
+};
+
+export type FaqEntry = { id: number; questionEn: string; questionAr: string; answerEn: string; answerAr: string };

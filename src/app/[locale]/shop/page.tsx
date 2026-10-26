@@ -4,12 +4,11 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
 import { ShopGrid } from "@/components/ShopGrid";
 import { hasLocale } from "@/i18n";
+import { isSilver, isSmall } from "@/lib/kinds";
 import { getTexts } from "@/lib/site-texts";
 import { getProducts } from "@/lib/server-api";
 
-// The footer's ready-made selections: metal (`m`) and size (`w`). Small means under 50 g
-// (Proposed, docs/SPEC.md 3.9); silver is the 999 metal.
-const SMALL_GRAMS = 50;
+// The footer's ready-made selections: metal (`m`) and size (`w`), by the rule the compare page uses too.
 type Preset = { metal?: "gold" | "silver"; size?: "small" | "large" };
 
 function presetOf(query: Record<string, string | string[] | undefined>): Preset {
@@ -42,8 +41,8 @@ export default async function ShopPage({ params, searchParams }: PageProps<"/[lo
   // No catch: if the catalogue cannot be loaded, error.tsx offers a retry.
   const products = (await getProducts()).filter(
     (p) =>
-      (!preset.metal || (preset.metal === "silver") === ((p.karat as number) === 999)) &&
-      (!preset.size || (preset.size === "small") === p.weightGrams < SMALL_GRAMS),
+      (!preset.metal || (preset.metal === "silver") === isSilver(p)) &&
+      (!preset.size || (preset.size === "small") === isSmall(p.weightGrams)),
   );
   const initial = products.find((p) => p.category === query.c)?.category ?? "all";
 

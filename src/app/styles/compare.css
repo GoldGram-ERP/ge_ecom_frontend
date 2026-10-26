@@ -1,0 +1,24 @@
+/* ---------- compare the same piece across brands: two lists, the table, then the piece ---------- */
+.cmp .cmp-pick{ display:grid; grid-template-columns:repeat(2,minmax(0,240px)); gap:var(--s2) var(--s3); margin:var(--s6) 0 var(--s4); }
+.cmp .cmp-pick .sel{ width:100%; }
+html[lang="ar"] .cmp .f > span{ font-size:12px; letter-spacing:0; }
+
+/* the button column has no title of its own (a cell, so the table keeps its four headers) */
+.cmp-table thead td{ border-top:0; background:var(--warm); }
+.cmp-table td.cmp-add{ width:1%; padding-top:8px; padding-bottom:8px; }
+.cmp-table .pc-buy{ margin-top:0; width:auto; min-width:132px; padding:10px 16px; }
+.cmp-table .pc-buy.added{ padding:9px 15px; }
+
+.cmp-info{ margin-top:var(--s8); }
+.cmp-info h2{ font-size:clamp(20px,2vw,24px); margin-bottom:var(--s2); }
+html[lang="ar"] .cmp-info h2{ letter-spacing:0; }
+.cmp-info .cmp-about-note{ font-size:12.5px; line-height:1.6; color:var(--muted); }
+.cmp-info .cmp-more{ display:inline-flex; margin-top:var(--s3); }
+
+@media (max-width:900px){
+  .cmp .cmp-pick{ grid-template-columns:1fr 1fr; }
+  .cmp-info{ margin-top:var(--s6); }
+}
+@media (max-width:480px){
+  .cmp .cmp-pick{ grid-template-columns:1fr; }
+}

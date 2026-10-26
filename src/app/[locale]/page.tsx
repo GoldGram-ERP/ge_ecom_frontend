@@ -5,7 +5,8 @@ import { FaqList, WhyPanels } from "@/components/home-client";
 import { Phones } from "@/components/phones";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
-import { getPricesOrNull, getSpotOrNull } from "@/lib/server-api";
+import { ArticleCards, StarterCarousel, starterProducts } from "@/components/home-sections";
+import { getArticles, getFaq, getPricesOrNull, getProducts, getSpotOrNull } from "@/lib/server-api";
 import { site } from "@/lib/site";
 import { Reveal } from "@/components/controls";
 
@@ -14,7 +15,15 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   if (!hasLocale(locale)) notFound();
   const t = await getTexts(locale);
   // The home page still renders if the backend is down; the price phone says so.
-  const [prices, spot] = await Promise.all([getPricesOrNull(), getSpotOrNull()]);
+  const [prices, spot, faq, articles, products] = await Promise.all([
+    getPricesOrNull(),
+    getSpotOrNull(),
+    getFaq(),
+    getArticles(),
+    getProducts().catch(() => []),
+  ]);
+  const faqItems = faq.map((f) => ({ q: locale === "ar" ? f.questionAr : f.questionEn, a: locale === "ar" ? f.answerAr : f.answerEn }));
+  const starter = starterProducts(products);
 
   return (
     <div className="page">
@@ -56,11 +65,33 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       </div>
 
+      {starter.length > 0 && (
+        <div className="band-white">
+          <div className="wrap">
+            <Reveal as="section" id="starter">
+              <h2 className="ask">{t.starter.title}</h2>
+              <StarterCarousel products={starter} locale={locale} t={t} />
+            </Reveal>
+          </div>
+        </div>
+      )}
+
+      {articles.length > 0 && (
+        <div className="band-off">
+          <div className="wrap">
+            <Reveal as="section" id="articles">
+              <h2 className="ask">{t.articles.title}</h2>
+              <ArticleCards articles={articles.slice(0, 3)} locale={locale} t={t} />
+            </Reveal>
+          </div>
+        </div>
+      )}
+
       <div className="band-white">
         <div className="wrap">
           <Reveal as="section" id="faq">
               <h2 className="ask">{t.faq.title}</h2>
-              <FaqList />
+              {faqItems.length ? <FaqList items={faqItems} /> : <FaqList />}
             </Reveal>
 
           <Reveal as="section" id="contact" style={{ paddingTop: 0 }}>

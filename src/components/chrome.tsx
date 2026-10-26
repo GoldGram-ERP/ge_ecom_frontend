@@ -162,6 +162,7 @@ export function Footer({ t, locale }: { t: Dict; locale: Locale }) {
       links: [
         [t.footer.sell, to("/sell")],
         [t.footer.compare, to("/compare")],
+        [t.footer.zakat, to("/zakat")],
         [t.footer.goldPrice, to("/prices")],
         [t.footer.silverPrice, to("/prices/silver")],
       ],

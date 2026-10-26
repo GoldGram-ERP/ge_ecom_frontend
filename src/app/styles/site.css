@@ -905,3 +905,18 @@ html[lang="ar"] .pr-main h2,html[lang="ar"] .pr-calc h2{ letter-spacing:0; }
 .cmp-ask{ color:var(--muted); font-size:12.5px; }
 .cmp-note{ margin-top:var(--s3); font-size:12.5px; line-height:1.6; color:var(--muted); max-width:90ch; }
 .cmp-more{ display:inline-block; margin-top:var(--s2); }
+
+/* ---------- home: starter carousel and articles ---------- */
+.carousel{ display:flex; gap:var(--s3); margin-top:var(--s4); overflow-x:auto; scroll-snap-type:x mandatory; padding-bottom:var(--s2); }
+.carousel .pcard{ flex:0 0 min(260px,78%); scroll-snap-align:start; }
+.art-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3); margin-top:var(--s4); }
+.art-card{ display:flex; flex-direction:column; background:var(--white); border:1px solid var(--line); border-radius:18px; padding:var(--s3); color:inherit; text-decoration:none; }
+.art-card:hover{ border-color:rgba(198,163,98,.55); }
+.art-img{ width:100%; height:auto; aspect-ratio:16/9; object-fit:cover; border-radius:12px; margin-bottom:var(--s2); }
+.art-card time{ font-size:11px; letter-spacing:1px; color:var(--muted); }
+.art-card h3{ font-family:var(--font-heading); font-size:18px; color:var(--navy-deep); margin:6px 0 0 0; }
+.art-card p{ font-size:13px; line-height:1.6; color:var(--muted); margin:8px 0 0 0; flex:1; }
+.art-more{ margin-top:var(--s2); font-size:12.5px; font-weight:600; color:var(--navy-deep); text-decoration:underline; text-decoration-color:var(--gold); text-underline-offset:3px; }
+.art-body p{ max-width:68ch; line-height:1.8; margin:var(--s3) 0 0 0; }
+.art-body .art-img{ margin-top:var(--s3); max-width:680px; }
+@media (max-width:900px){ .art-grid{ grid-template-columns:1fr; } }

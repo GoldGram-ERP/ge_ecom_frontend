@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import type { MyOrder, PriceHistory, Prices, Product, Spot, User } from "./types";
+import type { Article, FaqEntry, MyOrder, PriceHistory, Prices, Product, Spot, User } from "./types";
 
 // Server Components call the backend directly. Nothing here is cached: prices move.
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
@@ -35,6 +35,33 @@ export async function getPricesOrNull(): Promise<Prices | null> {
   }
 }
 
+/** Published articles, newest as the dashboard orders them. Empty when the backend does not answer. */
+export async function getArticles(): Promise<Article[]> {
+  try {
+    return (await get<Article[]>("/articles")).data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+/** One published article, or null (missing or backend down). */
+export async function getArticle(id: string): Promise<Article | null> {
+  try {
+    return (await get<Article>(`/articles/${encodeURIComponent(id)}`)).data;
+  } catch {
+    return null;
+  }
+}
+
+/** Active FAQ entries from the dashboard. Empty when the backend does not answer. */
+export async function getFaq(): Promise<FaqEntry[]> {
+  try {
+    return (await get<FaqEntry[]>("/faq")).data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** The international ounce for the first paint of the home page; null while its feed is down. */
 export async function getSpotOrNull(): Promise<Spot | null> {
   try {
@@ -62,6 +89,16 @@ export async function branchPickup(): Promise<boolean> {
     return data?.branchPickup ?? true;
   } catch {
     return true;
+  }
+}
+
+/** Whether every order needs an uploaded KYC document (a dashboard setting). Off when the backend does not say. */
+export async function requireKycDocPerOrder(): Promise<boolean> {
+  try {
+    const { data } = await get<{ requireKycDocPerOrder: boolean }>("/settings");
+    return data?.requireKycDocPerOrder ?? false;
+  } catch {
+    return false;
   }
 }
 

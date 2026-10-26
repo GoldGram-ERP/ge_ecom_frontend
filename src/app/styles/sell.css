@@ -18,8 +18,11 @@ html[lang="ar"] .sell-sub, html[lang="ar"] .sell .f > span{ font-size:12px; lett
 .sell-qty output{ flex:1; }
 .sell-err{ display:block; margin-top:6px; font-size:12px; color:#8C3722; }
 
-/* the estimate: one number leads, the lines under it say where it comes from */
-.sell .order{ top:calc(var(--ticker-h, 0px) + 72px + var(--s3)); }
+/* the estimate: one number leads, the lines under it say where it comes from.
+   The estimate and "What do we buy?" stay in view together while the form scrolls. */
+.sell.co-grid > aside{ align-self:start; position:sticky; top:calc(var(--ticker-h, 0px) + 72px + var(--s3)); }
+.sell .order{ position:static; }
+.sell-cashback b{ color:var(--gold-d); }
 .sell-big{ font:400 clamp(30px,3.4vw,40px)/1.1 var(--font-num); color:var(--navy-deep); letter-spacing:-.02em; margin-bottom:var(--s3); }
 .sell-big small{ font:600 12px var(--font-body); letter-spacing:.4px; color:var(--muted); }
 .sell-est .o-line span{ font-variant-numeric:tabular-nums; }
@@ -34,6 +37,6 @@ html[lang="ar"] .sell-sub, html[lang="ar"] .sell .f > span{ font-size:12px; lett
 /* the header's Sell link goes into the menu on small screens, like Prices */
 @media (max-width:900px){
   .bar .navlink.nav-sell{ display:none; }
-  .sell .order{ position:static; }
+  .sell.co-grid > aside{ position:static; }
   .sell .ff{ grid-template-columns:1fr; }
 }

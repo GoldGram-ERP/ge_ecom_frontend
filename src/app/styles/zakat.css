@@ -1,0 +1,40 @@
+/* ---------- the zakat calculator: the prices page's frame, the result in the side panel ---------- */
+.zk-form{ background:var(--white); border:1px solid var(--line); border-radius:16px; padding:var(--s4); display:grid; gap:var(--s4); }
+.zk-form fieldset{ border:0; margin:0; padding:0; min-width:0; }
+.zk-form legend{ font:400 21px var(--font-heading); color:var(--navy-deep); padding:0; margin-bottom:var(--s2); }
+.zk-lede{ font-size:13px; line-height:1.6; color:var(--muted); margin:calc(var(--s1) * -1) 0 var(--s2) 0; }
+.zk-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s2); }
+.zk-form .f > span{ font-size:11.5px; letter-spacing:1.2px; }
+html[lang="ar"] .zk-form .f > span{ font-size:13px; letter-spacing:0; }
+.zk-form .f em{ display:block; margin-top:6px; font-style:normal; font-size:11.5px; line-height:1.5; }
+.zk-hint{ color:var(--muted); }
+.zk-err{ color:#8C3722; }
+.zk-form fieldset:has(#zk-cash) .zk-grid{ grid-template-columns:minmax(0,1fr); max-width:360px; }
+
+.zk-result{ background:var(--navy-deep); color:#E6EBF5; border-radius:16px; padding:var(--s3); }
+.zk-result h2{ font-size:19px; color:var(--gold-l); margin-bottom:var(--s2); }
+.zk-verdict{ font:600 14px var(--font-body); color:#fff; }
+.zk-big{ font:400 clamp(30px,3.4vw,40px)/1.15 var(--font-num); color:var(--gold-l); margin-top:4px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.zk-big small{ font:600 12px var(--font-body); color:#B9C2D8; }
+.zk-why,.zk-silver-note{ font-size:12.5px; line-height:1.6; color:#B9C2D8; margin-top:var(--s1); }
+.zk-silver-note{ padding:var(--s2); border-radius:10px; background:rgba(231,210,160,.1); color:#E7D2A0; }
+.zk-lines{ display:grid; gap:8px; margin-top:var(--s3); }
+.zk-lines div{ display:flex; justify-content:space-between; gap:var(--s2); font-size:13px; }
+.zk-lines dd{ font-family:var(--font-num); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.zk-lines small{ font-size:10.5px; opacity:.75; }
+.zk-result .zk-total{ border-top:1px solid rgba(231,210,160,.25); padding-top:8px; font-weight:600; color:#fff; }
+.zk-nisab .zk-lines{ margin-top:0; }
+.zk-nisab .zk-lines dt{ color:var(--muted); }
+.zk-nisab .zk-lines dd{ color:var(--navy-deep); }
+
+.zk-warn{ border-radius:16px; padding:var(--s3); background:#FBF1E4; border:1px solid rgba(192,69,43,.35); color:#6B2D1C; }
+.zk-warn h2{ font-size:16px; color:#8C3722; margin-bottom:6px; }
+.zk-warn p, p.zk-warn{ font-size:13px; line-height:1.65; }
+
+@media (max-width:900px){
+  .zk-grid{ grid-template-columns:1fr 1fr; }
+  .zk-form{ padding:var(--s3); }
+}
+@media (max-width:480px){
+  .zk-grid{ grid-template-columns:1fr; }
+}

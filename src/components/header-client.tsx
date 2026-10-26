@@ -13,6 +13,34 @@ import { Button } from "./controls";
 // The sell page and its header link (loaded with the header, so the link's phone rule holds everywhere).
 import "../app/styles/sell.css";
 
+type NavItem = { label: string; href?: string; onSelect?: () => void };
+
+function NavMenuItem({ item }: { item: NavItem }) {
+  return item.href ? (
+    <DropdownMenu.Item asChild>
+      <Link href={item.href}>{item.label}</Link>
+    </DropdownMenu.Item>
+  ) : (
+    <DropdownMenu.Item onSelect={item.onSelect}>{item.label}</DropdownMenu.Item>
+  );
+}
+
+/** A header link that opens a small menu of links. */
+function NavDropdown({ label, items, className }: { label: string; items: NavItem[]; className: string }) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger className={`navlink ${className}`}>{label} <span aria-hidden="true">▾</span></DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content className="nav-menu" align="start" sideOffset={8}>
+          {items.map((item) => (
+            <NavMenuItem key={item.label} item={item} />
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
 /** The prototype's "Sign in" button. Once signed in it leads to the account instead. */
 export function AccountLink() {
   const { t, href } = useI18n();
@@ -73,6 +101,27 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     router.push(otherHref + window.location.search);
   };
 
+  // Shop filters use the shop page's own query: category slug (c), metal (m), size (w).
+  // shortcut: "Making charge" and "GoldGram app" have no page of their own yet; they lead to help and the home hero.
+  const shopItems: NavItem[] = [
+    { label: t.nav.ingots, href: href("/shop") + "?m=gold&w=small" },
+    { label: t.nav.coins, href: href("/shop") + "?c=coin" },
+    { label: t.nav.wearable, href: href("/shop") + "?c=wear" },
+    { label: t.nav.bars, href: href("/shop") + "?m=gold&w=large" },
+    { label: t.nav.silver, href: href("/shop") + "?m=silver" },
+  ];
+  const serviceItems: NavItem[] = [
+    { label: t.nav.app, href: `/${locale}#top` },
+    { label: t.sell.nav, href: href("/sell") },
+    { label: t.zakat.nav, href: href("/zakat") },
+    { label: t.nav.makingCharge, href: href("/help") },
+  ];
+  const aboutItems: NavItem[] = [
+    { label: t.nav.whoWeAre, onSelect: () => setOpen(true) },
+    { label: t.nav.branches, href: `/${locale}#contact` },
+    { label: t.nav.register, href: href("/sign-up") },
+  ];
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -86,31 +135,15 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     <header>
       <div className="wrap bar">
         <Brand locale={locale} />
-        {/* On the home page these scroll; elsewhere they go to the home page's section. */}
-        <Link className="link" href={`/${locale}#included`}>
-          {t.nav.why}
+        <Link className="navlink nav-home" href={`/${locale}`}>
+          {t.nav.home}
         </Link>
-        <Link className="link" href={`/${locale}#record`}>
-          {t.nav.record}
-        </Link>
-        <Button
-          className="navlink nav-about"
-          type="button"
-          aria-expanded={open}
-          aria-controls="aboutPanel"
-          onClick={() => setOpen((v) => !v)}
-        >
-          {t.nav.about}
-        </Button>
         <Link className="navlink nav-prices" href={href("/prices")}>
           {t.prices.nav}
         </Link>
-        <Link className="navlink nav-sell" href={href("/sell")}>
-          {t.sell.nav}
-        </Link>
-        <Link className="navlink" href={href("/shop")}>
-          {t.nav.shop}
-        </Link>
+        <NavDropdown className="nav-shop" label={t.nav.shop} items={shopItems} />
+        <NavDropdown className="nav-dd" label={t.nav.service} items={serviceItems} />
+        <NavDropdown className="nav-dd" label={t.nav.about} items={aboutItems} />
         <CartDrawer />
         {end ?? <AccountLink />}
         <Link className="navlink lang-switch" href={otherHref} lang={other} hrefLang={other} onClick={switchLanguage}>
@@ -123,17 +156,25 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="nav-menu" align="end" sideOffset={8}>
               <DropdownMenu.Item asChild>
-                <Link href={`/${locale}#included`}>{t.nav.why}</Link>
+                <Link href={`/${locale}`}>{t.nav.home}</Link>
               </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <Link href={`/${locale}#record`}>{t.nav.record}</Link>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item onSelect={() => setOpen(true)}>{t.nav.about}</DropdownMenu.Item>
               <DropdownMenu.Item asChild>
                 <Link href={href("/prices")}>{t.prices.nav}</Link>
               </DropdownMenu.Item>
+              {[
+                [t.nav.shop, shopItems],
+                [t.nav.service, serviceItems],
+                [t.nav.about, aboutItems],
+              ].map(([label, items]) => (
+                <DropdownMenu.Group key={label as string}>
+                  <DropdownMenu.Label className="nav-grp">{label as string}</DropdownMenu.Label>
+                  {(items as NavItem[]).map((item) => (
+                    <NavMenuItem key={item.label} item={item} />
+                  ))}
+                </DropdownMenu.Group>
+              ))}
               <DropdownMenu.Item asChild>
-                <Link href={href("/sell")}>{t.sell.nav}</Link>
+                <Link href={href("/compare")}>{t.footer.compare}</Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
                 <Link href={href("/help")}>{t.nav.help}</Link>
