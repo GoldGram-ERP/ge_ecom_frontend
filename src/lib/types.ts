@@ -158,6 +158,8 @@ export interface User {
   id: number;
   email: string;
   mobile: string;
+  firstName: string;
+  lastName: string;
   role: "customer" | "admin";
   createdAt: string;
 }

@@ -89,11 +89,17 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // A signed-in customer starts with the email and mobile from their account.
+  // A signed-in customer starts with their name, email and mobile from their account; all stay editable.
   const [prefilled, setPrefilled] = useState(false);
   if (user && !prefilled) {
     setPrefilled(true);
-    setForm((f) => ({ ...f, email: f.email || user.email, phone: f.phone || user.mobile }));
+    setForm((f) => ({
+      ...f,
+      firstName: f.firstName || user.firstName,
+      lastName: f.lastName || user.lastName,
+      email: f.email || user.email,
+      phone: f.phone || user.mobile,
+    }));
   }
 
   // ---- the server-priced summary ----
@@ -484,20 +490,8 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
 
               <ProofUpload orderId={done.id} guestToken={done.guestToken} />
 
-              {done.guestToken && (
-                <div className="done-account">
-                  <p>{t.checkout.accountOffer}</p>
-                  <Link
-                    className="gold-btn"
-                    href={href(`/sign-up?${new URLSearchParams({ email: done.email, mobile: done.phone })}`)}
-                  >
-                    {fmt(t.checkout.accountCreate, { email: done.email })}
-                  </Link>
-                </div>
-              )}
-
               <div className="done-acts">
-                <Link className={done.guestToken ? "done-link" : "gold-btn"} href={href("/shop")}>
+                <Link className="gold-btn" href={href("/shop")}>
                   {t.checkout.backToShop}
                 </Link>
                 {!done.guestToken && (

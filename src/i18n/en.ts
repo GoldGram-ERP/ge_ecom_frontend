@@ -600,6 +600,7 @@ export const en = {
     privacy: "Privacy",
     help: "Help",
     errMissing: "Enter your email and password to continue.",
+    errName: "Enter your first and last name.",
     errCredentials: "The email or password is not right.",
     errSuspended: "This account is suspended. Call 17937.",
     signUpTitle: "Create your account",

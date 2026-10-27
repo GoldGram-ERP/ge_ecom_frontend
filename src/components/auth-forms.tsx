@@ -120,10 +120,14 @@ export function SignInForm({ toCheckout = false }: { toCheckout?: boolean }) {
       <Button className="login-btn" type="submit" disabled={busy}>
         {busy ? t.auth.signingIn : t.auth.signIn}
       </Button>
-      <Button className="guest-btn" type="button" onClick={() => router.push(href("/account"))}>
-        {t.auth.guest}
-      </Button>
-      <p className="guest-note">{t.auth.guestNote}</p>
+      {!toCheckout && (
+        <>
+          <Button className="guest-btn" type="button" onClick={() => router.push(href("/account"))}>
+            {t.auth.guest}
+          </Button>
+          <p className="guest-note">{t.auth.guestNote}</p>
+        </>
+      )}
       <Link className="forgot" href={href("/forgot-password")}>
         {t.auth.forgot}
       </Link>
@@ -147,6 +151,8 @@ export function SignUpForm({
   const { locale, t, href } = useI18n();
   const { refresh } = useSession();
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState(initialEmail);
   const [mobile, setMobile] = useState(initialMobile);
   const [password, setPassword] = useState("");
@@ -156,6 +162,7 @@ export function SignUpForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const phone = normalizePhone(mobile);
+    if (!firstName.trim() || !lastName.trim()) return setError(t.auth.errName);
     if (!isEmail(email)) return setError(t.auth.errEmail);
     if (!phone) return setError(t.auth.errMobile);
     if (!isPassword(password)) return setError(t.auth.errPassword);
@@ -165,7 +172,7 @@ export function SignUpForm({
     try {
       // The guest order placed from this tab joins the account (the server checks the email matches).
       const claimToken = sessionStorage.getItem(CLAIM_KEY) ?? undefined;
-      await api("/auth/register", { body: { email: email.trim().toLowerCase(), mobile: phone, password, locale, claimToken } });
+      await api("/auth/register", { body: { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim().toLowerCase(), mobile: phone, password, locale, claimToken } });
       sessionStorage.removeItem(CLAIM_KEY);
       await refresh();
       router.push(href(toCheckout ? "/checkout" : "/account"));
@@ -184,6 +191,20 @@ export function SignUpForm({
   return (
     <form className="login-card" onSubmit={submit} noValidate>
       {error && <Alert text={error} />}
+      <label className="field">
+        <span>{t.checkout.firstName}</span>
+        <div className="input">
+          <PersonIcon />
+          <input type="text" autoComplete="given-name" maxLength={60} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+        </div>
+      </label>
+      <label className="field">
+        <span>{t.checkout.lastName}</span>
+        <div className="input">
+          <PersonIcon />
+          <input type="text" autoComplete="family-name" maxLength={60} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+        </div>
+      </label>
       <EmailField value={email} onChange={setEmail} />
       <label className="field">
         <span>{t.auth.mobile}</span>
