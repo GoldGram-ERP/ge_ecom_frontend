@@ -41,7 +41,15 @@ const SERVER_FIELDS: Record<string, ErrorKey> = {
 const KYC_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const KYC_MAX_BYTES = 2 * 1024 * 1024;
 
-export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup: boolean; requireKycDoc?: boolean }) {
+export function Checkout({
+  branchPickup,
+  requireKycDoc = false,
+  promoAvailable = false,
+}: {
+  branchPickup: boolean;
+  requireKycDoc?: boolean;
+  promoAvailable?: boolean;
+}) {
   const { locale, t, href } = useI18n();
   const { user } = useSession();
   const router = useRouter();
@@ -73,6 +81,10 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
   const [kycState, setKycState] = useState<"idle" | "sending">("idle");
   const [kycError, setKycError] = useState<string | null>(null);
   const kycPicker = useRef<HTMLInputElement>(null);
+
+  // The promo code typed in, and the one actually sent to the quote (applied on "Apply").
+  const [codeInput, setCodeInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
 
   const [errors, setErrors] = useState<Errors>({});
   const [message, setMessage] = useState<string | null>(null);
@@ -110,7 +122,7 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
   const { prices: liveBoard } = useLivePrices();
   // Only a method that is on offer counts as chosen.
   const payment = picked && (methods === null || methods.some((m) => m.code === picked)) ? picked : null;
-  const quoteKey = JSON.stringify([lines, fulfilment, payment, governorate, retry, liveBoard?.updatedAt ?? ""]);
+  const quoteKey = JSON.stringify([lines, fulfilment, payment, governorate, appliedCode, retry, liveBoard?.updatedAt ?? ""]);
   const [loaded, setLoaded] = useState<{ key: string; quote: Quote } | null>(null);
   const [failedKey, setFailedKey] = useState<string | null>(null);
   const hasLines = lines.length > 0;
@@ -122,7 +134,7 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
   useEffect(() => {
     if (!hasLines || done) return;
     const controller = new AbortController();
-    api<Quote>("/orders/quote", { body: { items: lines, fulfilment, ...(payment ? { paymentMethod: payment } : {}), governorate }, signal: controller.signal })
+    api<Quote>("/orders/quote", { body: { items: lines, fulfilment, ...(payment ? { paymentMethod: payment } : {}), governorate, ...(appliedCode ? { code: appliedCode } : {}) }, signal: controller.signal })
       .then((q) => {
         setLoaded({ key: quoteKey, quote: q });
         if (q.unavailable.length) {
@@ -263,6 +275,7 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
       ...(form.notes.trim() ? { notes: form.notes.trim() } : {}),
       acceptTerms: true,
       ...(kycToken ? { kycDocumentToken: kycToken } : {}),
+      ...(appliedCode ? { code: appliedCode } : {}),
       expectedTotalPiastres: quote.totalPiastres,
       locale,
     };
@@ -726,6 +739,54 @@ export function Checkout({ branchPickup, requireKycDoc = false }: { branchPickup
                     )}
                   </div>
                   {handlingParts.length > 0 && <p className="o-sub">{handlingParts.join(" · ")}</p>}
+
+                  {promoAvailable && (
+                    <div className="o-promo">
+                      {appliedCode ? (
+                        <div className="promo-applied">
+                          <span className="promo-code" dir="ltr">{appliedCode}</span>
+                          <button type="button" className="promo-remove" onClick={() => { setAppliedCode(null); setCodeInput(""); }}>
+                            {t.checkout.promoRemove}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="promo-row">
+                          <input
+                            type="text"
+                            dir="ltr"
+                            inputMode="text"
+                            autoComplete="off"
+                            maxLength={30}
+                            placeholder={t.checkout.promoPh}
+                            aria-label={t.checkout.promoLabel}
+                            value={codeInput}
+                            onChange={(e) => setCodeInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && codeInput.trim()) {
+                                e.preventDefault();
+                                setAppliedCode(codeInput.trim().toUpperCase());
+                              }
+                            }}
+                          />
+                          <button type="button" className="promo-apply" disabled={!codeInput.trim()} onClick={() => setAppliedCode(codeInput.trim().toUpperCase())}>
+                            {t.checkout.promoApply}
+                          </button>
+                        </div>
+                      )}
+                      {appliedCode && quoteFresh && quote?.codeStatus && (
+                        <p className={`promo-msg ${quote.codeStatus === "applied" ? "ok" : "bad"}`} role="status">
+                          {quote.codeStatus === "applied"
+                            ? fmt(t.checkout.promoOk, { amount: `${pounds(quote.discountPiastres)} ${t.product.egp}` })
+                            : quote.codeStatus === "below_min"
+                              ? t.checkout.promoBelowMin
+                              : quote.codeStatus === "inactive"
+                                ? t.checkout.promoInactive
+                                : t.checkout.promoInvalid}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="o-total">
                     <span>{t.checkout.total}</span>
                     <div className="money">

@@ -92,6 +92,16 @@ export async function branchPickup(): Promise<boolean> {
   }
 }
 
+/** Whether at least one active promo code exists, so checkout shows the promo field. Off when the backend does not say. */
+export async function promoAvailable(): Promise<boolean> {
+  try {
+    const { data } = await get<{ available: boolean }>("/discounts/promo-available");
+    return data?.available ?? false;
+  } catch {
+    return false;
+  }
+}
+
 /** Whether every order needs an uploaded KYC document (a dashboard setting). Off when the backend does not say. */
 export async function requireKycDocPerOrder(): Promise<boolean> {
   try {
