@@ -134,7 +134,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
 
   // Shop filters use the shop page's own query: category slug (c: bar/coin/wear), size (w), metal (m).
   // Ingots and bars are both the "bar" category, told apart by size; coins and wearables by category.
-  // shortcut: "Making charge" and "GoldGram app" have no page of their own yet; they lead to help and the home hero.
+  // shortcut: "GoldGram app" has no page of its own yet; it leads to the home hero.
   const shopItems: NavItem[] = [
     { label: t.nav.ingots, href: href("/shop") + "?c=ingot" },
     { label: t.nav.coins, href: href("/shop") + "?c=coin" },
@@ -146,7 +146,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     { label: t.nav.app, href: `/${locale}#top` },
     { label: t.sell.nav, href: href("/sell") },
     { label: t.zakat.nav, href: href("/zakat") },
-    { label: t.nav.makingCharge, href: href("/help") },
+    { label: t.nav.makingCharge, href: href("/making-charges") },
   ];
   const aboutItems: NavItem[] = [
     { label: t.nav.whoWeAre, onSelect: () => setOpen(true) },

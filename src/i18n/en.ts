@@ -374,6 +374,18 @@ export const en = {
     ],
     note: "Prices are indicative and move with the market. The price that applies is the one confirmed at the moment you buy. Making charges are shown separately from the metal on every piece and on your invoice.",
   },
+  making: {
+    kicker: "Transparent pricing",
+    title: "Making charges",
+    intro:
+      "The making charge is what it costs to turn raw gold into a finished, certified piece — minting, the assay card and the certificate. The metal is priced the same whoever makes it; the difference between brands is their making charge. Here is the charge on every piece we sell, shown apart from the value of the metal.",
+    colProduct: "Piece",
+    colWeight: "Weight",
+    colBrand: "Brand",
+    colMaking: "Making charge",
+    empty: "No pieces to show right now.",
+    note: "The making charge is shown separately from the metal on every product and on your invoice. The metal value moves with the market; the making charge is fixed per piece.",
+  },
   cart: {
     title: "Your cart",
     open: "Cart, {count} pieces. Open the cart",
