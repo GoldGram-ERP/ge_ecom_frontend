@@ -158,6 +158,10 @@ export function SignUpForm({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Set when the server asks for an emailed code first; then the form becomes the code step.
+  const [otpEmail, setOtpEmail] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [resent, setResent] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -172,8 +176,14 @@ export function SignUpForm({
     try {
       // The guest order placed from this tab joins the account (the server checks the email matches).
       const claimToken = sessionStorage.getItem(CLAIM_KEY) ?? undefined;
-      await api("/auth/register", { body: { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim().toLowerCase(), mobile: phone, password, locale, claimToken } });
+      const res = await api<{ otpRequired?: boolean; email?: string }>("/auth/register", { body: { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim().toLowerCase(), mobile: phone, password, locale, claimToken } });
       sessionStorage.removeItem(CLAIM_KEY);
+      if (res.otpRequired) {
+        // Account made, not signed in yet: ask for the emailed code.
+        setOtpEmail(res.email ?? email.trim().toLowerCase());
+        setBusy(false);
+        return;
+      }
       await refresh();
       router.push(href(toCheckout ? "/checkout" : "/account"));
       router.refresh();
@@ -186,6 +196,58 @@ export function SignUpForm({
       } else setError(errorText(err, t));
       setBusy(false);
     }
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(code.trim())) return setError(t.auth.errOtp);
+    setBusy(true);
+    setError(null);
+    try {
+      await api("/auth/register/verify", { body: { email: otpEmail, code: code.trim() } });
+      await refresh();
+      router.push(href(toCheckout ? "/checkout" : "/account"));
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof ApiError && err.code === "OTP_INVALID" ? t.auth.errOtp : errorText(err, t));
+      setBusy(false);
+    }
+  }
+
+  async function resend() {
+    setError(null);
+    setResent(false);
+    try {
+      await api("/auth/register/resend", { body: { email: otpEmail, locale } });
+      setResent(true);
+    } catch (err) {
+      setError(errorText(err, t));
+    }
+  }
+
+  if (otpEmail) {
+    return (
+      <form className="login-card" onSubmit={verifyCode} noValidate>
+        {error && <Alert text={error} />}
+        {resent && <Alert ok text={t.auth.otpResent} />}
+        <p className="guest-note">
+          {t.auth.otpSent} <b dir="ltr">{otpEmail}</b>
+        </p>
+        <label className="field">
+          <span>{t.auth.otpLabel}</span>
+          <div className="input">
+            <LockIcon />
+            <input dir="ltr" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="------" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
+          </div>
+        </label>
+        <Button className="login-btn" type="submit" disabled={busy}>
+          {busy ? t.auth.verifying : t.auth.verify}
+        </Button>
+        <Button className="guest-btn" type="button" onClick={resend}>
+          {t.auth.resend}
+        </Button>
+      </form>
+    );
   }
 
   return (
