@@ -470,6 +470,10 @@ export const ar: Dict = {
     kycDocSend: "ارفع صورة البطاقة",
     kycDocReplace: "غيّر الصورة",
     kycDocSent: "تم رفع صورة البطاقة ✓",
+    kycFrontLabel: "صورة البطاقة — الوجه الأمامي",
+    kycBackLabel: "صورة البطاقة — الوجه الخلفي",
+    kycBackHint: "دلوقتي الوجه الخلفي للبطاقة. JPEG أو PNG أو WebP حتى 2 ميجابايت.",
+    kycPassportLabel: "صورة جواز السفر",
     errPayment: "من فضلك اختر طريقة الدفع للمتابعة.",
     errPriceChanged:
       "تحرّكت الأسعار منذ فتحت هذه الصفحة. الإجمالي أعلاه هو الجديد — راجعه ثم أكّد الطلب مرة أخرى.",

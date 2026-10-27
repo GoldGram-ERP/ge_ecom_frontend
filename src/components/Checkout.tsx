@@ -74,13 +74,12 @@ export function Checkout({
   // Nothing is chosen for the customer: a method staff switched off must never be sent unseen.
   const [picked, setPicked] = useState<PaymentMethod | null>(null);
   const [terms, setTerms] = useState(false);
-  // The ID photo is sent first; its token is what the order carries (single use).
-  const [kycToken, setKycToken] = useState<string | null>(null);
+  // The ID photos are sent first; their tokens are what the order carries (single use each).
+  // A national ID needs front and back; a passport only the one page (kept in `front`).
+  const [kycFront, setKycFront] = useState<string | null>(null);
+  const [kycBack, setKycBack] = useState<string | null>(null);
   // Starts from the server-read prop; a 409 flips it on if the rule was enabled mid-session.
   const [kycRequired, setKycRequired] = useState(requireKycDoc);
-  const [kycState, setKycState] = useState<"idle" | "sending">("idle");
-  const [kycError, setKycError] = useState<string | null>(null);
-  const kycPicker = useRef<HTMLInputElement>(null);
 
   // The promo code typed in, and the one actually sent to the quote (applied on "Apply").
   const [codeInput, setCodeInput] = useState("");
@@ -201,28 +200,6 @@ export function Checkout({
     return fmt(t.checkout.errFields, { fields: names.join(locale === "ar" ? "، " : ", ") });
   }
 
-  async function sendKyc(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file) return;
-    if (!KYC_TYPES.includes(file.type)) return setKycError(t.checkout.proofErrType);
-    if (file.size > KYC_MAX_BYTES) return setKycError(t.checkout.proofErrSize);
-    setKycState("sending");
-    setKycError(null);
-    const body = new FormData();
-    body.append("file", file);
-    try {
-      const response = await fetch("/api/orders/kyc-document", { method: "POST", body });
-      if (!response.ok) throw new Error(String(response.status));
-      setKycToken(((await response.json()) as { token: string }).token);
-      setMessage(null);
-    } catch {
-      setKycError(t.checkout.proofErrSend);
-    } finally {
-      setKycState("idle");
-    }
-  }
-
   async function place() {
     setNotice(null);
     if (!hasLines) {
@@ -247,7 +224,9 @@ export function Checkout({
       setMessage(t.checkout.errTerms);
       return;
     }
-    if (kycRequired && !kycToken) {
+    // National ID: front and back; passport: the one page. The back is only kept when not a passport.
+    const kycTokens = [kycFront, ...(passport ? [] : [kycBack])].filter((x): x is string => Boolean(x));
+    if (kycRequired && kycTokens.length < (passport ? 1 : 2)) {
       setMessage(t.checkout.errKycDoc);
       return;
     }
@@ -274,7 +253,7 @@ export function Checkout({
       ...(wantsOtherAddress ? { deliveryAddress: form.deliveryAddress.trim() } : {}),
       ...(form.notes.trim() ? { notes: form.notes.trim() } : {}),
       acceptTerms: true,
-      ...(kycToken ? { kycDocumentToken: kycToken } : {}),
+      ...(kycTokens.length ? { kycDocumentTokens: kycTokens } : {}),
       ...(appliedCode ? { code: appliedCode } : {}),
       expectedTotalPiastres: quote.totalPiastres,
       locale,
@@ -348,9 +327,10 @@ export function Checkout({
         setMessage(t.checkout.errStoreClosed);
         break;
       case "KYC_DOCUMENT_REQUIRED":
-        // used up/unknown token, or the rule was switched on since the page loaded: reveal the
-        // upload and ask for the photo again.
-        setKycToken(null);
+        // used up/unknown tokens, or the rule was switched on since the page loaded: reveal the
+        // uploads and ask for the photos again.
+        setKycFront(null);
+        setKycBack(null);
         setKycRequired(true);
         setMessage(t.checkout.errKycDoc);
         break;
@@ -610,21 +590,10 @@ export function Checkout({
                 <p className="co-legal">{t.checkout.idLegal}</p>
 
                 {kycRequired && (
-                  <div className="f wide" style={{ marginTop: "var(--s2)" }}>
-                    <span>
-                      {t.checkout.kycDocLabel}
-                      <em>*</em>
-                    </span>
-                    <div className="proof">
-                      <input ref={kycPicker} id="co-kycDoc" type="file" accept={KYC_TYPES.join(",")} hidden tabIndex={-1} aria-hidden="true" onChange={sendKyc} />
-                      <Button type="button" className="proof-btn" disabled={kycState === "sending"} onClick={() => kycPicker.current?.click()}>
-                        {kycState === "sending" ? t.checkout.proofSending : kycToken ? t.checkout.kycDocReplace : t.checkout.kycDocSend}
-                      </Button>
-                      <span className={`proof-note${kycError ? " bad" : kycToken ? " ok" : ""}`} aria-live="polite">
-                        {kycError ?? (kycToken ? t.checkout.kycDocSent : t.checkout.kycDocHint)}
-                      </span>
-                    </div>
-                  </div>
+                  <>
+                    <KycSlot label={passport ? t.checkout.kycPassportLabel : t.checkout.kycFrontLabel} hint={t.checkout.kycDocHint} token={kycFront} onToken={setKycFront} />
+                    {!passport && <KycSlot label={t.checkout.kycBackLabel} hint={t.checkout.kycBackHint} token={kycBack} onToken={setKycBack} />}
+                  </>
                 )}
 
                 <h2 className="co-h">{t.checkout.how}</h2>
@@ -838,5 +807,63 @@ export function Checkout({
         </div>
       </div>
     </>
+  );
+}
+
+/** One ID-photo upload: picks a file, sends it, and reports its single-use token up. */
+function KycSlot({
+  label,
+  hint,
+  token,
+  onToken,
+}: {
+  label: string;
+  hint: string;
+  token: string | null;
+  onToken: (token: string | null) => void;
+}) {
+  const { t } = useI18n();
+  const picker = useRef<HTMLInputElement>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function send(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!KYC_TYPES.includes(file.type)) return setError(t.checkout.proofErrType);
+    if (file.size > KYC_MAX_BYTES) return setError(t.checkout.proofErrSize);
+    setSending(true);
+    setError(null);
+    const body = new FormData();
+    body.append("file", file);
+    try {
+      const response = await fetch("/api/orders/kyc-document", { method: "POST", body });
+      if (!response.ok) throw new Error(String(response.status));
+      onToken(((await response.json()) as { token: string }).token);
+    } catch {
+      setError(t.checkout.proofErrSend);
+      onToken(null);
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="f wide" style={{ marginTop: "var(--s2)" }}>
+      <span>
+        {label}
+        <em>*</em>
+      </span>
+      <div className="proof">
+        <input ref={picker} type="file" accept={KYC_TYPES.join(",")} hidden tabIndex={-1} aria-hidden="true" onChange={send} />
+        <Button type="button" className="proof-btn" disabled={sending} onClick={() => picker.current?.click()}>
+          {sending ? t.checkout.proofSending : token ? t.checkout.kycDocReplace : t.checkout.kycDocSend}
+        </Button>
+        <span className={`proof-note${error ? " bad" : token ? " ok" : ""}`} aria-live="polite">
+          {error ?? (token ? t.checkout.kycDocSent : hint)}
+        </span>
+      </div>
+    </div>
   );
 }

@@ -468,6 +468,10 @@ export const en = {
     kycDocSend: "Upload ID photo",
     kycDocReplace: "Replace ID photo",
     kycDocSent: "ID photo uploaded ✓",
+    kycFrontLabel: "ID photo — front",
+    kycBackLabel: "ID photo — back",
+    kycBackHint: "Now the back of your ID. JPEG, PNG or WebP, up to 2 MB.",
+    kycPassportLabel: "Passport photo",
     errPayment: "Please choose a payment method to continue.",
     errPriceChanged:
       "Prices have moved since you opened this page. The total above is the new one — check it and place the order again.",
