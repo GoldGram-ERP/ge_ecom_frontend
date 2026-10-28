@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -60,7 +61,7 @@ export default async function ShopPage({ params, searchParams }: PageProps<"/[lo
             {selection ? (
               <div className="shop-preset">
                 <h1>{selection}</h1>
-                <Link href={`/${locale}/shop`}>{t.shop.all}</Link>
+                <Link href={localePath(locale, `/shop`)}>{t.shop.all}</Link>
               </div>
             ) : (
               <h1 className="vh">{t.nav.shop}</h1>

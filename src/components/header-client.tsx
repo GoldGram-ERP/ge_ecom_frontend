@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client-api";
 import { CartDrawer } from "./cart-drawer";
 import { Brand, Icon, ICONS } from "./chrome";
+import { localePath } from "@/i18n";
 import { useI18n, useSession } from "./Providers";
 import { Button } from "./controls";
 // The sell page and its header link (loaded with the header, so the link's phone rule holds everywhere).
@@ -123,7 +124,10 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
   // The same page in the other language. Each language is named in its own words, whatever the page's language.
   const other = locale === "en" ? "ar" : "en";
   const otherName = other === "ar" ? "العربية" : "English";
-  const otherHref = `/${other}${usePathname().slice(locale.length + 1)}`;
+  // Arabic has no prefix; English lives under /en. Strip any /en, then re-prefix for the other language.
+  const path = usePathname();
+  const bare = path === "/en" || path.startsWith("/en/") ? path.slice(3) || "/" : path;
+  const otherHref = localePath(other, bare);
   const router = useRouter();
   // The query (an account tab, a shop filter) goes along, so the switch lands on exactly this view.
   const switchLanguage = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -143,14 +147,14 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     { label: t.nav.silver, href: href("/shop") + "?m=silver" },
   ];
   const serviceItems: NavItem[] = [
-    { label: t.nav.app, href: `/${locale}#top` },
+    { label: t.nav.app, href: href("#top") },
     { label: t.sell.nav, href: href("/sell") },
     { label: t.zakat.nav, href: href("/zakat") },
     { label: t.nav.makingCharge, href: href("/making-charges") },
   ];
   const aboutItems: NavItem[] = [
     { label: t.nav.whoWeAre, onSelect: () => setOpen(true) },
-    { label: t.nav.branches, href: `/${locale}#contact` },
+    { label: t.nav.branches, href: href("#contact") },
     { label: t.nav.register, href: href("/sign-up") },
   ];
 
@@ -167,7 +171,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     <header>
       <div className="wrap bar">
         <Brand locale={locale} />
-        <Link className="navlink nav-home" href={`/${locale}`}>
+        <Link className="navlink nav-home" href={localePath(locale, ``)}>
           {t.nav.home}
         </Link>
         <Link className="navlink nav-prices" href={href("/prices")}>
@@ -188,7 +192,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="nav-menu" align="end" sideOffset={8}>
               <DropdownMenu.Item asChild>
-                <Link href={`/${locale}`}>{t.nav.home}</Link>
+                <Link href={localePath(locale, ``)}>{t.nav.home}</Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
                 <Link href={href("/prices")}>{t.prices.nav}</Link>

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Locale } from "@/i18n";
 import type { Dict } from "@/i18n";
@@ -27,7 +28,7 @@ export function StarterCarousel({ products, locale, t }: { products: Product[]; 
         const photo = p.imageIds?.[0];
         return (
           <article className="pcard" key={p.id}>
-            <Link className="pc-link" href={`/${locale}/shop/${p.slug}`}>
+            <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)}>
               {photo ? (
                 <div className="pc-frame">
                   <Image unoptimized className="pc-photo" src={`/api/products/${p.id}/images/${photo}`} alt="" width={328} height={328} loading="lazy" />
@@ -65,7 +66,7 @@ export function ArticleCards({ articles, locale, t }: { articles: Article[]; loc
         const first = stripHtml(articleBody(a, locale));
         const photo = a.imageIds?.[0];
         return (
-          <Link className="art-card" key={a.id} href={`/${locale}/articles/${a.id}`}>
+          <Link className="art-card" key={a.id} href={localePath(locale, `/articles/${a.id}`)}>
             {photo ? (
               <Image unoptimized className="art-img" src={`/api/articles/${a.id}/images/${photo}`} alt="" width={400} height={225} loading="lazy" />
             ) : null}

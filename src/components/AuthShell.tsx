@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localePath } from "@/i18n";
 import type { Dict, Locale } from "@/i18n";
 import { SiteHeader } from "./header-client";
 
@@ -37,8 +38,8 @@ export function AuthShell(props: {
           )}
 
           <div className="login-legal">
-            <Link href={`/${locale}/terms`}>{t.auth.terms}</Link> · <Link href={`/${locale}/privacy`}>{t.auth.privacy}</Link> ·{" "}
-            <Link href={`/${locale}/help`}>{t.auth.help}</Link>
+            <Link href={localePath(locale, `/terms`)}>{t.auth.terms}</Link> · <Link href={localePath(locale, `/privacy`)}>{t.auth.privacy}</Link> ·{" "}
+            <Link href={localePath(locale, `/help`)}>{t.auth.help}</Link>
           </div>
         </div>
       </div>

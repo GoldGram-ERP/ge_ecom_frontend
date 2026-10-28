@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localePath } from "@/i18n";
 import { notFound } from "next/navigation";
 import { ContactRows, StoreButtons } from "@/components/chrome";
 import { SiteHeader } from "@/components/header-client";
@@ -93,7 +94,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
             <Reveal as="section" id="starter">
               <div className="starter-head">
                 <h2 className="ask">{t.starter.title}</h2>
-                <Link className="starter-all" href={`/${locale}/shop`}>{t.starter.all}</Link>
+                <Link className="starter-all" href={localePath(locale, `/shop`)}>{t.starter.all}</Link>
               </div>
               <StarterCarousel products={starter} locale={locale} t={t} />
             </Reveal>

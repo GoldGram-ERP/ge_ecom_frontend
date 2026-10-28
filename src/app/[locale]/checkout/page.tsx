@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { localePath } from "@/i18n";
 import { Checkout } from "@/components/Checkout";
 import { SiteHeader } from "@/components/header-client";
 import { hasLocale } from "@/i18n";
@@ -12,7 +13,7 @@ export default async function CheckoutPage({ params }: PageProps<"/[locale]/chec
 
   // A guest cannot check out: send them to sign in / register, then back to checkout.
   const user = await getUser();
-  if (!user) redirect(`/${locale}/sign-in?next=checkout`);
+  if (!user) redirect(localePath(locale, `/sign-in?next=checkout`));
 
   // One parallel read of the settings the checkout needs on the server, so nothing flickers.
   const [branch, kycRequired, promo] = await Promise.all([branchPickup(), requireKycDocPerOrder(), promoAvailable()]);

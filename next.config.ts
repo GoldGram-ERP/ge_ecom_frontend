@@ -7,9 +7,7 @@ const API_URL = process.env.API_URL ?? "http://localhost:4000";
 const nextConfig: NextConfig = {
   // Hosts that run the app as one self-contained server (Hostinger) need the standalone output.
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
-  async redirects() {
-    return [{ source: "/", destination: "/en", permanent: false }];
-  },
+  // Arabic is served at the root and English under /en; middleware.ts handles the routing.
   async rewrites() {
     return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
   },

@@ -1,18 +1,40 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-// Search engines: pages that belong to one visitor (account, orders, checkout, sign-in) and any
-// URL with a query (shop filter combinations, help search results) are kept out of the index;
-// their links are still followed. The path without its language goes on to the layout, which
-// names the page's English and Arabic versions from it.
-const PRIVATE = /^\/(en|ar)\/(account|checkout|sign-in|sign-up|forgot-password|reset-password)(\/|$)/;
+// Locale routing + indexing. Arabic is served at the root (no prefix); English lives under /en.
+// The app's pages live in the internal [locale] tree, so root paths are rewritten to /ar.
+// Private pages (account, checkout, sign-in…) and any URL with a query are kept out of the index;
+// their links are still followed. The path without its language goes on to the layout as x-gg-path.
+const PRIVATE = /^\/(account|checkout|sign-in|sign-up|forgot-password|reset-password)(\/|$)/;
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // Old Arabic URLs (/ar/...) are gone: Arabic is at the root now. Send them there, once.
+  if (pathname === "/ar" || pathname.startsWith("/ar/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(3) || "/";
+    return NextResponse.redirect(url, 308);
+  }
+
+  const isEn = pathname === "/en" || pathname.startsWith("/en/");
+  const bare = isEn ? pathname.slice(3) || "/" : pathname;
   const headers = new Headers(request.headers);
-  headers.set("x-gg-path", pathname.replace(/^\/(en|ar)/, ""));
-  const response = NextResponse.next({ request: { headers } });
-  if (PRIVATE.test(pathname) || search) response.headers.set("X-Robots-Tag", "noindex, follow");
-  return response;
+  headers.set("x-gg-path", bare === "/" ? "" : bare);
+
+  const noindex = PRIVATE.test(bare) || Boolean(search);
+  const withRobots = (response: NextResponse) => {
+    if (noindex) response.headers.set("X-Robots-Tag", "noindex, follow");
+    return response;
+  };
+
+  // English keeps its /en prefix; its paths already match the [locale] tree.
+  if (isEn) return withRobots(NextResponse.next({ request: { headers } }));
+
+  // Everything else is Arabic at the root: render it from the internal /ar tree.
+  const url = request.nextUrl.clone();
+  url.pathname = `/ar${pathname === "/" ? "" : pathname}`;
+  return withRobots(NextResponse.rewrite(url, { request: { headers } }));
 }
 
-export const config = { matcher: ["/(en|ar)", "/(en|ar)/:path*"] };
+// Everything except the API proxy, Next internals and files with an extension.
+export const config = { matcher: ["/((?!api|_next|.*\\.).*)"] };

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/chrome";
 import { PriceTicker } from "@/components/PriceTicker";
 import { Providers } from "@/components/Providers";
-import { dirOf, hasLocale, locales } from "@/i18n";
+import { dirOf, hasLocale, locales, localePath } from "@/i18n";
 import { getPricesOrNull } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 import { fontVariables } from "../fonts";
@@ -32,10 +32,14 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
     metadataBase: new URL(`${scheme}://${host}`),
     title: t.meta.title,
     description: t.meta.description,
-    // This page in each language (the proxy passes the path without its language).
+    // This page in each language. Arabic is at the root, English under /en (middleware sets x-gg-path).
     alternates: {
-      canonical: `/${locale}${rest}`,
-      languages: { en: `/en${rest}`, ar: `/ar${rest}`, "x-default": `/en${rest}` },
+      canonical: localePath(locale, rest || "/"),
+      languages: {
+        en: localePath("en", rest || "/"),
+        ar: localePath("ar", rest || "/"),
+        "x-default": localePath("en", rest || "/"),
+      },
     },
   };
 }

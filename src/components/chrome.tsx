@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
 import { site } from "@/lib/site";
@@ -45,7 +46,7 @@ export const ICONS = {
 
 export function Brand({ locale }: { locale: Locale }) {
   return (
-    <Link className="brand" href={`/${locale}`}>
+    <Link className="brand" href={localePath(locale, ``)}>
       <Image src="/logo.png" alt="" width={121} height={72} priority />
       <span>GoldGram</span>
     </Link>
@@ -146,7 +147,7 @@ export function StoreButtons({ t }: { t: Dict }) {
  * what to shop, the services offered today, the company, and the legal line.
  */
 export function Footer({ t, locale }: { t: Dict; locale: Locale }) {
-  const to = (path: string) => `/${locale}${path}`;
+  const to = (path: string) => localePath(locale, `${path}`);
   const columns: { title: string; links: [string, string][] }[] = [
     {
       title: t.footer.shop,

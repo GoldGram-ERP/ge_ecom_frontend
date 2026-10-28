@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -56,7 +57,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
   const found = await findProduct(id);
   if (!found) notFound();
   // Reached by the old numeric id (or any non-canonical handle): send on to the name URL, once.
-  if (found.product.slug !== id) permanentRedirect(`/${locale}/shop/${found.product.slug}`);
+  if (found.product.slug !== id) permanentRedirect(localePath(locale, `/shop/${found.product.slug}`));
   const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
   const { product: p, rank, sameWeight, related } = found;
   const name = productName(p, locale);
@@ -66,7 +67,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
   const kind = (locale === "ar" ? p.categoryNameAr : p.categoryNameEn) || null;
   // Silver is priced at 999, which the shop's karat type does not list.
   const silver = (p.karat as number) === 999;
-  const shop = `/${locale}/shop`;
+  const shop = localePath(locale, `/shop`);
   const link = (product: Product) => `${shop}/${product.slug}`;
 
   const specs: [string, string][] = [
@@ -96,7 +97,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
       <div className="band-off pdp-band">
         <div className="wrap">
           <nav className="pdp-crumbs" aria-label={t.pdp.breadcrumb}>
-            <Link href={`/${locale}`}>{t.pdp.home}</Link>
+            <Link href={localePath(locale, ``)}>{t.pdp.home}</Link>
             <span aria-hidden="true">/</span>
             <Link href={shop}>{t.nav.shop}</Link>
             {kind ? (
@@ -212,7 +213,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
                   </tbody>
                 </table>
               </div>
-              <Link className="pdp-view cmp-more" href={`/${locale}/compare?g=${p.category}-${p.karat}-${p.weightGrams}`}>
+              <Link className="pdp-view cmp-more" href={localePath(locale, `/compare?g=${p.category}-${p.karat}-${p.weightGrams}`)}>
                 {t.compare.link}
               </Link>
             </section>

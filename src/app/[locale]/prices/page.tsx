@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -55,7 +56,7 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
       <div className="band-off pr-band">
         <div className="wrap">
           <nav className="pr-crumb" aria-label={t.prices.crumbGold}>
-            <Link href={`/${locale}`}>{t.prices.crumbHome}</Link>
+            <Link href={localePath(locale, ``)}>{t.prices.crumbHome}</Link>
             <span aria-hidden="true">›</span>
             <span aria-current="page">{t.prices.crumbGold}</span>
           </nav>
@@ -112,7 +113,7 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
                   })}
                   <tr>
                     <th scope="row">
-                      <Link className="pr-row-link" href={`/${locale}/prices/silver`}>
+                      <Link className="pr-row-link" href={localePath(locale, `/prices/silver`)}>
                         {t.prices.silverCard}
                       </Link>
                     </th>
@@ -160,7 +161,7 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
                 {toBuy.map((p) => {
                   const photo = p.imageIds?.[0];
                   return (
-                    <Link className="pr-pick" href={`/${locale}/shop/${p.slug}`} key={p.id}>
+                    <Link className="pr-pick" href={localePath(locale, `/shop/${p.slug}`)} key={p.id}>
                       {photo ? (
                         <span className="pr-pick-art">
                           <Image unoptimized src={`/api/products/${p.id}/images/${photo}`} alt="" width={160} height={160} loading="lazy" />
@@ -193,7 +194,7 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
             </section>
           </div>
 
-          <Link className="gold-btn pr-cta" href={`/${locale}/shop`}>
+          <Link className="gold-btn pr-cta" href={localePath(locale, `/shop`)}>
             {t.prices.shop}
           </Link>
         </div>

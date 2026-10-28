@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { localePath } from "@/i18n";
 import { notFound } from "next/navigation";
 import { Icon, ICONS, MiniArt } from "@/components/chrome";
 import { AccountLink, SignOutButton, SiteHeader } from "@/components/header-client";
@@ -74,8 +75,8 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
     .sort((x, y) => place(x.category) - place(y.category));
   // The forms to shop by: every category that has pieces, named as the dashboard sets it.
   const forms = products.filter((p, i) => products.findIndex((q) => q.category === p.category) === i);
-  const shop = `/${locale}/shop`;
-  const account = `/${locale}/account`;
+  const shop = localePath(locale, `/shop`);
+  const account = localePath(locale, `/account`);
   const labels = { home: t.account.tabHome, balance: t.account.tabBalance, profile: t.account.tabProfile };
 
   // Balance: money, read from the orders. There is no wallet, so nothing here is a stored amount.
@@ -110,7 +111,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
             {!user ? (
               <div className="guest-bar">
                 <p>{t.account.guestBar}</p>
-                <Link href={`/${locale}/sign-in`}>{t.nav.signIn}</Link>
+                <Link href={localePath(locale, `/sign-in`)}>{t.nav.signIn}</Link>
               </div>
             ) : tab === "balance" ? (
               <>
@@ -176,8 +177,8 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
                   </div>
                 </dl>
                 <div className="profile-acts">
-                  <Link href={`/${locale}/account/password`}>{t.account.changePassword}</Link>
-                  <Link href={`/${locale}/help`}>{t.help.kicker}</Link>
+                  <Link href={localePath(locale, `/account/password`)}>{t.account.changePassword}</Link>
+                  <Link href={localePath(locale, `/help`)}>{t.help.kicker}</Link>
                   <SignOutButton />
                 </div>
               </div>
@@ -239,7 +240,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
                   </i>
                   <span>{t.account.save}</span>
                 </span>
-                <Link className="q" href={`/${locale}/prices`}>
+                <Link className="q" href={localePath(locale, `/prices`)}>
                   <i>
                     <Icon d={ICONS.chart} />
                   </i>
@@ -309,7 +310,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
               ) : (
                 <div className="guest-bar">
                   <p>{t.account.guestBar}</p>
-                  <Link href={`/${locale}/sign-in`}>{t.nav.signIn}</Link>
+                  <Link href={localePath(locale, `/sign-in`)}>{t.nav.signIn}</Link>
                 </div>
               )}
             </div>

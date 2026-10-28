@@ -3,7 +3,7 @@
 import { MotionConfig } from "motion/react";
 import { Direction } from "radix-ui";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import type { Dict, Locale } from "@/i18n";
+import { type Dict, type Locale, localePath } from "@/i18n";
 import { api } from "@/lib/client-api";
 import type { User } from "@/lib/types";
 
@@ -54,7 +54,7 @@ export function Providers({ locale, dict, children }: { locale: Locale; dict: Di
   }, []);
 
   const i18n = useMemo<I18n>(
-    () => ({ locale, t: dict, href: (path) => `/${locale}${path === "/" ? "" : path}` }),
+    () => ({ locale, t: dict, href: (path) => localePath(locale, path) }),
     [locale, dict],
   );
   const session = useMemo<Session>(() => ({ user, refresh }), [user, refresh]);

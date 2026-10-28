@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -44,7 +45,7 @@ export default async function CategoryPage({ params }: PageProps<"/[locale]/[cat
           <section style={{ paddingTop: "var(--s8)" }}>
             <div className="shop-preset">
               <h1>{name}</h1>
-              <Link href={`/${locale}/shop`}>{t.shop.all}</Link>
+              <Link href={localePath(locale, `/shop`)}>{t.shop.all}</Link>
             </div>
             <ShopGrid products={products} initial={slug} />
             <div className="assure">

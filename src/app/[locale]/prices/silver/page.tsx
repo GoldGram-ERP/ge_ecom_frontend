@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -27,7 +28,7 @@ export default async function SilverPricesPage({ params }: PageProps<"/[locale]/
       <SiteHeader />
       <div className="band-off pr-band">
         <div className="wrap">
-          <Link className="back pdp-back" href={`/${locale}/prices`}>
+          <Link className="back pdp-back" href={localePath(locale, `/prices`)}>
             <svg viewBox="0 0 16 16" aria-hidden="true">
               <path d="M10 3 5 8l5 5" />
             </svg>
@@ -61,7 +62,7 @@ export default async function SilverPricesPage({ params }: PageProps<"/[locale]/
             <PriceChart metal="silver" initial={history} initialDays={30} />
           </section>
 
-          <Link className="gold-btn pr-cta" href={`/${locale}/shop`}>
+          <Link className="gold-btn pr-cta" href={localePath(locale, `/shop`)}>
             {t.prices.shop}
           </Link>
         </div>

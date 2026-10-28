@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -27,7 +28,7 @@ export default async function ZakatPage({ params }: PageProps<"/[locale]/zakat">
       <div className="band-off pr-band">
         <div className="wrap">
           <nav className="pr-crumb" aria-label={t.zakat.crumb}>
-            <Link href={`/${locale}`}>{t.prices.crumbHome}</Link>
+            <Link href={localePath(locale, ``)}>{t.prices.crumbHome}</Link>
             <span aria-hidden="true">›</span>
             <span aria-current="page">{t.zakat.crumb}</span>
           </nav>

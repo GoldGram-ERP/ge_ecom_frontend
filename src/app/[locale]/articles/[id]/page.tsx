@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -26,7 +27,7 @@ export default async function ArticlePage({ params }: PageProps<"/[locale]/artic
       <div className="band-off">
         <div className="wrap">
           <article className="art-body" style={{ paddingTop: "var(--s8)" }}>
-            <Link href={`/${locale}/articles`}>{t.articles.back}</Link>
+            <Link href={localePath(locale, `/articles`)}>{t.articles.back}</Link>
             <h1>{articleTitle(article, locale)}</h1>
             <time dateTime={article.publishedAt}>{cairoDate(article.publishedAt, locale)}</time>
             {/* Images live inline inside the body; no separate gallery, so nothing shows twice. */}

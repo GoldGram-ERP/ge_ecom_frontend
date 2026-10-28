@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fmt } from "@/i18n";
@@ -38,7 +39,7 @@ export default async function BrandsPage({ params }: PageProps<"/[locale]/brands
             <h1>{t.brands.title}</h1>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--s3)", marginTop: "var(--s4)" }}>
               {[...brands.values()].map((brand) => (
-                <Link key={brand.slug} className="brand-card" href={`/${locale}/brands/${brand.slug}`}>
+                <Link key={brand.slug} className="brand-card" href={localePath(locale, `/brands/${brand.slug}`)}>
                   <b>{brand.name}</b>
                   <span>{fmt(t.brands.pieces, { n: String(brand.count) })}</span>
                 </Link>

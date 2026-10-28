@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
@@ -33,7 +34,7 @@ export default async function BrandPage({ params }: PageProps<"/[locale]/brands/
           <section style={{ paddingTop: "var(--s8)" }}>
             <div className="shop-preset">
               <h1>{name}</h1>
-              <Link href={`/${locale}/brands`}>{t.brands.title}</Link>
+              <Link href={localePath(locale, `/brands`)}>{t.brands.title}</Link>
             </div>
             <ShopGrid products={products} initial="all" />
             <p className="buy-note">{t.shop.note}</p>
