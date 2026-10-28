@@ -73,6 +73,8 @@ export interface Product {
   manufacturerId: number;
   manufacturerEn: string;
   manufacturerAr: string;
+  /** The brand's URL handle, e.g. `btc`. */
+  manufacturerSlug: string;
   /** Today's buy price per gram of its metal and karat. */
   gramPiastres: number;
   /** What GoldGram pays back on resale; null when no policy is offered. */

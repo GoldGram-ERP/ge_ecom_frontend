@@ -132,14 +132,14 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     router.push(otherHref + window.location.search);
   };
 
-  // Shop filters use the shop page's own query: category slug (c: bar/coin/wear), size (w), metal (m).
-  // Ingots and bars are both the "bar" category, told apart by size; coins and wearables by category.
+  // Each kind has its own clean URL (the URL Map); silver has no page yet, so it keeps the shop filter.
   // shortcut: "GoldGram app" has no page of its own yet; it leads to the home hero.
   const shopItems: NavItem[] = [
-    { label: t.nav.ingots, href: href("/shop") + "?c=ingot" },
-    { label: t.nav.coins, href: href("/shop") + "?c=coin" },
-    { label: t.nav.wearable, href: href("/shop") + "?c=wear" },
-    { label: t.nav.bars, href: href("/shop") + "?c=bar&m=gold" },
+    { label: t.nav.ingots, href: href("/gold-ingots") },
+    { label: t.nav.coins, href: href("/gold-coins") },
+    { label: t.nav.wearable, href: href("/gold-bar-pendants") },
+    { label: t.nav.bars, href: href("/gold-bars") },
+    { label: t.brands.title, href: href("/brands") },
     { label: t.nav.silver, href: href("/shop") + "?m=silver" },
   ];
   const serviceItems: NavItem[] = [
