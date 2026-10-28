@@ -52,6 +52,8 @@ export interface PriceHistory {
 
 export interface Product {
   id: number;
+  /** The piece's URL handle, e.g. `btc-gold-bar-10g-24k`. */
+  slug: string;
   category: Category;
   categoryNameEn: string;
   categoryNameAr: string;

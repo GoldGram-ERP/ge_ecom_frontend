@@ -96,7 +96,7 @@ export function ShopGrid({ products: rendered, initial }: { products: Product[];
             return (
             <Reveal as="article" className="pcard" key={p.id} delay={Math.min(index, 5) * 40}>
                 {/* The picture, name and description open the piece's own page; the button stays outside the link. */}
-                <Link className="pc-link" href={`/${locale}/shop/${p.id}`}>
+                <Link className="pc-link" href={`/${locale}/shop/${p.slug}`}>
                   {photo ? (
                     <div className="pc-frame">
                       {/* The name follows as text, so the picture adds nothing for a screen reader. Served as stored: it is small already. */}

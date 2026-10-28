@@ -27,7 +27,7 @@ export function StarterCarousel({ products, locale, t }: { products: Product[]; 
         const photo = p.imageIds?.[0];
         return (
           <article className="pcard" key={p.id}>
-            <Link className="pc-link" href={`/${locale}/shop/${p.id}`}>
+            <Link className="pc-link" href={`/${locale}/shop/${p.slug}`}>
               {photo ? (
                 <div className="pc-frame">
                   <Image unoptimized className="pc-photo" src={`/api/products/${p.id}/images/${photo}`} alt="" width={328} height={328} loading="lazy" />

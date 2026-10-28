@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { MiniArt } from "@/components/chrome";
 import { SiteHeader } from "@/components/header-client";
@@ -18,9 +18,10 @@ import type { Product } from "@/lib/types";
 
 // The catalogue is small and public, so a piece is found in the same list the shop shows:
 // no endpoint of its own, and a hidden or unknown piece is a 404 like any other address.
-const findProduct = cache(async (id: string) => {
+// The handle is the slug (btc-gold-bar-10g-24k); an old numeric id still resolves, to be redirected.
+const findProduct = cache(async (handle: string) => {
   const products = await getProducts();
-  const product = products.find((p) => String(p.id) === id);
+  const product = products.find((p) => p.slug === handle) ?? products.find((p) => String(p.id) === handle);
   if (!product) return null;
   // The drawn piece grows with its position inside its category, as on the shop grid.
   const rank = products.filter((p) => p.category === product.category).indexOf(product);
@@ -54,6 +55,8 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
   if (!hasLocale(locale)) notFound();
   const found = await findProduct(id);
   if (!found) notFound();
+  // Reached by the old numeric id (or any non-canonical handle): send on to the name URL, once.
+  if (found.product.slug !== id) permanentRedirect(`/${locale}/shop/${found.product.slug}`);
   const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
   const { product: p, rank, sameWeight, related } = found;
   const name = productName(p, locale);
@@ -64,7 +67,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
   // Silver is priced at 999, which the shop's karat type does not list.
   const silver = (p.karat as number) === 999;
   const shop = `/${locale}/shop`;
-  const link = (product: Product) => `${shop}/${product.id}`;
+  const link = (product: Product) => `${shop}/${product.slug}`;
 
   const specs: [string, string][] = [
     ...(kind ? ([[t.pdp.specType, kind]] as [string, string][]) : []),

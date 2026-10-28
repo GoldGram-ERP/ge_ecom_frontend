@@ -160,7 +160,7 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
                 {toBuy.map((p) => {
                   const photo = p.imageIds?.[0];
                   return (
-                    <Link className="pr-pick" href={`/${locale}/shop/${p.id}`} key={p.id}>
+                    <Link className="pr-pick" href={`/${locale}/shop/${p.slug}`} key={p.id}>
                       {photo ? (
                         <span className="pr-pick-art">
                           <Image unoptimized src={`/api/products/${p.id}/images/${photo}`} alt="" width={160} height={160} loading="lazy" />

@@ -182,7 +182,7 @@ export function CompareTool({
             <h2 id="cmp-about">{fmt(t.compare.about, { name })}</h2>
             <p>{info.about}</p>
             {time ? <p className="cmp-about-note">{fmt(t.compare.aboutNote, { time })}</p> : null}
-            <Link className="pdp-view cmp-more" href={href(`/shop/${cheapest.id}`)}>
+            <Link className="pdp-view cmp-more" href={href(`/shop/${cheapest.slug}`)}>
               {fmt(t.compare.aboutLink, { brand: brand(cheapest), name })}
             </Link>
           </section>
