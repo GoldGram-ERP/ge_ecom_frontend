@@ -72,6 +72,16 @@ export async function getSpotOrNull(): Promise<Spot | null> {
   }
 }
 
+/** The buy-back cashback per gram (in piastres) set in the dashboard: sealed-with-invoice and opened. */
+export async function getCashback(): Promise<{ sealed: number; opened: number }> {
+  try {
+    const { data } = await get<Partial<Record<"sellCashbackSealedPiastres" | "sellCashbackOpenedPiastres", number>>>("/settings");
+    return { sealed: data?.sellCashbackSealedPiastres ?? 0, opened: data?.sellCashbackOpenedPiastres ?? 0 };
+  } catch {
+    return { sealed: 0, opened: 0 };
+  }
+}
+
 /** Whether sold-out pieces still appear in the account screen's "Popular" list (a dashboard setting). */
 export async function showOutOfStockHome(): Promise<boolean> {
   try {

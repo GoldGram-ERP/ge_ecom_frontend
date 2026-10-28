@@ -23,11 +23,14 @@ const weightsOf = (products: Product[], kind: Kind) =>
 export function CompareTool({
   products: rendered,
   prices: initialPrices,
+  cashback,
   kind: askedKind,
   weight: askedWeight,
 }: {
   products: Product[];
   prices: Prices | null;
+  /** Buy-back cashback per gram (piastres), from the dashboard: sealed-with-invoice and opened. */
+  cashback: { sealed: number; opened: number };
   kind?: Kind;
   weight?: number;
 }) {
@@ -61,6 +64,17 @@ export function CompareTool({
   );
   const ask = <span className="cmp-ask">{t.compare.none}</span>;
 
+  // Buy-back, live: today's metal sell value for the piece + the dashboard cashback per gram
+  // (sealed with the invoice, or opened). Replaces each product's stored, stale buy-back amounts.
+  const sellGram = (p: Product) =>
+    (p.karat as number) === 999
+      ? (prices?.silver.sellPiastres ?? null)
+      : (prices?.karats.find((k) => k.karat === p.karat)?.sellPiastres ?? null);
+  const buyback = (p: Product, cashbackGram: number): number | null => {
+    const gram = sellGram(p);
+    return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
+  };
+
   const template = choice.kind === "silver" ? t.compare.nameSilver : choice.kind === "pounds" ? t.compare.namePound : t.compare.nameBar;
   const name = fmt(template, { w: weightText(choice.weight) });
   const cheapest = rows[0];
@@ -79,7 +93,8 @@ export function CompareTool({
     const range = { min: pounds(cheapest.pricePiastres), max: pounds(dearest.pricePiastres), n: rows.length };
     const lowLabor = rows.reduce((low, p) => (p.laborPiastres < low.laborPiastres ? p : low), cheapest);
     const highLabor = Math.max(...rows.map((p) => p.laborPiastres));
-    const sold = rows.find((p) => p.buyback);
+    const sellWith = buyback(cheapest, cashback.sealed);
+    const sellWithout = buyback(cheapest, cashback.opened);
     info = {
       about: fmt(t.compare.aboutText, {
         name,
@@ -107,11 +122,11 @@ export function CompareTool({
         },
         {
           q: fmt(t.compare.faqSell, { name }),
-          a: sold?.buyback
+          a: sellWith !== null && sellWithout !== null
             ? fmt(t.compare.faqSellA, {
-                brand: brand(sold),
-                with: pounds(sold.buyback.withPackagingPiastres),
-                without: pounds(sold.buyback.withoutPackagingPiastres),
+                brand: brand(cheapest),
+                with: pounds(sellWith),
+                without: pounds(sellWithout),
               })
             : t.compare.faqSellNone,
         },
@@ -164,8 +179,8 @@ export function CompareTool({
                   {index === 0 && many ? <em className="pdp-tag">{t.compare.best}</em> : null}
                 </th>
                 <td className="cmp-price">{egp(p.pricePiastres)}</td>
-                <td className="cmp-with">{p.buyback ? egp(p.buyback.withPackagingPiastres) : ask}</td>
-                <td className="cmp-without">{p.buyback ? egp(p.buyback.withoutPackagingPiastres) : ask}</td>
+                <td className="cmp-with">{buyback(p, cashback.sealed) !== null ? egp(buyback(p, cashback.sealed)!) : ask}</td>
+                <td className="cmp-without">{buyback(p, cashback.opened) !== null ? egp(buyback(p, cashback.opened)!) : ask}</td>
                 <td className="cmp-add">
                   <AddButton productId={p.id} inStock={p.inStock !== false} />
                 </td>

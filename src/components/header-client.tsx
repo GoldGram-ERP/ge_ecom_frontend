@@ -143,7 +143,6 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     { label: t.nav.coins, href: href("/gold-coins") },
     { label: t.nav.wearable, href: href("/gold-bar-pendants") },
     { label: t.nav.bars, href: href("/gold-bars") },
-    { label: t.brands.title, href: href("/brands") },
     { label: t.nav.silver, href: href("/shop") + "?m=silver" },
   ];
   const serviceItems: NavItem[] = [
