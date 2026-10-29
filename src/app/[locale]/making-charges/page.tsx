@@ -27,11 +27,13 @@ export default async function MakingChargesPage({ params, searchParams }: PagePr
 
       <div className="band-off">
         <div className="wrap">
-          <section style={{ paddingTop: "var(--s8)" }}>
+          {/* The same header as the prices and zakat pages. */}
+          <section className="pr-head">
             <div className="kicker">{t.making.kicker}</div>
             <h1>{t.making.title}</h1>
-            <p className="buy-note" style={{ maxWidth: "70ch", marginTop: "var(--s2)" }}>{t.making.intro}</p>
-
+            <p>{t.making.intro}</p>
+          </section>
+          <section>
             {products.length === 0 ? (
               <p className="buy-note">{t.making.empty}</p>
             ) : (
