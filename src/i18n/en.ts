@@ -196,6 +196,7 @@ export const en = {
     add: "Add to cart",
     best: "Best price",
     perGram: "{amount} EGP / g",
+    perPiece: "{amount} EGP / piece",
     note: "Prices follow today's board and change on their own when a new one is published. Cashback is what GoldGram adds per gram, on top of today's price, when you sell the piece back to us, with its original packaging intact or without it.",
     empty: "No pieces to compare yet.",
     link: "Compare every maker",
