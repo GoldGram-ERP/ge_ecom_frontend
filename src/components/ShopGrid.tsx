@@ -40,11 +40,16 @@ export function AddButton({ productId, inStock, stock }: { productId: number; in
     <Button
       className={`pc-buy${added ? " added" : ""}`}
       type="button"
+      // Off while "Added" shows, so a double click does not add a second piece.
+      disabled={added}
       onClick={() => {
+        if (timer.current) return; // a second click before the button has turned off
         cart.add(productId, stock);
         setAdded(true);
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => setAdded(false), 1200);
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          setAdded(false);
+        }, 1200);
       }}
     >
       {/* aria-live so the confirmation is announced, not only shown */}

@@ -55,11 +55,16 @@ export function ProductBuy({ productId, inStock, stock }: { productId: number; i
       <Button
         className={`pc-buy pdp-add${added ? " added" : ""}`}
         type="button"
+        // Off while "Added" shows, so a double click does not add the quantity twice.
+        disabled={added}
         onClick={() => {
+          if (timer.current) return; // a second click before the button has turned off
           put();
           setAdded(true);
-          if (timer.current) clearTimeout(timer.current);
-          timer.current = setTimeout(() => setAdded(false), 1200);
+          timer.current = setTimeout(() => {
+            timer.current = null;
+            setAdded(false);
+          }, 1200);
         }}
       >
         <span aria-live="polite">{added ? t.shop.added : t.shop.add}</span>
