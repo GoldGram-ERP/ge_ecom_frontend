@@ -70,15 +70,11 @@ export function CompareTool({
       {pounds(piastres)} <small>{t.product.egp}</small>
     </>
   );
-  // The cashback columns: the product's cashback per gram, as set in the dashboard (Cashback
-  // policies), with the packaging or without; 0 when it offers none. A piece under a gram shows
-  // what that comes to for the whole piece (weight × per gram, to the piastre), "per piece".
+  // The cashback columns: the number set in the dashboard (Cashback policies), with the
+  // packaging or without, exactly as it shows there; 0 when the product offers none.
   const perGram = (p: Product, packaging: "with" | "without") => {
-    const gram = p.cashback ? (packaging === "with" ? p.cashback.withPackagingPiastres : p.cashback.withoutPackagingPiastres) : 0;
-    const small = p.weightGrams < 1;
-    const piastres = small ? Math.round(p.weightGrams * gram) : gram;
-    const amount = piastres % 100 ? poundsParts(piastres).full : pounds(piastres);
-    return fmt(small ? t.compare.perPiece : t.compare.perGram, { amount });
+    const piastres = p.cashback ? (packaging === "with" ? p.cashback.withPackagingPiastres : p.cashback.withoutPackagingPiastres) : 0;
+    return piastres % 100 ? poundsParts(piastres).full : pounds(piastres);
   };
 
   // Buy-back, live, for the questions below the table: today's metal sell value for the piece +
