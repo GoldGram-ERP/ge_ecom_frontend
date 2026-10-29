@@ -2,6 +2,7 @@ import Image from "next/image";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
+import { SHOP_LINKS } from "@/lib/shop-links";
 import { site } from "@/lib/site";
 import type { Category } from "@/lib/types";
 
@@ -151,12 +152,8 @@ export function Footer({ t, locale }: { t: Dict; locale: Locale }) {
   const columns: { title: string; links: [string, string][] }[] = [
     {
       title: t.footer.shop,
-      links: [
-        [t.footer.smallGold, to("/shop?c=bar&m=gold&w=small")],
-        [t.footer.goldCoins, to("/shop?c=coin")],
-        [t.footer.largeGold, to("/shop?c=bar&m=gold&w=large")],
-        [t.footer.largeSilver, to("/shop?c=bar&m=silver&w=large")],
-      ],
+      // The same kinds, names and links as the header's Shop menu.
+      links: SHOP_LINKS.map((link) => [t.nav[link.label], to(link.path)]),
     },
     {
       title: t.footer.services,

@@ -19,12 +19,6 @@ type Handover = "branch" | "courier";
 type Payout = "bank" | "cash";
 type Field = "weight" | "name" | "mobile" | "email";
 
-/** Cashback per gram, in piastres, for a piece of a brand GoldGram sells (dashboard settings). */
-export interface Cashback {
-  sealed: number;
-  opened: number;
-}
-
 const MAX_QTY = 1000;
 // Up to 2 decimals, as the server accepts.
 const WEIGHT = /^\d{1,6}(\.\d{1,2})?$/;
@@ -37,9 +31,6 @@ interface Placed {
   estimatePiastres: number;
 }
 
-/** 4000 → "40", 3550 → "35.50". */
-const perGramText = (piastres: number): string => (piastres % 100 ? poundsParts(piastres).full : pounds(piastres));
-
 /** Coins are their own kind; every other category (bars, wearables) is sold back as a bar. */
 const kindOf = (product: Product): Kind => (product.category === "coin" ? "coin" : "bar");
 
@@ -48,12 +39,10 @@ export function SellForm({
   prices: initial,
   branchPickup,
   products,
-  cashback,
 }: {
   prices: Prices | null;
   branchPickup: boolean;
   products: Product[];
-  cashback: Cashback;
 }) {
   const { locale, t } = useI18n();
   const s = t.sell;
@@ -97,13 +86,15 @@ export function SellForm({
     return pieces.some((o) => o !== p && weightLabel(o.weightGrams, t) === label) ? `${label} · ${productName(p, locale)}` : label;
   };
 
-  // The same sums as the server's sellEstimate: the sale price and the cashback, each to the piastre.
+  // The same sums as the server's sellEstimate: the product's refund per piece (its cashback policy
+  // in the dashboard, for the condition) × quantity; with no refund, the metal at today's price alone.
   const gram = prices?.karats.find((k) => k.karat === (product ? product.karat : Number(karat)))?.sellPiastres ?? null;
   const grams = product ? product.weightGrams : WEIGHT.test(weight.trim()) ? Number(weight.trim()) : 0;
-  const cashbackGram = product ? (condition === "sealed_invoice" ? cashback.sealed : cashback.opened) : 0;
+  const refundOf = (which: Condition): number | null =>
+    product?.buyback ? (which === "sealed_invoice" ? product.buyback.withPackagingPiastres : product.buyback.withoutPackagingPiastres) : null;
+  const refund = refundOf(condition);
   const sale = gram !== null ? Math.round(grams * qty * gram) : null;
-  const cashbackTotal = Math.round(grams * qty * cashbackGram);
-  const estimate = sale !== null ? sale + cashbackTotal : null;
+  const estimate = refund !== null ? refund * qty : sale;
 
   const payouts: [Payout, string][] = [["bank", s.bank], ...(branchPickup ? ([["cash", s.cash]] as [Payout, string][]) : [])];
 
@@ -300,14 +291,15 @@ export function SellForm({
         <Options value={condition} onChange={setCondition} aria-label={s.conditionH}>
           {(
             [
-              ["sealed_invoice", s.sealedInvoice, s.sealedInvoiceSub, cashback.sealed],
-              ["opened", s.opened, s.openedSub, cashback.opened],
+              ["sealed_invoice", s.sealedInvoice, s.sealedInvoiceSub],
+              ["opened", s.opened, s.openedSub],
             ] as const
-          ).map(([value, title, sub, perGram]) => (
+          ).map(([value, title, sub]) => (
             <Option value={value} id={`sell-cond-${value}`} key={value}>
               <div>
                 <b>{title}</b>
-                {product ? <span>{fmt(sub, { cb: perGramText(perGram) })}</span> : null}
+                {/* A brand we sell with no refund set shows 0: no fixed amount stands in for it. */}
+                {product ? <span>{fmt(sub, { cb: poundsParts(refundOf(value) ?? 0).full })}</span> : null}
               </div>
             </Option>
           ))}
@@ -385,7 +377,16 @@ export function SellForm({
           <div className="sell-big">
             {estimate !== null ? poundsParts(estimate).full : "—"} <small>{t.product.egp}</small>
           </div>
-          {gram !== null && sale !== null ? (
+          {refund !== null ? (
+            <div className="o-line sell-refund">
+              <span>
+                {condition === "sealed_invoice" ? s.refundWith : s.refundWithout}
+                <br />
+                {fmt(s.refundLine, { refund: poundsParts(refund).full, qty: String(qty) })}
+              </span>
+              <b>{poundsParts(refund * qty).full}</b>
+            </div>
+          ) : gram !== null && sale !== null ? (
             <>
               <div className="o-line">
                 <span>{fmt(s.perGram, { w: grams ? String(grams) : "0", price: poundsParts(gram).full })}</span>
@@ -397,7 +398,7 @@ export function SellForm({
               {product ? (
                 <div className="o-line sell-cashback">
                   <span>{s.cashback}</span>
-                  <b>{poundsParts(cashbackTotal).full}</b>
+                  <b>{poundsParts(0).full}</b>
                 </div>
               ) : (
                 <p className="sell-note sell-nocb">{s.noCashback}</p>

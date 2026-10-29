@@ -48,7 +48,7 @@ export function StarterCarousel({ products, locale, t }: { products: Product[]; 
               {pounds(p.pricePiastres)}
               <u>{t.product.egp}</u>
             </div>
-            <AddButton productId={p.id} inStock={p.inStock !== false} />
+            <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
           </article>
         );
       })}

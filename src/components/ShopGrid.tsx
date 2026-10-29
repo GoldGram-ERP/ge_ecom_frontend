@@ -5,7 +5,7 @@ import { localePath } from "@/i18n";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { fmt } from "@/i18n";
-import { cart } from "@/lib/cart";
+import { cart, qtyLimit, qtyOf, useCart } from "@/lib/cart";
 import { useLiveProducts } from "@/lib/live-products";
 import { artClass, artStyle, pounds, productName, productSub } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
@@ -14,8 +14,9 @@ import { Button, Reveal } from "./controls";
 
 type Filter = "all" | Category;
 
-export function AddButton({ productId, inStock }: { productId: number; inStock: boolean }) {
+export function AddButton({ productId, inStock, stock }: { productId: number; inStock: boolean; stock?: number | null }) {
   const { t } = useI18n();
+  const inCart = qtyOf(useCart(), productId);
   const [added, setAdded] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
@@ -27,15 +28,28 @@ export function AddButton({ productId, inStock }: { productId: number; inStock: 
       </Button>
     );
   }
+  // Every piece in stock is already in the cart: nothing more can be ordered.
+  if (inCart >= qtyLimit(stock) && !added) {
+    return (
+      <Button className="pc-buy" type="button" disabled>
+        {t.shop.allInCart}
+      </Button>
+    );
+  }
   return (
     <Button
       className={`pc-buy${added ? " added" : ""}`}
       type="button"
+      // Off while "Added" shows, so a double click does not add a second piece.
+      disabled={added}
       onClick={() => {
-        cart.add(productId);
+        if (timer.current) return; // a second click before the button has turned off
+        cart.add(productId, stock);
         setAdded(true);
-        if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(() => setAdded(false), 1200);
+        timer.current = setTimeout(() => {
+          timer.current = null;
+          setAdded(false);
+        }, 1200);
       }}
     >
       {/* aria-live so the confirmation is announced, not only shown */}
@@ -119,7 +133,7 @@ export function ShopGrid({ products: rendered, initial }: { products: Product[];
                   {pounds(p.pricePiastres)}
                   <u>{t.product.egp}</u>
                 </div>
-                <AddButton productId={p.id} inStock={p.inStock !== false} />
+                <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
               </Reveal>
             );
           })}

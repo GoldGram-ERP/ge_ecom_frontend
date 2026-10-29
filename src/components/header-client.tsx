@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { DropdownMenu } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client-api";
+import { SHOP_LINKS } from "@/lib/shop-links";
 import { CartDrawer } from "./cart-drawer";
 import { Brand, Icon, ICONS } from "./chrome";
 import { localePath } from "@/i18n";
@@ -136,15 +137,9 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     router.push(otherHref + window.location.search);
   };
 
-  // Each kind has its own clean URL (the URL Map); silver has no page yet, so it keeps the shop filter.
+  // Each kind has its own clean URL (the URL Map); the footer lists the same ones.
   // shortcut: "GoldGram app" has no page of its own yet; it leads to the home hero.
-  const shopItems: NavItem[] = [
-    { label: t.nav.ingots, href: href("/gold-ingots") },
-    { label: t.nav.coins, href: href("/gold-coins") },
-    { label: t.nav.wearable, href: href("/gold-bar-pendants") },
-    { label: t.nav.bars, href: href("/gold-bars") },
-    { label: t.nav.silver, href: href("/shop") + "?m=silver" },
-  ];
+  const shopItems: NavItem[] = SHOP_LINKS.map((link) => ({ label: t.nav[link.label], href: href(link.path) }));
   const serviceItems: NavItem[] = [
     { label: t.nav.app, href: href("#top") },
     { label: t.sell.nav, href: href("/sell") },

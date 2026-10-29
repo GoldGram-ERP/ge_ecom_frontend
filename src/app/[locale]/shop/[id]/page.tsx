@@ -130,7 +130,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
               <p className="pdp-sub">{productSub(p, t)}</p>
               <PdpPrice product={p} note={time ? <p className="pdp-note">{fmt(t.pdp.priceNote, { time })}</p> : null} />
 
-              <ProductBuy productId={p.id} inStock={p.inStock !== false} />
+              <ProductBuy productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
               <p className={`pdp-stock${p.inStock === false ? " out" : ""}`}>{p.inStock === false ? t.pdp.soldOut : t.pdp.inStock}</p>
             </div>
           </article>

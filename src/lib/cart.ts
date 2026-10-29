@@ -38,12 +38,21 @@ export function parseCart(raw: string | null): CartLine[] {
   }
 }
 
-export function addLine(lines: CartLine[], productId: number): CartLine[] {
+/** The most of one piece a cart may hold: its stock when the shop counts it, and never over MAX_QTY. */
+export const qtyLimit = (stock?: number | null): number => Math.min(MAX_QTY, stock ?? MAX_QTY);
+
+/** How many of a piece the cart holds. */
+export const qtyOf = (lines: CartLine[], productId: number): number =>
+  lines.find((l) => l.productId === productId)?.qty ?? 0;
+
+/** Adds one, unless the line is already at the piece's limit (`stock`, see qtyLimit). */
+export function addLine(lines: CartLine[], productId: number, stock?: number | null): CartLine[] {
+  const limit = qtyLimit(stock);
   const existing = lines.find((l) => l.productId === productId);
   if (existing) {
-    return lines.map((l) => (l === existing ? { ...l, qty: Math.min(l.qty + 1, MAX_QTY) } : l));
+    return existing.qty >= limit ? lines : lines.map((l) => (l === existing ? { ...l, qty: l.qty + 1 } : l));
   }
-  return lines.length >= MAX_LINES ? lines : [...lines, { productId, qty: 1 }];
+  return lines.length >= MAX_LINES || limit < 1 ? lines : [...lines, { productId, qty: 1 }];
 }
 
 /** Takes one off the line, and drops the line when it reaches zero (the prototype's "Remove"). */
@@ -100,7 +109,7 @@ function subscribe(listener: () => void) {
 }
 
 export const cart = {
-  add: (productId: number) => commit(addLine(snapshot(), productId)),
+  add: (productId: number, stock?: number | null) => commit(addLine(snapshot(), productId, stock)),
   removeOne: (productId: number) => commit(removeOne(snapshot(), productId)),
   drop: (ids: number[]) => commit(dropProducts(snapshot(), ids)),
   clear: () => commit([]),

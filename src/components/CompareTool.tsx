@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { fmt } from "@/i18n";
 import { cairoTime, karatLabel, pounds, productName, weightLabel, weightText } from "@/lib/format";
-import { KINDS, type Kind, kindOf } from "@/lib/kinds";
+import { KINDS, type Kind, pieceKind } from "@/lib/kinds";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
 import type { Prices, Product } from "@/lib/types";
@@ -14,47 +14,55 @@ import { AddButton } from "./ShopGrid";
 import { Select } from "./controls";
 
 const weightsOf = (products: Product[], kind: Kind) =>
-  [...new Set(products.filter((p) => kindOf(p) === kind).map((p) => p.weightGrams))].sort((a, b) => a - b);
+  [...new Set(products.filter((p) => pieceKind(p) === kind).map((p) => p.weightGrams))].sort((a, b) => a - b);
 
 /**
  * The compare page's tool: a kind and a weight, then that piece from every brand with its live
  * price and buy-back, and what to know about it. The choice is kept in the address to be shared.
+ * The making-charges page shows the table alone (`details` off) and offers worn pieces too.
  */
 export function CompareTool({
   products: rendered,
   prices: initialPrices,
-  cashback,
   kind: askedKind,
   weight: askedWeight,
+  offered = KINDS,
+  allKinds = false,
+  details = true,
 }: {
   products: Product[];
   prices: Prices | null;
-  /** Buy-back cashback per gram (piastres), from the dashboard: sealed-with-invoice and opened. */
-  cashback: { sealed: number; opened: number };
   kind?: Kind;
   weight?: number;
+  /** The kinds the first list offers, in its order; a kind with no pieces is left out unless `allKinds`. */
+  offered?: readonly Kind[];
+  /** Offer every kind of `offered` even with no pieces: the table then says there are none. */
+  allKinds?: boolean;
+  /** Whether the "about" and questions section follows the table. */
+  details?: boolean;
 }) {
   const { locale, t, href } = useI18n();
   const products = useLiveProducts(rendered);
   const { prices } = useLivePrices({ prices: initialPrices });
 
-  const kinds = KINDS.filter((k) => rendered.some((p) => kindOf(p) === k));
+  const kinds = allKinds ? offered : offered.filter((k) => rendered.some((p) => pieceKind(p) === k));
   const startKind = askedKind && kinds.includes(askedKind) ? askedKind : kinds[0];
   const startWeights = weightsOf(rendered, startKind);
-  const [choice, setChoice] = useState(() => ({
+  // No weight only for a kind with no pieces (allKinds).
+  const [choice, setChoice] = useState<{ kind: Kind; weight: number | undefined }>(() => ({
     kind: startKind,
     weight: askedWeight !== undefined && startWeights.includes(askedWeight) ? askedWeight : startWeights[0],
   }));
   const weights = weightsOf(rendered, choice.kind);
 
-  const pick = (kind: Kind, weight: number) => {
+  const pick = (kind: Kind, weight: number | undefined) => {
     setChoice({ kind, weight });
     // Next.js keeps its router in step with the native history calls.
-    window.history.replaceState(null, "", `?c=${kind}&w=${weight}`);
+    window.history.replaceState(null, "", weight === undefined ? `?c=${kind}` : `?c=${kind}&w=${weight}`);
   };
 
   const rows = products
-    .filter((p) => kindOf(p) === choice.kind && p.weightGrams === choice.weight)
+    .filter((p) => pieceKind(p) === choice.kind && p.weightGrams === choice.weight)
     .sort((a, b) => a.pricePiastres - b.pricePiastres);
   const brand = (p: Product) => (locale === "ar" ? p.manufacturerAr : p.manufacturerEn) || productName(p, locale);
   const egp = (piastres: number) => (
@@ -64,19 +72,21 @@ export function CompareTool({
   );
   const ask = <span className="cmp-ask">{t.compare.none}</span>;
 
-  // Buy-back, live: today's metal sell value for the piece + the dashboard cashback per gram
-  // (sealed with the invoice, or opened). Replaces each product's stored, stale buy-back amounts.
-  const sellGram = (p: Product) =>
-    (p.karat as number) === 999
-      ? (prices?.silver.sellPiastres ?? null)
-      : (prices?.karats.find((k) => k.karat === p.karat)?.sellPiastres ?? null);
-  const buyback = (p: Product, cashbackGram: number): number | null => {
-    const gram = sellGram(p);
-    return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
-  };
+  // Buy-back: what GoldGram pays for the piece, with its packaging or without, as set per product
+  // in the dashboard (Cashback policies); null when it offers none, and the table says "ask us".
+  type Packaging = "with" | "without";
+  const buyback = (p: Product, packaging: Packaging): number | null =>
+    p.buyback ? (packaging === "with" ? p.buyback.withPackagingPiastres : p.buyback.withoutPackagingPiastres) : null;
 
-  const template = choice.kind === "silver" ? t.compare.nameSilver : choice.kind === "pounds" ? t.compare.namePound : t.compare.nameBar;
-  const name = fmt(template, { w: weightText(choice.weight) });
+  const template =
+    choice.kind === "silver"
+      ? t.compare.nameSilver
+      : choice.kind === "pounds"
+        ? t.compare.namePound
+        : choice.kind === "wear"
+          ? t.compare.nameWear
+          : t.compare.nameBar;
+  const name = choice.weight === undefined ? t.compare.kinds[choice.kind] : fmt(template, { w: weightText(choice.weight) });
   const cheapest = rows[0];
   const dearest = rows[rows.length - 1];
   const time = prices ? cairoTime(prices.updatedAt) : "";
@@ -93,8 +103,8 @@ export function CompareTool({
     const range = { min: pounds(cheapest.pricePiastres), max: pounds(dearest.pricePiastres), n: rows.length };
     const lowLabor = rows.reduce((low, p) => (p.laborPiastres < low.laborPiastres ? p : low), cheapest);
     const highLabor = Math.max(...rows.map((p) => p.laborPiastres));
-    const sellWith = buyback(cheapest, cashback.sealed);
-    const sellWithout = buyback(cheapest, cashback.opened);
+    const sellWith = buyback(cheapest, "with");
+    const sellWithout = buyback(cheapest, "without");
     info = {
       about: fmt(t.compare.aboutText, {
         name,
@@ -149,10 +159,10 @@ export function CompareTool({
         <div className="f">
           <span id="cmp-weight-label">{t.compare.weight}</span>
           <Select
-            value={String(choice.weight)}
-            onChange={(weight) => pick(choice.kind, Number(weight))}
+            value={choice.weight === undefined ? "none" : String(choice.weight)}
+            onChange={(weight) => (weight === "none" ? undefined : pick(choice.kind, Number(weight)))}
             aria-labelledby="cmp-weight-label"
-            options={weights.map((w) => [String(w), weightLabel(w, t)] as const)}
+            options={weights.length ? weights.map((w) => [String(w), weightLabel(w, t)] as const) : [["none", "—"] as const]}
           />
         </div>
       </div>
@@ -172,6 +182,13 @@ export function CompareTool({
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="cmp-none">
+                  {t.compare.noneOfKind}
+                </td>
+              </tr>
+            ) : null}
             {rows.map((p, index) => (
               <tr key={p.id} data-product={p.id}>
                 <th scope="row">
@@ -179,10 +196,10 @@ export function CompareTool({
                   {index === 0 && many ? <em className="pdp-tag">{t.compare.best}</em> : null}
                 </th>
                 <td className="cmp-price">{egp(p.pricePiastres)}</td>
-                <td className="cmp-with">{buyback(p, cashback.sealed) !== null ? egp(buyback(p, cashback.sealed)!) : ask}</td>
-                <td className="cmp-without">{buyback(p, cashback.opened) !== null ? egp(buyback(p, cashback.opened)!) : ask}</td>
+                <td className="cmp-with">{p.buyback ? egp(p.buyback.withPackagingPiastres) : ask}</td>
+                <td className="cmp-without">{p.buyback ? egp(p.buyback.withoutPackagingPiastres) : ask}</td>
                 <td className="cmp-add">
-                  <AddButton productId={p.id} inStock={p.inStock !== false} />
+                  <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
                 </td>
               </tr>
             ))}
@@ -191,7 +208,7 @@ export function CompareTool({
       </div>
       <p className="cmp-note">{t.compare.note}</p>
 
-      {info && cheapest ? (
+      {details && info && cheapest ? (
         <div className="pr-read cmp-info">
           <section aria-labelledby="cmp-about">
             <h2 id="cmp-about">{fmt(t.compare.about, { name })}</h2>

@@ -18,6 +18,15 @@ export function proxy(request: NextRequest) {
 
   const isEn = pathname === "/en" || pathname.startsWith("/en/");
   const bare = isEn ? pathname.slice(3) || "/" : pathname;
+
+  // The silver shop filter has its own page now: /shop?m=silver (and nothing else) goes to /silver.
+  const query = request.nextUrl.searchParams;
+  if (bare === "/shop" && query.get("m") === "silver" && query.size === 1) {
+    const url = request.nextUrl.clone();
+    url.pathname = isEn ? "/en/silver" : "/silver";
+    url.search = "";
+    return NextResponse.redirect(url, 308);
+  }
   const headers = new Headers(request.headers);
   headers.set("x-gg-path", bare === "/" ? "" : bare);
 

@@ -13,7 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/animate-ui/primitives/radix/sheet";
 import { fmt } from "@/i18n";
-import { cart, countItems, MAX_QTY, useCart } from "@/lib/cart";
+import { cart, countItems, qtyLimit, useCart } from "@/lib/cart";
 import { api } from "@/lib/client-api";
 import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
 import type { Quote } from "@/lib/types";
@@ -119,7 +119,7 @@ export function CartDrawer() {
                           <Icon d={ICONS.minus} size={16} />
                         </Button>
                         <output>{line.qty}</output>
-                        <Button type="button" aria-label={fmt(t.cart.addOne, { name })} disabled={line.qty >= MAX_QTY} onClick={() => cart.add(line.productId)}>
+                        <Button type="button" aria-label={fmt(t.cart.addOne, { name })} disabled={line.qty >= qtyLimit(line.stock)} onClick={() => cart.add(line.productId, line.stock)}>
                           <Icon d={ICONS.plus} size={16} />
                         </Button>
                       </div>
