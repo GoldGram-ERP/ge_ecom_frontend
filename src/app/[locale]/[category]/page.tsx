@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { localePath } from "@/i18n";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
 import { ShopGrid } from "@/components/ShopGrid";
@@ -69,11 +68,7 @@ export default async function CategoryPage({ params }: PageProps<"/[locale]/[cat
       <div className="band-off">
         <div className="wrap">
           <section style={{ paddingTop: "var(--s8)" }}>
-            <div className="shop-preset">
-              <h1>{name}</h1>
-              <Link href={localePath(locale, `/shop`)}>{t.shop.all}</Link>
-            </div>
-            <ShopGrid products={all} initial={initial} />
+            <ShopGrid products={all} initial={initial} heading={{ name, allHref: localePath(locale, "/shop") }} />
             <div className="assure">
               {t.shop.assure.map((item) => (
                 <div className="as" key={item.t}>
