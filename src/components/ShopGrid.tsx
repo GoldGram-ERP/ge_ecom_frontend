@@ -58,7 +58,20 @@ export function AddButton({ productId, inStock, stock }: { productId: number; in
   );
 }
 
-export function ShopGrid({ products: rendered, initial }: { products: Product[]; initial: Filter }) {
+/**
+ * The shop's filters and pieces. With `heading` (the menu's category pages) the grid also draws
+ * the page heading, which follows the chosen filter: the page's own name for the filter it opened
+ * on, a category's name for another, and "Shop" for all; its link goes to the whole shop.
+ */
+export function ShopGrid({
+  products: rendered,
+  initial,
+  heading,
+}: {
+  products: Product[];
+  initial: Filter;
+  heading?: { name: string; allHref: string };
+}) {
   const { locale, t } = useI18n();
   const products = useLiveProducts(rendered);
   const [filter, setFilter] = useState<Filter>(initial);
@@ -80,9 +93,17 @@ export function ShopGrid({ products: rendered, initial }: { products: Product[];
   }
 
   const shown = filter === "all" ? products : products.filter((p) => p.category === filter);
+  const title =
+    filter === initial ? heading?.name : filter === "all" ? t.nav.shop : filters.find((f) => f.id === filter)?.label;
 
   return (
     <>
+      {heading ? (
+        <div className="shop-preset">
+          <h1>{title}</h1>
+          <Link href={heading.allHref}>{t.shop.all}</Link>
+        </div>
+      ) : null}
       <div className="filters" role="group" aria-label={t.shop.filterLabel}>
         {filters.map((f) => (
           <Button
