@@ -136,14 +136,14 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     router.push(otherHref + window.location.search);
   };
 
-  // Each kind has its own clean URL (the URL Map); silver has no page yet, so it keeps the shop filter.
+  // Each kind has its own clean URL (the URL Map).
   // shortcut: "GoldGram app" has no page of its own yet; it leads to the home hero.
   const shopItems: NavItem[] = [
     { label: t.nav.ingots, href: href("/gold-ingots") },
     { label: t.nav.coins, href: href("/gold-coins") },
     { label: t.nav.wearable, href: href("/gold-bar-pendants") },
     { label: t.nav.bars, href: href("/gold-bars") },
-    { label: t.nav.silver, href: href("/shop") + "?m=silver" },
+    { label: t.nav.silver, href: href("/silver") },
   ];
   const serviceItems: NavItem[] = [
     { label: t.nav.app, href: href("#top") },
