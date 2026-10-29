@@ -902,7 +902,6 @@ html[lang="ar"] .pr-main h2,html[lang="ar"] .pr-calc h2{ letter-spacing:0; }
 .cmp-pick .fp{ text-decoration:none; }
 .cmp-table td small{ font-size:11px; color:var(--muted); }
 .cmp-table .cmp-low{ background:rgba(47,138,85,.12); color:#1F5C39; }
-.cmp-ask{ color:var(--muted); font-size:12.5px; }
 .cmp-note{ margin-top:var(--s3); font-size:12.5px; line-height:1.6; color:var(--muted); max-width:90ch; }
 .cmp-more{ display:inline-block; margin-top:var(--s2); }
 
