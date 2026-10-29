@@ -3,7 +3,9 @@
 #
 # Hostinger's build servers have GLIBC 2.28, which Next 16 cannot compile on, so the app is built
 # here (Linux, in Docker) as a standalone server and uploaded prebuilt: the zip's "build" script is
-# a no-op. Needs only git and Docker. Builds the committed HEAD, never uncommitted files.
+# a no-op. Needs Docker and python3. In a git checkout it builds the committed HEAD, never
+# uncommitted files; anywhere else (e.g. an exported `git archive` on the server) the folder it is
+# run from.
 #
 #   API_URL=https://goldgram-api.178-16-130-122.sslip.io scripts/hostinger-zip.sh [out.zip] [test path]
 #
@@ -16,12 +18,16 @@ set -euo pipefail
 OUT="$(realpath -m "${1:-app.zip}")"
 TEST_PATH="${2:-/}"
 NODE_IMAGE="node:22"
-ROOT="$(git rev-parse --show-toplevel)"
 WORK="$(mktemp -d)"
 trap 'docker rm -f hostinger-zip-test >/dev/null 2>&1 || true; rm -rf "$WORK"' EXIT
 
-echo "==> Source: $(git -C "$ROOT" log -1 --format='%h %s')"
-git -C "$ROOT" archive HEAD | tar -x -C "$WORK"
+if ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"; then
+  echo "==> Source: $(git -C "$ROOT" log -1 --format='%h %s')"
+  git -C "$ROOT" archive HEAD | tar -x -C "$WORK"
+else
+  echo "==> Source: $(pwd) (not a git checkout)"
+  tar -c --exclude=./node_modules --exclude=./.next . | tar -x -C "$WORK"
+fi
 
 # A flat node_modules: pnpm's default symlinked layout does not survive being zipped, and the
 # standalone server then dies with "Cannot find module 'next'". pnpm 11 reads this setting from

@@ -36,3 +36,13 @@ Environment variables are listed in `.env.example`. None is required locally.
 Prices are never trusted from the browser: the cart holds product ids and quantities, the checkout asks the backend for a quote, and the order is priced again on the server.
 
 The contract with the backend, the acceptance criteria and the edge cases are in `docs/SPEC.md` at the project root.
+
+## Deploying to Hostinger
+
+Hostinger's build servers cannot compile Next 16 (their GLIBC is 2.28), so the app is uploaded ready-made. On a Linux machine with Docker (the VPS will do), from a checkout or an exported `git archive` of `master`:
+
+```bash
+API_URL=https://goldgram-api.178-16-130-122.sslip.io scripts/hostinger-zip.sh app.zip
+```
+
+It builds the standalone server in `node:22`, zips it with a no-op build script, then unzips that zip and starts it to prove it runs. Upload the zip to the site as `app.zip` and start a Node.js build (Next.js, pnpm, Node 22, output `.next`). `API_URL` is baked into the `/api` rewrite at build time, so it must be the live backend.
