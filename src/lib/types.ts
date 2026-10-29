@@ -79,9 +79,12 @@ export interface Product {
   manufacturerSlug: string;
   /** Today's buy price per gram of its metal and karat. */
   gramPiastres: number;
-  /** What GoldGram pays back on resale; null when no policy is offered. */
-  /** Resale: what we pay back with and without the packaging, and the making charge returned (cashback). */
-  buyback: { withPackagingPiastres: number; withoutPackagingPiastres: number; laborPiastres: number } | null;
+  /**
+   * Cashback per gram on resale (the dashboard's Cashback policies), with and without the
+   * packaging; null when none is offered. GoldGram pays today's sell price per gram × weight
+   * plus this × weight.
+   */
+  cashback: { withPackagingPiastres: number; withoutPackagingPiastres: number } | null;
 }
 
 export interface Zone {

@@ -72,11 +72,19 @@ export function CompareTool({
   );
   const ask = <span className="cmp-ask">{t.compare.none}</span>;
 
-  // Buy-back: what GoldGram pays for the piece, with its packaging or without, as set per product
-  // in the dashboard (Cashback policies); null when it offers none, and the table says "ask us".
+  // Buy-back, live: today's metal sell value for the piece + its cashback per gram (Cashback
+  // policies in the dashboard, with the packaging or without; 0 when it offers none), each to the
+  // piastre as the sell page adds them. Null only with no price board: the table says "ask us".
   type Packaging = "with" | "without";
-  const buyback = (p: Product, packaging: Packaging): number | null =>
-    p.buyback ? (packaging === "with" ? p.buyback.withPackagingPiastres : p.buyback.withoutPackagingPiastres) : null;
+  const sellGram = (p: Product) =>
+    (p.karat as number) === 999
+      ? (prices?.silver.sellPiastres ?? null)
+      : (prices?.karats.find((k) => k.karat === p.karat)?.sellPiastres ?? null);
+  const buyback = (p: Product, packaging: Packaging): number | null => {
+    const gram = sellGram(p);
+    const cashbackGram = p.cashback ? (packaging === "with" ? p.cashback.withPackagingPiastres : p.cashback.withoutPackagingPiastres) : 0;
+    return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
+  };
 
   const template =
     choice.kind === "silver"
@@ -196,8 +204,8 @@ export function CompareTool({
                   {index === 0 && many ? <em className="pdp-tag">{t.compare.best}</em> : null}
                 </th>
                 <td className="cmp-price">{egp(p.pricePiastres)}</td>
-                <td className="cmp-with">{p.buyback ? egp(p.buyback.withPackagingPiastres) : ask}</td>
-                <td className="cmp-without">{p.buyback ? egp(p.buyback.withoutPackagingPiastres) : ask}</td>
+                <td className="cmp-with">{buyback(p, "with") !== null ? egp(buyback(p, "with")!) : ask}</td>
+                <td className="cmp-without">{buyback(p, "without") !== null ? egp(buyback(p, "without")!) : ask}</td>
                 <td className="cmp-add">
                   <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
                 </td>
