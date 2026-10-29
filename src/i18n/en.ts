@@ -29,7 +29,7 @@ export const en = {
     service: "Service",
     ingots: "Gold ingots",
     coins: "Gold coins",
-    wearable: "Wearable",
+    wearable: "Pendants",
     bars: "Gold bars",
     silver: "Silver bars",
     app: "GoldGram app",
