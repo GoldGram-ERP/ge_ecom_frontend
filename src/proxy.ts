@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { MOVED_URLS } from "@/lib/shop-links";
 
 // Locale routing + indexing. Arabic is served at the root (no prefix); English lives under /en.
 // The app's pages live in the internal [locale] tree, so root paths are rewritten to /ar.
@@ -18,6 +19,14 @@ export function proxy(request: NextRequest) {
 
   const isEn = pathname === "/en" || pathname.startsWith("/en/");
   const bare = isEn ? pathname.slice(3) || "/" : pathname;
+
+  // A page that moved (e.g. /gold-bar-pendants → /pendants) goes to its new address, for good.
+  const moved = MOVED_URLS[bare.slice(1)];
+  if (moved) {
+    const url = request.nextUrl.clone();
+    url.pathname = isEn ? `/en/${moved}` : `/${moved}`;
+    return NextResponse.redirect(url, 308);
+  }
 
   // The silver shop filter has its own page now: /shop?m=silver (and nothing else) goes to /silver.
   const query = request.nextUrl.searchParams;

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { fmt } from "@/i18n";
 import { cart, qtyLimit, qtyOf, useCart } from "@/lib/cart";
 import { useLiveProducts } from "@/lib/live-products";
+import { filterPath } from "@/lib/shop-links";
 import { artClass, artStyle, pounds, productName, productSub } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
 import { useI18n } from "./Providers";
@@ -111,7 +112,12 @@ export function ShopGrid({
             className={`fp${filter === f.id ? " on" : ""}`}
             type="button"
             aria-pressed={filter === f.id}
-            onClick={() => setFilter(f.id)}
+            onClick={() => {
+              setFilter(f.id);
+              // On a menu category page the address follows the filter (its clean URL), so a
+              // copied or reloaded link opens on it. Next.js keeps its router in step.
+              if (heading) window.history.replaceState(null, "", localePath(locale, filterPath(f.id)));
+            }}
           >
             {f.label}
           </Button>

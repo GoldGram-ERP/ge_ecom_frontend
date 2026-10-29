@@ -5,24 +5,10 @@ import { SiteHeader } from "@/components/header-client";
 import { ShopGrid } from "@/components/ShopGrid";
 import { hasLocale, type Locale } from "@/i18n";
 import { isSilver } from "@/lib/kinds";
-import { SHOP_LINKS } from "@/lib/shop-links";
+import { CATEGORY_URLS, SHOP_LINKS, SILVER } from "@/lib/shop-links";
 import { getTexts } from "@/lib/site-texts";
 import { getProducts } from "@/lib/server-api";
 import type { Product } from "@/lib/types";
-
-/** Not a catalogue slug: the silver page's marker. */
-const SILVER = "@silver";
-
-// Clean, SEO-friendly URLs (the URL Map) mapped to the catalogue's own category slugs, so the
-// shop's filters and data stay unchanged: /en/gold-bars renders the "bar" category. /silver is
-// the metal, not a category: every 999 piece, whatever its category (the old /shop?m=silver).
-const CATEGORY_URLS: Record<string, string> = {
-  "gold-bars": "bar",
-  "gold-coins": "coin",
-  "gold-ingots": "ingot",
-  "gold-bar-pendants": "wear",
-  silver: SILVER,
-};
 
 const pick = (products: Product[], slug: string) =>
   products.filter((p) => (slug === SILVER ? isSilver(p) : p.category === slug));
