@@ -1,24 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
-import { type Cashback, SellForm } from "@/components/SellForm";
+import { SellForm } from "@/components/SellForm";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
 import { branchPickup, getPricesOrNull, getProducts } from "@/lib/server-api";
 import type { Product } from "@/lib/types";
-
-const API_URL = process.env.API_URL ?? "http://localhost:4000";
-
-/** The cashback per gram set in the dashboard; none when the backend does not say. */
-async function sellCashback(): Promise<Cashback> {
-  try {
-    const response = await fetch(`${API_URL}/api/settings`, { cache: "no-store", signal: AbortSignal.timeout(8000) });
-    const data = response.ok ? ((await response.json()) as Partial<Record<"sellCashbackSealedPiastres" | "sellCashbackOpenedPiastres", number>>) : {};
-    return { sealed: data.sellCashbackSealedPiastres ?? 0, opened: data.sellCashbackOpenedPiastres ?? 0 };
-  } catch {
-    return { sealed: 0, opened: 0 };
-  }
-}
 
 async function productsOrNone(): Promise<Product[]> {
   try {
@@ -39,8 +26,8 @@ export default async function SellPage({ params }: PageProps<"/[locale]/sell">) 
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
   const t = await getTexts(locale);
-  // Read on the server, so the branch options, the brands and the cashback never flicker in or out.
-  const [prices, branch, products, cashback] = await Promise.all([getPricesOrNull(), branchPickup(), productsOrNone(), sellCashback()]);
+  // Read on the server, so the branch options, the brands and their refunds never flicker in or out.
+  const [prices, branch, products] = await Promise.all([getPricesOrNull(), branchPickup(), productsOrNone()]);
 
   return (
     <div className="page checkout-page sell-page">
@@ -64,7 +51,7 @@ export default async function SellPage({ params }: PageProps<"/[locale]/sell">) 
       </div>
       <div className="band-off">
         <div className="wrap">
-          <SellForm prices={prices} branchPickup={branch} products={products} cashback={cashback} />
+          <SellForm prices={prices} branchPickup={branch} products={products} />
         </div>
       </div>
     </div>

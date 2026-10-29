@@ -4,7 +4,7 @@ import { CompareTool } from "@/components/CompareTool";
 import { SiteHeader } from "@/components/header-client";
 import { hasLocale } from "@/i18n";
 import { ALL_KINDS, isKind } from "@/lib/kinds";
-import { getCashback, getPricesOrNull, getProducts } from "@/lib/server-api";
+import { getPricesOrNull, getProducts } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 import "../../styles/compare.css";
 
@@ -19,13 +19,7 @@ export default async function MakingChargesPage({ params, searchParams }: PagePr
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
   // No catch on the catalogue: if it cannot be loaded, error.tsx offers a retry.
-  const [t, products, prices, cashback, query] = await Promise.all([
-    getTexts(locale),
-    getProducts(),
-    getPricesOrNull(),
-    getCashback(),
-    searchParams,
-  ]);
+  const [t, products, prices, query] = await Promise.all([getTexts(locale), getProducts(), getPricesOrNull(), searchParams]);
 
   return (
     <div className="page">
@@ -47,7 +41,6 @@ export default async function MakingChargesPage({ params, searchParams }: PagePr
                 <CompareTool
                   products={products}
                   prices={prices}
-                  cashback={cashback}
                   offered={ALL_KINDS}
                   allKinds
                   details={false}
