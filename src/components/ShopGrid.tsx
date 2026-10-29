@@ -96,6 +96,10 @@ export function ShopGrid({
   const shown = filter === "all" ? products : products.filter((p) => p.category === filter);
   const title =
     filter === initial ? heading?.name : filter === "all" ? t.nav.shop : filters.find((f) => f.id === filter)?.label;
+  // The browser tab's title follows the heading too, in the pages' own "Name · GoldGram" form.
+  useEffect(() => {
+    if (heading && title) document.title = `${title} · GoldGram`;
+  }, [heading, title]);
 
   return (
     <>
