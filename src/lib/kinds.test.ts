@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isSmall, kindOf } from "./kinds";
+import { isKind, isSmall, kindOf, pieceKind } from "./kinds";
 import type { Karat } from "./types";
 
 const piece = (category: string, karat: number, weightGrams: number) => ({ category, karat: karat as Karat, weightGrams });
@@ -17,5 +17,11 @@ describe("kinds", () => {
     expect(kindOf(piece("bar", 999, 1000))).toBe("silver");
     expect(kindOf(piece("coin", 21, 8))).toBe("pounds");
     expect(kindOf(piece("wear", 24, 1))).toBeNull();
+  });
+
+  it("gives worn pieces a kind of their own for the making-charges page", () => {
+    expect(pieceKind(piece("wear", 24, 1))).toBe("wear");
+    expect(pieceKind(piece("bar", 24, 100))).toBe("large");
+    expect(isKind("wear")).toBe(true);
   });
 });

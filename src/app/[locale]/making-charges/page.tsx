@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CompareTool } from "@/components/CompareTool";
 import { SiteHeader } from "@/components/header-client";
 import { hasLocale } from "@/i18n";
-import { poundsParts, productName, weightLabel } from "@/lib/format";
-import { getProducts } from "@/lib/server-api";
+import { ALL_KINDS, isKind } from "@/lib/kinds";
+import { getCashback, getPricesOrNull, getProducts } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
-import type { Product } from "@/lib/types";
-
-// The making charge to the piastre, the way the product page shows it.
-const money = (piastres: number) => poundsParts(piastres).full;
+import "../../styles/compare.css";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/making-charges">): Promise<Metadata> {
   const { locale } = await params;
@@ -17,21 +15,17 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/making-c
   return { title: `${t.making.title} · GoldGram` };
 }
 
-export default async function MakingChargesPage({ params }: PageProps<"/[locale]/making-charges">) {
+export default async function MakingChargesPage({ params, searchParams }: PageProps<"/[locale]/making-charges">) {
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
-  const t = await getTexts(locale);
-  // No catch: if the catalogue cannot be loaded, error.tsx offers a retry.
-  const products = await getProducts();
-
-  // Grouped by category, in the catalogue's own order; each group shows its own name and its pieces.
-  const groups = new Map<string, { name: string; items: Product[] }>();
-  for (const p of products) {
-    const name = locale === "ar" ? p.categoryNameAr : p.categoryNameEn;
-    const group = groups.get(p.category) ?? { name, items: [] };
-    group.items.push(p);
-    groups.set(p.category, group);
-  }
+  // No catch on the catalogue: if it cannot be loaded, error.tsx offers a retry.
+  const [t, products, prices, cashback, query] = await Promise.all([
+    getTexts(locale),
+    getProducts(),
+    getPricesOrNull(),
+    getCashback(),
+    searchParams,
+  ]);
 
   return (
     <div className="page">
@@ -44,38 +38,22 @@ export default async function MakingChargesPage({ params }: PageProps<"/[locale]
             <h1>{t.making.title}</h1>
             <p className="buy-note" style={{ maxWidth: "70ch", marginTop: "var(--s2)" }}>{t.making.intro}</p>
 
-            {groups.size === 0 ? (
+            {products.length === 0 ? (
               <p className="buy-note">{t.making.empty}</p>
             ) : (
-              [...groups.values()].map((group) => (
-                <section className="pdp-section" key={group.name}>
-                  <h2>{group.name}</h2>
-                  <div className="pdp-table-wrap">
-                    <table className="pdp-table">
-                      <thead>
-                        <tr>
-                          <th scope="col">{t.making.colProduct}</th>
-                          <th scope="col">{t.making.colWeight}</th>
-                          <th scope="col">{t.making.colBrand}</th>
-                          <th scope="col">{t.making.colMaking}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {group.items.map((p) => (
-                          <tr key={p.id}>
-                            <th scope="row">{productName(p, locale)}</th>
-                            <td>{weightLabel(p.weightGrams, t)}</td>
-                            <td>{(locale === "ar" ? p.manufacturerAr : p.manufacturerEn) || "—"}</td>
-                            <td>
-                              {money(p.laborPiastres)} <small>{t.product.egp}</small>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              ))
+              // A kind and a weight (the first of each until the visitor picks), then that piece
+              // from every brand: price, cashback with and without packaging, and add to cart.
+              <div className="cmp">
+                <CompareTool
+                  products={products}
+                  prices={prices}
+                  cashback={cashback}
+                  offered={ALL_KINDS}
+                  details={false}
+                  kind={isKind(query.c) ? query.c : undefined}
+                  weight={typeof query.w === "string" ? Number(query.w) : undefined}
+                />
+              </div>
             )}
 
             <p className="buy-note" style={{ marginTop: "var(--s6)" }}>{t.making.note}</p>

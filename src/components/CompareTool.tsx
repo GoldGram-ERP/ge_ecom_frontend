@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { fmt } from "@/i18n";
 import { cairoTime, karatLabel, pounds, productName, weightLabel, weightText } from "@/lib/format";
-import { KINDS, type Kind, kindOf } from "@/lib/kinds";
+import { KINDS, type Kind, pieceKind } from "@/lib/kinds";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
 import type { Prices, Product } from "@/lib/types";
@@ -14,11 +14,12 @@ import { AddButton } from "./ShopGrid";
 import { Select } from "./controls";
 
 const weightsOf = (products: Product[], kind: Kind) =>
-  [...new Set(products.filter((p) => kindOf(p) === kind).map((p) => p.weightGrams))].sort((a, b) => a - b);
+  [...new Set(products.filter((p) => pieceKind(p) === kind).map((p) => p.weightGrams))].sort((a, b) => a - b);
 
 /**
  * The compare page's tool: a kind and a weight, then that piece from every brand with its live
  * price and buy-back, and what to know about it. The choice is kept in the address to be shared.
+ * The making-charges page shows the table alone (`details` off) and offers worn pieces too.
  */
 export function CompareTool({
   products: rendered,
@@ -26,6 +27,8 @@ export function CompareTool({
   cashback,
   kind: askedKind,
   weight: askedWeight,
+  offered = KINDS,
+  details = true,
 }: {
   products: Product[];
   prices: Prices | null;
@@ -33,12 +36,16 @@ export function CompareTool({
   cashback: { sealed: number; opened: number };
   kind?: Kind;
   weight?: number;
+  /** The kinds the first list offers, in its order; a kind with no pieces is left out. */
+  offered?: readonly Kind[];
+  /** Whether the "about" and questions section follows the table. */
+  details?: boolean;
 }) {
   const { locale, t, href } = useI18n();
   const products = useLiveProducts(rendered);
   const { prices } = useLivePrices({ prices: initialPrices });
 
-  const kinds = KINDS.filter((k) => rendered.some((p) => kindOf(p) === k));
+  const kinds = offered.filter((k) => rendered.some((p) => pieceKind(p) === k));
   const startKind = askedKind && kinds.includes(askedKind) ? askedKind : kinds[0];
   const startWeights = weightsOf(rendered, startKind);
   const [choice, setChoice] = useState(() => ({
@@ -54,7 +61,7 @@ export function CompareTool({
   };
 
   const rows = products
-    .filter((p) => kindOf(p) === choice.kind && p.weightGrams === choice.weight)
+    .filter((p) => pieceKind(p) === choice.kind && p.weightGrams === choice.weight)
     .sort((a, b) => a.pricePiastres - b.pricePiastres);
   const brand = (p: Product) => (locale === "ar" ? p.manufacturerAr : p.manufacturerEn) || productName(p, locale);
   const egp = (piastres: number) => (
@@ -75,7 +82,14 @@ export function CompareTool({
     return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
   };
 
-  const template = choice.kind === "silver" ? t.compare.nameSilver : choice.kind === "pounds" ? t.compare.namePound : t.compare.nameBar;
+  const template =
+    choice.kind === "silver"
+      ? t.compare.nameSilver
+      : choice.kind === "pounds"
+        ? t.compare.namePound
+        : choice.kind === "wear"
+          ? t.compare.nameWear
+          : t.compare.nameBar;
   const name = fmt(template, { w: weightText(choice.weight) });
   const cheapest = rows[0];
   const dearest = rows[rows.length - 1];
@@ -191,7 +205,7 @@ export function CompareTool({
       </div>
       <p className="cmp-note">{t.compare.note}</p>
 
-      {info && cheapest ? (
+      {details && info && cheapest ? (
         <div className="pr-read cmp-info">
           <section aria-labelledby="cmp-about">
             <h2 id="cmp-about">{fmt(t.compare.about, { name })}</h2>
