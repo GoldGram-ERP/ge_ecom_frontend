@@ -205,6 +205,7 @@ export const ar: Dict = {
     nameSilver: "سبيكة فضة {w} جرام",
     namePound: "جنيه ذهب {w} جرام",
     nameWear: "قطعة للارتداء {w} جرام",
+    noneOfKind: "لا توجد قطع من هذا النوع حاليًا.",
     gold: "الذهب",
     silver: "الفضة",
     about: "عن {name}",
@@ -367,6 +368,7 @@ export const ar: Dict = {
     add: "أضف إلى السلة",
     added: "تمت الإضافة",
     outOfStock: "غير متوفر",
+    allInCart: "كل الكمية المتاحة في سلتك",
     empty: "لا توجد قطع في هذا القسم حاليًا.",
     filterLabel: "تصفية القطع",
     assure: [

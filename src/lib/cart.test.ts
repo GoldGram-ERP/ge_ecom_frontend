@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addLine, countItems, dropProducts, MAX_LINES, MAX_QTY, parseCart, removeOne } from "./cart";
+import { addLine, countItems, dropProducts, MAX_LINES, MAX_QTY, parseCart, qtyLimit, qtyOf, removeOne } from "./cart";
 
 describe("parseCart (EC-16)", () => {
   it("reads a stored cart", () => {
@@ -45,6 +45,17 @@ describe("cart operations", () => {
     expect(addLine([{ productId: 5, qty: MAX_QTY }], 5)).toEqual([{ productId: 5, qty: MAX_QTY }]);
     const full = Array.from({ length: MAX_LINES }, (_, i) => ({ productId: i + 1, qty: 1 }));
     expect(addLine(full, 999)).toHaveLength(MAX_LINES);
+  });
+  it("stops at the piece's stock when the shop counts it", () => {
+    const two = addLine(addLine([], 5, 2), 5, 2);
+    expect(two).toEqual([{ productId: 5, qty: 2 }]);
+    expect(addLine(two, 5, 2)).toBe(two);
+    expect(addLine([], 5, 0)).toEqual([]);
+    expect(qtyOf(two, 5)).toBe(2);
+    expect(qtyOf(two, 6)).toBe(0);
+    expect(qtyLimit(null)).toBe(MAX_QTY);
+    expect(qtyLimit(500)).toBe(MAX_QTY);
+    expect(qtyLimit(3)).toBe(3);
   });
   it("removes one at a time and drops the line at zero", () => {
     const two = [{ productId: 5, qty: 2 }, { productId: 8, qty: 1 }];

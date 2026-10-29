@@ -49,6 +49,7 @@ export default async function MakingChargesPage({ params, searchParams }: PagePr
                   prices={prices}
                   cashback={cashback}
                   offered={ALL_KINDS}
+                  allKinds
                   details={false}
                   kind={isKind(query.c) ? query.c : undefined}
                   weight={typeof query.w === "string" ? Number(query.w) : undefined}

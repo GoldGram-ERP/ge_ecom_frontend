@@ -203,6 +203,7 @@ export const en = {
     nameSilver: "{w} g silver bar",
     namePound: "{w} g gold pound",
     nameWear: "{w} g wearable piece",
+    noneOfKind: "No pieces of this kind right now.",
     gold: "gold",
     silver: "silver",
     about: "About the {name}",
@@ -365,6 +366,7 @@ export const en = {
     add: "Add to cart",
     added: "Added",
     outOfStock: "Out of stock",
+    allInCart: "All available are in your cart",
     empty: "No pieces in this category right now.",
     filterLabel: "Filter the pieces",
     assure: [

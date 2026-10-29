@@ -66,6 +66,8 @@ export interface Product {
   laborPiastres: number;
   pricePiastres: number;
   inStock: boolean;
+  /** How many can be ordered; null or absent when the shop does not count stock (no limit). */
+  stock?: number | null;
   descriptionEn: string;
   descriptionAr: string;
   /** Its photos, first one first: `/api/products/:id/images/:imageId`. */
@@ -111,6 +113,8 @@ export interface QuoteLine {
   lineTotalPiastres: number;
   /** The product's first photo, null when it has none. */
   imageId: number | null;
+  /** How many can be ordered; null or absent when the shop does not count stock (no limit). */
+  stock?: number | null;
 }
 
 export interface Quote {

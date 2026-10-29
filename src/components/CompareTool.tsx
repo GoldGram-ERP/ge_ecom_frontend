@@ -28,6 +28,7 @@ export function CompareTool({
   kind: askedKind,
   weight: askedWeight,
   offered = KINDS,
+  allKinds = false,
   details = true,
 }: {
   products: Product[];
@@ -36,8 +37,10 @@ export function CompareTool({
   cashback: { sealed: number; opened: number };
   kind?: Kind;
   weight?: number;
-  /** The kinds the first list offers, in its order; a kind with no pieces is left out. */
+  /** The kinds the first list offers, in its order; a kind with no pieces is left out unless `allKinds`. */
   offered?: readonly Kind[];
+  /** Offer every kind of `offered` even with no pieces: the table then says there are none. */
+  allKinds?: boolean;
   /** Whether the "about" and questions section follows the table. */
   details?: boolean;
 }) {
@@ -45,19 +48,20 @@ export function CompareTool({
   const products = useLiveProducts(rendered);
   const { prices } = useLivePrices({ prices: initialPrices });
 
-  const kinds = offered.filter((k) => rendered.some((p) => pieceKind(p) === k));
+  const kinds = allKinds ? offered : offered.filter((k) => rendered.some((p) => pieceKind(p) === k));
   const startKind = askedKind && kinds.includes(askedKind) ? askedKind : kinds[0];
   const startWeights = weightsOf(rendered, startKind);
-  const [choice, setChoice] = useState(() => ({
+  // No weight only for a kind with no pieces (allKinds).
+  const [choice, setChoice] = useState<{ kind: Kind; weight: number | undefined }>(() => ({
     kind: startKind,
     weight: askedWeight !== undefined && startWeights.includes(askedWeight) ? askedWeight : startWeights[0],
   }));
   const weights = weightsOf(rendered, choice.kind);
 
-  const pick = (kind: Kind, weight: number) => {
+  const pick = (kind: Kind, weight: number | undefined) => {
     setChoice({ kind, weight });
     // Next.js keeps its router in step with the native history calls.
-    window.history.replaceState(null, "", `?c=${kind}&w=${weight}`);
+    window.history.replaceState(null, "", weight === undefined ? `?c=${kind}` : `?c=${kind}&w=${weight}`);
   };
 
   const rows = products
@@ -90,7 +94,7 @@ export function CompareTool({
         : choice.kind === "wear"
           ? t.compare.nameWear
           : t.compare.nameBar;
-  const name = fmt(template, { w: weightText(choice.weight) });
+  const name = choice.weight === undefined ? t.compare.kinds[choice.kind] : fmt(template, { w: weightText(choice.weight) });
   const cheapest = rows[0];
   const dearest = rows[rows.length - 1];
   const time = prices ? cairoTime(prices.updatedAt) : "";
@@ -163,10 +167,10 @@ export function CompareTool({
         <div className="f">
           <span id="cmp-weight-label">{t.compare.weight}</span>
           <Select
-            value={String(choice.weight)}
-            onChange={(weight) => pick(choice.kind, Number(weight))}
+            value={choice.weight === undefined ? "none" : String(choice.weight)}
+            onChange={(weight) => (weight === "none" ? undefined : pick(choice.kind, Number(weight)))}
             aria-labelledby="cmp-weight-label"
-            options={weights.map((w) => [String(w), weightLabel(w, t)] as const)}
+            options={weights.length ? weights.map((w) => [String(w), weightLabel(w, t)] as const) : [["none", "—"] as const]}
           />
         </div>
       </div>
@@ -186,6 +190,13 @@ export function CompareTool({
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="cmp-none">
+                  {t.compare.noneOfKind}
+                </td>
+              </tr>
+            ) : null}
             {rows.map((p, index) => (
               <tr key={p.id} data-product={p.id}>
                 <th scope="row">
@@ -196,7 +207,7 @@ export function CompareTool({
                 <td className="cmp-with">{buyback(p, cashback.sealed) !== null ? egp(buyback(p, cashback.sealed)!) : ask}</td>
                 <td className="cmp-without">{buyback(p, cashback.opened) !== null ? egp(buyback(p, cashback.opened)!) : ask}</td>
                 <td className="cmp-add">
-                  <AddButton productId={p.id} inStock={p.inStock !== false} />
+                  <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
                 </td>
               </tr>
             ))}

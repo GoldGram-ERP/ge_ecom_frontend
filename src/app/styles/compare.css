@@ -22,3 +22,4 @@ html[lang="ar"] .cmp-info h2{ letter-spacing:0; }
 @media (max-width:480px){
   .cmp .cmp-pick{ grid-template-columns:1fr; }
 }
+.cmp .cmp-table .cmp-none{ text-align:center; color:var(--muted); padding:var(--s4) var(--s2); }
