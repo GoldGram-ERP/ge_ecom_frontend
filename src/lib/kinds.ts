@@ -1,4 +1,4 @@
-import type { Product } from "./types";
+import { isWearable, type Product } from "./types";
 
 // What kind of piece a product is, derived from what the dashboard already stores (no field of
 // its own): silver is the 999 metal, pounds are the coin category, and every other gold piece
@@ -23,7 +23,7 @@ export const isKind = (value: unknown): value is Kind => (ALL_KINDS as readonly 
 
 /** The kind of a piece; null for one worn as jewellery, which the compare page leaves out. */
 export function kindOf(p: Kindable): Exclude<Kind, "wear"> | null {
-  if (p.category === "wear") return null;
+  if (isWearable(p.category)) return null;
   if (isSilver(p)) return "silver";
   if (p.category === "coin") return "pounds";
   return isSmall(p.weightGrams) ? "small" : "large";

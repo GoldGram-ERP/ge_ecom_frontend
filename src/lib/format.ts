@@ -1,5 +1,5 @@
 import { fmt, type Dict, type Locale } from "@/i18n";
-import type { Category, Product } from "./types";
+import { type Category, isWearable, type Product } from "./types";
 
 // Western digits and separators in both languages, as in the Arabic prototype.
 const whole = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -30,7 +30,7 @@ type Describable = Pick<Product, "category" | "weightGrams" | "karat">;
 
 /** What a piece is besides its weight: "999.9", "21K", "mounted". */
 export function productPurity(p: Describable, t: Dict): string {
-  if (p.category === "wear") return t.product.mounted;
+  if (isWearable(p.category)) return t.product.mounted;
   if (p.category === "bar" && p.karat === 24) return "999.9";
   return karatLabel(p.karat, t);
 }
@@ -67,7 +67,7 @@ export function artStyle(category: Category, rank: number): React.CSSProperties 
     const size = COIN[Math.min(rank, COIN.length - 1)];
     return { width: size, height: size };
   }
-  if (category === "wear") {
+  if (isWearable(category)) {
     const [size, borderWidth] = RING[Math.min(rank, RING.length - 1)];
     return { width: size, height: size, borderWidth };
   }

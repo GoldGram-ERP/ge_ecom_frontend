@@ -1,19 +1,21 @@
 import type { Dict } from "@/i18n";
+import { WEARABLE } from "./types";
 
 /** Not a catalogue slug: the silver page's marker. /silver is the metal, not a category. */
 export const SILVER = "@silver";
 
 /**
  * Clean, SEO-friendly URLs (the URL Map) mapped to the catalogue's own category slugs, so the
- * shop's filters and data stay unchanged: /en/gold-bars renders the "bar" category. /silver is
- * the metal, not a category: every 999 piece, whatever its category (the old /shop?m=silver).
+ * shop's filters and data stay unchanged: /en/gold-bars renders the "bar" category. A page may
+ * answer to several slugs (the wearable one was renamed). /silver is the metal, not a category:
+ * every 999 piece, whatever its category (the old /shop?m=silver).
  */
-export const CATEGORY_URLS: Record<string, string> = {
-  "gold-bars": "bar",
-  "gold-coins": "coin",
-  "gold-ingots": "ingot",
-  pendants: "wear",
-  silver: SILVER,
+export const CATEGORY_URLS: Record<string, readonly string[]> = {
+  "gold-bars": ["bar"],
+  "gold-coins": ["coin"],
+  "gold-ingots": ["ingot"],
+  pendants: WEARABLE,
+  silver: [SILVER],
 };
 
 /** Old addresses of these pages, kept working: each answers with a permanent redirect. */
@@ -39,7 +41,7 @@ export const SHOP_LINKS: readonly { label: keyof Dict["nav"]; path: string }[] =
  */
 export function filterPath(filter: string): string {
   if (filter === "all") return "/shop";
-  const url = Object.keys(CATEGORY_URLS).find((u) => CATEGORY_URLS[u] === filter);
+  const url = Object.keys(CATEGORY_URLS).find((u) => CATEGORY_URLS[u].includes(filter));
   if (url) return `/${url}`;
   if (filter === "silver") return "/silver";
   return `/shop?c=${encodeURIComponent(filter)}`;
