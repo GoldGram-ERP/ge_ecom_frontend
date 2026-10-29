@@ -28,42 +28,55 @@ function NavMenuItem({ item }: { item: NavItem }) {
 }
 
 /**
- * A header entry with a submenu. When `href` is set the label is a link (click goes there,
- * e.g. "Shop" opens the full shop) and the submenu opens on hover; without it the label is a
- * button that opens the submenu on click.
+ * A header entry with a submenu, which opens on hover with a mouse. When `href` is set the label
+ * is a link (click goes there, e.g. "Shop" opens the full shop); without it the label is a button,
+ * and a tap or the keyboard opens the submenu.
  */
 function NavDropdown({ label, items, className, href }: { label: string; items: NavItem[]; className: string; href?: string }) {
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openNow = () => {
+  // Hover is a mouse thing: a tap also sends pointerenter, and must stay a plain toggle.
+  const openNow = (event: React.PointerEvent) => {
+    if (event.pointerType !== "mouse") return;
     if (timer.current) clearTimeout(timer.current);
     setOpen(true);
   };
-  const closeSoon = () => {
+  const closeSoon = (event: React.PointerEvent) => {
+    if (event.pointerType !== "mouse") return;
     timer.current = setTimeout(() => setOpen(false), 120);
   };
+  // The mouse already opened it by hovering: a click on the label must not shut it again. That
+  // press asks to close twice (the label's toggle, then "pressed outside the menu"), so both are
+  // ignored until the press has been handled.
+  const mousePress = useRef(false);
+  const change = (next: boolean) => {
+    if (!next && mousePress.current) return;
+    setOpen(next);
+  };
   return (
-    <DropdownMenu.Root open={open} onOpenChange={setOpen} modal={false}>
-      <span className="nav-dd-wrap" onPointerEnter={href ? openNow : undefined} onPointerLeave={href ? closeSoon : undefined}>
+    <DropdownMenu.Root open={open} onOpenChange={change} modal={false}>
+      <span className="nav-dd-wrap" onPointerEnter={openNow} onPointerLeave={closeSoon}>
         <DropdownMenu.Trigger asChild>
           {href ? (
             <Link className={`navlink ${className}`} href={href} onClick={() => setOpen(false)}>
               {label} <span aria-hidden="true">▾</span>
             </Link>
           ) : (
-            <button type="button" className={`navlink ${className}`}>
+            <button
+              type="button"
+              className={`navlink ${className}`}
+              onPointerDown={(event) => {
+                if (event.pointerType !== "mouse") return;
+                mousePress.current = true;
+                setTimeout(() => (mousePress.current = false));
+              }}
+            >
               {label} <span aria-hidden="true">▾</span>
             </button>
           )}
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content
-            className="nav-menu"
-            align="start"
-            sideOffset={8}
-            onPointerEnter={href ? openNow : undefined}
-            onPointerLeave={href ? closeSoon : undefined}
-          >
+          <DropdownMenu.Content className="nav-menu" align="start" sideOffset={8} onPointerEnter={openNow} onPointerLeave={closeSoon}>
             {items.map((item) => (
               <NavMenuItem key={item.label} item={item} />
             ))}
