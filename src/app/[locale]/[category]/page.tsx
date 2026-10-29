@@ -47,10 +47,14 @@ export default async function CategoryPage({ params }: PageProps<"/[locale]/[cat
   const slug = CATEGORY_URLS[category];
   if (!slug) notFound();
   const t = await getTexts(locale);
-  const products = pick(await getProducts(), slug);
+  const all = await getProducts();
+  const products = pick(all, slug);
   // The menu always links silver, so its page stays up (empty) when there is none on sale.
   const name = await pageName(locale, slug, products);
   if (name === null) notFound();
+  // The grid gets every piece, with all the shop's filters, and starts on this page's own: the
+  // category, or for silver the category its pieces are in (none on sale: an empty filter).
+  const initial = slug === SILVER ? (products[0]?.category ?? "silver") : slug;
 
   return (
     <div className="page buy-page">
@@ -62,7 +66,7 @@ export default async function CategoryPage({ params }: PageProps<"/[locale]/[cat
               <h1>{name}</h1>
               <Link href={localePath(locale, `/shop`)}>{t.shop.all}</Link>
             </div>
-            <ShopGrid products={products} initial={slug === SILVER ? "all" : slug} />
+            <ShopGrid products={all} initial={initial} />
             <div className="assure">
               {t.shop.assure.map((item) => (
                 <div className="as" key={item.t}>

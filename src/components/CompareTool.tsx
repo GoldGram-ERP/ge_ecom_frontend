@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { fmt } from "@/i18n";
-import { cairoTime, karatLabel, pounds, productName, weightLabel, weightText } from "@/lib/format";
+import { cairoTime, karatLabel, pounds, poundsParts, productName, weightLabel, weightText } from "@/lib/format";
 import { KINDS, type Kind, pieceKind } from "@/lib/kinds";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
@@ -70,11 +70,16 @@ export function CompareTool({
       {pounds(piastres)} <small>{t.product.egp}</small>
     </>
   );
-  const ask = <span className="cmp-ask">{t.compare.none}</span>;
+  // The cashback columns: the product's cashback per gram, as set in the dashboard (Cashback
+  // policies), with the packaging or without; 0 when it offers none.
+  const perGram = (p: Product, packaging: "with" | "without") => {
+    const piastres = p.cashback ? (packaging === "with" ? p.cashback.withPackagingPiastres : p.cashback.withoutPackagingPiastres) : 0;
+    return fmt(t.compare.perGram, { amount: piastres % 100 ? poundsParts(piastres).full : pounds(piastres) });
+  };
 
-  // Buy-back, live: today's metal sell value for the piece + its cashback per gram (Cashback
-  // policies in the dashboard, with the packaging or without; 0 when it offers none), each to the
-  // piastre as the sell page adds them. Null only with no price board: the table says "ask us".
+  // Buy-back, live, for the questions below the table: today's metal sell value for the piece +
+  // its cashback per gram × weight, each to the piastre as the sell page adds them; null with no
+  // price board.
   type Packaging = "with" | "without";
   const sellGram = (p: Product) =>
     (p.karat as number) === 999
@@ -204,8 +209,8 @@ export function CompareTool({
                   {index === 0 && many ? <em className="pdp-tag">{t.compare.best}</em> : null}
                 </th>
                 <td className="cmp-price">{egp(p.pricePiastres)}</td>
-                <td className="cmp-with">{buyback(p, "with") !== null ? egp(buyback(p, "with")!) : ask}</td>
-                <td className="cmp-without">{buyback(p, "without") !== null ? egp(buyback(p, "without")!) : ask}</td>
+                <td className="cmp-with">{perGram(p, "with")}</td>
+                <td className="cmp-without">{perGram(p, "without")}</td>
                 <td className="cmp-add">
                   <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
                 </td>
