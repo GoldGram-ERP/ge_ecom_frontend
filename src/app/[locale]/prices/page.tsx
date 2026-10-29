@@ -11,7 +11,7 @@ import { FaqList } from "@/components/home-client";
 import { PriceChart } from "@/components/PriceChart";
 import { fmt, hasLocale } from "@/i18n";
 import { cairoDate, cairoTime, changeLine, karatLabel, pounds, poundsParts, productName, productSub, weightText } from "@/lib/format";
-import type { Prices, Product } from "@/lib/types";
+import { isWearable, type Prices, type Product } from "@/lib/types";
 import { getPrices, getPriceHistory, getProducts } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 
@@ -30,7 +30,7 @@ function rich(template: string, values: Record<string, ReactNode>): ReactNode[] 
 /** What to buy at today's price: 24K bars of 1, 5 and 10 g and the gold pound, when the catalogue has them. */
 function picks(products: Product[]): Product[] {
   const sold = products.filter((p) => p.inStock !== false);
-  const bar = (grams: number) => sold.find((p) => p.karat === 24 && p.weightGrams === grams && p.category !== "coin" && p.category !== "wear");
+  const bar = (grams: number) => sold.find((p) => p.karat === 24 && p.weightGrams === grams && p.category !== "coin" && !isWearable(p.category));
   const pound = sold.find((p) => p.category === "coin" && p.weightGrams === 8);
   return [bar(1), bar(5), bar(10), pound].filter((p): p is Product => Boolean(p));
 }

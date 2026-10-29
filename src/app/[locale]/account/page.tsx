@@ -8,7 +8,7 @@ import { fmt, hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
 import { cairoDate, cairoHour, changeLine, changeParts, durationText, karatLabel, pounds, poundsParts, productShortName } from "@/lib/format";
 import { getMyOrders, getPrices, getProducts, getUser, showOutOfStockHome } from "@/lib/server-api";
-import type { Category, MyOrder } from "@/lib/types";
+import { type Category, isWearable, type MyOrder } from "@/lib/types";
 import { ProofUpload } from "@/components/proof-upload";
 
 const TABS = ["home", "balance", "profile"] as const;
@@ -69,7 +69,10 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
   // Bars, then the wearable piece, then the coin: the order the prototype shows them in.
   // Categories the drawings do not know come after them.
   const popularOrder: Category[] = ["bar", "wear", "coin"];
-  const place = (category: Category) => (popularOrder.indexOf(category) + popularOrder.length + 1) % (popularOrder.length + 1);
+  const place = (category: Category) => {
+    const at = popularOrder.indexOf(isWearable(category) ? "wear" : category);
+    return (at + popularOrder.length + 1) % (popularOrder.length + 1);
+  };
   const featured = products
     .filter((p) => p.featured && (withSoldOut || p.inStock !== false))
     .sort((x, y) => place(x.category) - place(y.category));

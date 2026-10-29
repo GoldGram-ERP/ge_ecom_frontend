@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isKind, isSmall, kindOf, pieceKind } from "./kinds";
+import { CATEGORY_URLS, filterPath } from "./shop-links";
 import type { Karat } from "./types";
 
 const piece = (category: string, karat: number, weightGrams: number) => ({ category, karat: karat as Karat, weightGrams });
@@ -23,5 +24,22 @@ describe("kinds", () => {
     expect(pieceKind(piece("wear", 24, 1))).toBe("wear");
     expect(pieceKind(piece("bar", 24, 100))).toBe("large");
     expect(isKind("wear")).toBe(true);
+  });
+
+  it("knows the wearable category by its new slug too", () => {
+    expect(kindOf(piece("pendants", 21, 2))).toBeNull();
+    expect(pieceKind(piece("pendants", 21, 2))).toBe("wear");
+  });
+});
+
+describe("shop addresses", () => {
+  it("send a filter to its own page, the wearable one by either slug", () => {
+    expect(filterPath("all")).toBe("/shop");
+    expect(filterPath("coin")).toBe("/gold-coins");
+    expect(filterPath("wear")).toBe("/pendants");
+    expect(filterPath("pendants")).toBe("/pendants");
+    expect(filterPath("silver")).toBe("/silver");
+    expect(filterPath("gift sets")).toBe("/shop?c=gift%20sets");
+    expect(CATEGORY_URLS.pendants).toEqual(["wear", "pendants"]);
   });
 });

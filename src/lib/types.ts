@@ -1,8 +1,15 @@
 // Shapes returned by the backend. The contract is docs/SPEC.md section 5.
 
 export type Karat = 24 | 21 | 18;
-/** A category slug as the dashboard sets it. "bar", "coin" and "wear" have their own drawing; any other is drawn as a bar. */
+/** A category slug as the dashboard sets it. "bar", "coin" and the wearable ones have their own drawing; any other is drawn as a bar. */
 export type Category = string;
+
+/**
+ * The slugs the wearable category goes by: "wear" from the start, "pendants" since the dashboard
+ * renamed it to match /pendants. Either one is the wearable category, everywhere on the site.
+ */
+export const WEARABLE: readonly Category[] = ["wear", "pendants"];
+export const isWearable = (category: Category): boolean => WEARABLE.includes(category);
 export type Fulfilment = "storage" | "branch" | "delivery";
 export type PaymentMethod = "instapay" | "bank";
 export type OrderStatus = "initiated" | "pending" | "processing" | "shipping" | "ready" | "completed" | "cancelled" | "refund";
