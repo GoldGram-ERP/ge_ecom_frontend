@@ -54,5 +54,5 @@ export function proxy(request: NextRequest) {
   return withRobots(NextResponse.rewrite(url, { request: { headers } }));
 }
 
-// Everything except the API proxy, Next internals and files with an extension.
-export const config = { matcher: ["/((?!api|_next|.*\\.).*)"] };
+// Everything except the API proxy, the dashboard's built-in wording feed, Next internals and files with an extension.
+export const config = { matcher: ["/((?!api|site-texts|_next|.*\\.).*)"] };

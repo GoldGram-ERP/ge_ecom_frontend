@@ -490,6 +490,7 @@ export const en = {
     errUnavailable: "Some pieces are no longer available and were removed from your cart.",
     errPaused: "Ordering is paused at the moment. Your cart is kept; please try again shortly.",
     errStoreClosed: "The store is closed at the moment. Your cart is kept.",
+    errOutsideHours: "Orders are taken between {open} and {close}, Cairo time. Your cart is kept; please come back then.",
     errKyc: "Your identity has not been verified yet. We will contact you, and you can order once it is approved.",
     errStock: "Some pieces are not available in the quantity you chose.",
     errNoZone: "Delivery is not available in this governorate yet. Choose collection from our branch, or call 17937.",
