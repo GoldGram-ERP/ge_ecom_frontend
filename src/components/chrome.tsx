@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
 import { SHOP_LINKS } from "@/lib/shop-links";
 import { site } from "@/lib/site";
+import { getLinks } from "@/lib/site-links";
 import type { Category } from "@/lib/types";
 
 const MINI_ART: Record<Category, React.ReactNode> = {
@@ -78,7 +79,8 @@ export function BackLink({ href, children }: { href: string; children: React.Rea
 }
 
 /** The ways to reach GoldGram. The home page lists the branch first, the help centre last, as each prototype does. */
-export function ContactRows({ t, branchLast = false }: { t: Dict; branchLast?: boolean }) {
+export async function ContactRows({ t, branchLast = false }: { t: Dict; branchLast?: boolean }) {
+  const links = await getLinks();
   const branch = (
     <a className="rr" href={site.mapUrl} target="_blank" rel="noopener noreferrer">
       <span>{t.contact.branch}</span>
@@ -94,11 +96,13 @@ export function ContactRows({ t, branchLast = false }: { t: Dict; branchLast?: b
         <b>{site.hotline}</b>
         <u>{t.contact.call}</u>
       </a>
-      <a className="rr" href={site.whatsappUrl}>
+      {links.whatsappUrl && (
+      <a className="rr" href={links.whatsappUrl}>
         <span>{t.contact.whatsapp}</span>
         <b>{t.contact.message}</b>
         <u>{t.contact.open}</u>
       </a>
+      )}
       <a className="rr" href={`mailto:${site.email}`}>
         <span>{t.contact.email}</span>
         <b>{site.email}</b>
@@ -114,10 +118,12 @@ export function ContactRows({ t, branchLast = false }: { t: Dict; branchLast?: b
 }
 
 /** The App Store and Google Play buttons: the home hero and the footer. */
-export function StoreButtons({ t }: { t: Dict }) {
+export async function StoreButtons({ t }: { t: Dict }) {
+  const links = await getLinks();
   return (
     <div className="stores">
-      <a className="store" href={site.iosUrl}>
+      {links.iosUrl && (
+      <a className="store" href={links.iosUrl}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M16.3 12.7c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2s-2.2-.8-2.2-3.2z" />
           <path d="M14.6 6.3c.5-.7.9-1.6.8-2.6-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.8 2.5.9.1 1.8-.4 2.4-1.1z" />
@@ -127,7 +133,9 @@ export function StoreButtons({ t }: { t: Dict }) {
           <b>{t.hero.appStore}</b>
         </span>
       </a>
-      <a className="store" href={site.androidUrl}>
+      )}
+      {links.androidUrl && (
+      <a className="store" href={links.androidUrl}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 3.2v17.6c0 .4.2.7.5.9l9.2-9.7L4.5 2.3c-.3.2-.5.5-.5.9z" />
           <path d="M17.2 8.6 6.1 2.3l8.4 8.9 2.7-2.6z" />
@@ -139,6 +147,7 @@ export function StoreButtons({ t }: { t: Dict }) {
           <b>{t.hero.googlePlay}</b>
         </span>
       </a>
+      )}
     </div>
   );
 }
@@ -147,7 +156,8 @@ export function StoreButtons({ t }: { t: Dict }) {
  * The footer of every page (mounted once, in the layout): the brand and how to reach us, then
  * what to shop, the services offered today, the company, and the legal line.
  */
-export function Footer({ t, locale }: { t: Dict; locale: Locale }) {
+export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
+  const links = await getLinks();
   const to = (path: string) => localePath(locale, `${path}`);
   const columns: { title: string; links: [string, string][] }[] = [
     {
@@ -219,30 +229,38 @@ export function Footer({ t, locale }: { t: Dict; locale: Locale }) {
         </div>
         <div className="sf-base">
           <div className="social">
-            <a className="soc" href={site.instagramUrl} aria-label={t.footer.instagram}>
+            {links.instagramUrl && (
+            <a className="soc" href={links.instagramUrl} aria-label={t.footer.instagram}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5" />
                 <circle cx="12" cy="12" r="4.1" />
                 <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" stroke="none" />
               </svg>
             </a>
-            <a className="soc" href={site.facebookUrl} aria-label={t.footer.facebook}>
+            )}
+            {links.facebookUrl && (
+            <a className="soc" href={links.facebookUrl} aria-label={t.footer.facebook}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14.6 21v-7.4h2.5l.4-2.9h-2.9V8.9c0-.8.2-1.4 1.4-1.4h1.6V4.9c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H8.9v2.9h2.5V21z" />
               </svg>
             </a>
-            <a className="soc" href={site.tiktokUrl} aria-label={t.footer.tiktok}>
+            )}
+            {links.tiktokUrl && (
+            <a className="soc" href={links.tiktokUrl} aria-label={t.footer.tiktok}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14.3 3.2v11.3a3 3 0 11-2.6-3v2.6a.9.9 0 100 .9V3.2z" />
                 <path d="M14.3 3.2c.4 2 1.9 3.5 3.9 3.8v2.6a6.6 6.6 0 01-3.9-1.4" />
               </svg>
             </a>
-            <a className="soc" href={site.whatsappUrl} aria-label={t.footer.whatsapp}>
+            )}
+            {links.whatsappUrl && (
+            <a className="soc" href={links.whatsappUrl} aria-label={t.footer.whatsapp}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M20.3 11.7a8.2 8.2 0 01-12.2 7.1L3.9 20l1.3-4a8.2 8.2 0 1115.1-4.3z" />
                 <path d="M9.2 8.7c.3-.1.6 0 .8.3l.8 1.2c.2.3.1.6-.1.8l-.5.5c.5 1 1.3 1.8 2.3 2.3l.5-.5c.2-.2.5-.3.8-.1l1.2.8c.3.2.4.5.3.8-.3.8-1.1 1.3-2 1.2a7.4 7.4 0 01-5.5-5.5c-.1-.9.4-1.7 1.2-2z" />
               </svg>
             </a>
+            )}
           </div>
           <p>{t.footer.legal}</p>
         </div>
