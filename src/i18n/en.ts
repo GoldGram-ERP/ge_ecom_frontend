@@ -252,7 +252,7 @@ export const en = {
     silverNote: "Your total is below the gold nisab but reaches the silver nisab of {nisab} EGP. Some scholars apply the lower silver nisab, especially to cash; ask a scholar which applies to you. At {rate}% it would be {amount} EGP.",
     nisabTitle: "The nisab today",
     nisabGold: "{g} g of {k} gold",
-    nisabGoldNote: "The gold nisab is 97 grams of 21 karat.",
+    nisabGoldNote: "The gold nisab is 97 grams of 21 karat, or 85 grams of 24 karat.",
     nisabSilver: "{g} g of silver",
     nisabNote: "The calculator applies the gold nisab, as Egypt's Dar al-Ifta commonly advises. The silver nisab is lower; some scholars prefer it.",
     priceNote: "Gold and silver are valued at GoldGram's buy-back (sell) price per gram of {time} Cairo time: what they would fetch if sold today.",
