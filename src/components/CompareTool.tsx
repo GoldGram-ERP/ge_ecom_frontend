@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { fmt } from "@/i18n";
 import { cairoTime, karatLabel, pounds, poundsParts, productName, weightLabel, weightText } from "@/lib/format";
 import { KINDS, type Kind, pieceKind } from "@/lib/kinds";
@@ -16,10 +16,13 @@ import { Select } from "./controls";
 const weightsOf = (products: Product[], kind: Kind) =>
   [...new Set(products.filter((p) => pieceKind(p) === kind).map((p) => p.weightGrams))].sort((a, b) => a - b);
 
+const allWeights = (products: Product[]) => [...new Set(products.map((p) => p.weightGrams))].sort((a, b) => a - b);
+
 /**
  * The compare page's tool: a kind and a weight, then that piece from every brand with its live
  * price and buy-back, and what to know about it. The choice is kept in the address to be shared.
- * The making-charges page shows the table alone (`details` off) and offers worn pieces too.
+ * The making-charges page shows the table alone (`details` off), offers worn pieces too, and with
+ * `showAll` starts on every kind and weight, grouped, with "All" in both lists.
  */
 export function CompareTool({
   products: rendered,
@@ -29,6 +32,7 @@ export function CompareTool({
   offered = KINDS,
   allKinds = false,
   details = true,
+  showAll = false,
 }: {
   products: Product[];
   prices: Prices | null;
@@ -40,6 +44,8 @@ export function CompareTool({
   allKinds?: boolean;
   /** Whether the "about" and questions section follows the table. */
   details?: boolean;
+  /** Start on every kind and weight, grouped, with an "All" option in both filters (making charges). */
+  showAll?: boolean;
 }) {
   const { locale, t, href } = useI18n();
   const products = useLiveProducts(rendered);
@@ -48,21 +54,32 @@ export function CompareTool({
   const kinds = allKinds ? offered : offered.filter((k) => rendered.some((p) => pieceKind(p) === k));
   const startKind = askedKind && kinds.includes(askedKind) ? askedKind : kinds[0];
   const startWeights = weightsOf(rendered, startKind);
-  // No weight only for a kind with no pieces (allKinds).
-  const [choice, setChoice] = useState<{ kind: Kind; weight: number | undefined }>(() => ({
-    kind: startKind,
-    weight: askedWeight !== undefined && startWeights.includes(askedWeight) ? askedWeight : startWeights[0],
-  }));
-  const weights = weightsOf(rendered, choice.kind);
+  // No weight only for a kind with no pieces (allKinds), or for "all kinds" on the making-charges page.
+  const [choice, setChoice] = useState<{ kind: Kind | undefined; weight: number | undefined }>(() => {
+    if (!showAll) {
+      return {
+        kind: startKind,
+        weight: askedWeight !== undefined && startWeights.includes(askedWeight) ? askedWeight : startWeights[0],
+      };
+    }
+    const kind = askedKind && kinds.includes(askedKind) ? askedKind : undefined;
+    const weights = kind ? weightsOf(rendered, kind) : allWeights(rendered);
+    return { kind, weight: askedWeight !== undefined && weights.includes(askedWeight) ? askedWeight : undefined };
+  });
+  const weights = choice.kind ? weightsOf(rendered, choice.kind) : allWeights(rendered);
 
-  const pick = (kind: Kind, weight: number | undefined) => {
+  const pick = (kind: Kind | undefined, weight: number | undefined) => {
     setChoice({ kind, weight });
     // Next.js keeps its router in step with the native history calls.
-    window.history.replaceState(null, "", weight === undefined ? `?c=${kind}` : `?c=${kind}&w=${weight}`);
+    const params = new URLSearchParams();
+    if (kind !== undefined) params.set("c", kind);
+    if (weight !== undefined) params.set("w", String(weight));
+    const query = params.toString();
+    window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   };
 
   const rows = products
-    .filter((p) => pieceKind(p) === choice.kind && p.weightGrams === choice.weight)
+    .filter((p) => (choice.kind === undefined || pieceKind(p) === choice.kind) && (choice.weight === undefined || p.weightGrams === choice.weight))
     .sort((a, b) => a.pricePiastres - b.pricePiastres);
   const brand = (p: Product) => (locale === "ar" ? p.manufacturerAr : p.manufacturerEn) || productName(p, locale);
   const egp = (piastres: number) => (
@@ -91,19 +108,29 @@ export function CompareTool({
     return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
   };
 
-  const template =
-    choice.kind === "silver"
-      ? t.compare.nameSilver
-      : choice.kind === "pounds"
-        ? t.compare.namePound
-        : choice.kind === "wear"
-          ? t.compare.nameWear
-          : t.compare.nameBar;
-  const name = choice.weight === undefined ? t.compare.kinds[choice.kind] : fmt(template, { w: weightText(choice.weight) });
+  const pieceName = (kind: Kind, weight: number) => {
+    const template = kind === "silver" ? t.compare.nameSilver : kind === "pounds" ? t.compare.namePound : kind === "wear" ? t.compare.nameWear : t.compare.nameBar;
+    return fmt(template, { w: weightText(weight) });
+  };
+  const name = choice.kind === undefined ? t.compare.all : choice.weight === undefined ? t.compare.kinds[choice.kind] : pieceName(choice.kind, choice.weight);
   const cheapest = rows[0];
   const dearest = rows[rows.length - 1];
   const time = prices ? cairoTime(prices.updatedAt) : "";
   const many = rows.length > 1;
+  // The full making-charges table is read in groups: a heading per kind and weight, then its brands.
+  const groups: { kind: Kind; weight: number; rows: Product[] }[] = [];
+  if (showAll) {
+    for (const p of rows) {
+      const kind = pieceKind(p);
+      let group = groups.find((g) => g.kind === kind && g.weight === p.weightGrams);
+      if (!group) {
+        group = { kind, weight: p.weightGrams, rows: [] };
+        groups.push(group);
+      }
+      group.rows.push(p);
+    }
+    groups.sort((a, b) => kinds.indexOf(a.kind) - kinds.indexOf(b.kind) || a.weight - b.weight);
+  }
 
   let info: { about: string; faq: { q: string; a: string }[] } | null = null;
   if (cheapest) {
@@ -157,26 +184,59 @@ export function CompareTool({
     };
   }
 
+  const renderRow = (p: Product, index: number, size: number) => (
+    <tr key={p.id} data-product={p.id}>
+      <th scope="row">
+        {brand(p)}
+        {index === 0 && size > 1 ? <em className="pdp-tag">{t.compare.best}</em> : null}
+      </th>
+      <td className="cmp-price">{egp(p.pricePiastres)}</td>
+      <td className="cmp-with">{perGram(p, "with")}</td>
+      <td className="cmp-without">{perGram(p, "without")}</td>
+      <td className="cmp-add">
+        <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
+      </td>
+    </tr>
+  );
+
   return (
     <>
       <div className="cmp-pick">
         <div className="f">
           <span id="cmp-kind-label">{t.compare.kind}</span>
-          <Select
-            value={choice.kind}
-            onChange={(kind) => pick(kind, weightsOf(rendered, kind)[0])}
-            aria-labelledby="cmp-kind-label"
-            options={kinds.map((k) => [k, t.compare.kinds[k]] as const)}
-          />
+          {showAll ? (
+            <Select
+              value={choice.kind ?? "all"}
+              onChange={(kind) => (kind === "all" ? pick(undefined, undefined) : pick(kind, undefined))}
+              aria-labelledby="cmp-kind-label"
+              options={[["all", t.compare.all] as const, ...kinds.map((k) => [k, t.compare.kinds[k]] as const)]}
+            />
+          ) : (
+            <Select
+              value={choice.kind ?? startKind}
+              onChange={(kind) => pick(kind, weightsOf(rendered, kind)[0])}
+              aria-labelledby="cmp-kind-label"
+              options={kinds.map((k) => [k, t.compare.kinds[k]] as const)}
+            />
+          )}
         </div>
         <div className="f">
           <span id="cmp-weight-label">{t.compare.weight}</span>
-          <Select
-            value={choice.weight === undefined ? "none" : String(choice.weight)}
-            onChange={(weight) => (weight === "none" ? undefined : pick(choice.kind, Number(weight)))}
-            aria-labelledby="cmp-weight-label"
-            options={weights.length ? weights.map((w) => [String(w), weightLabel(w, t)] as const) : [["none", "—"] as const]}
-          />
+          {showAll ? (
+            <Select
+              value={choice.weight === undefined ? "all" : String(choice.weight)}
+              onChange={(weight) => pick(choice.kind, weight === "all" ? undefined : Number(weight))}
+              aria-labelledby="cmp-weight-label"
+              options={[["all", t.compare.all] as const, ...weights.map((w) => [String(w), weightLabel(w, t)] as const)]}
+            />
+          ) : (
+            <Select
+              value={choice.weight === undefined ? "none" : String(choice.weight)}
+              onChange={(weight) => (weight === "none" ? undefined : pick(choice.kind, Number(weight)))}
+              aria-labelledby="cmp-weight-label"
+              options={weights.length ? weights.map((w) => [String(w), weightLabel(w, t)] as const) : [["none", "—"] as const]}
+            />
+          )}
         </div>
       </div>
 
@@ -202,20 +262,18 @@ export function CompareTool({
                 </td>
               </tr>
             ) : null}
-            {rows.map((p, index) => (
-              <tr key={p.id} data-product={p.id}>
-                <th scope="row">
-                  {brand(p)}
-                  {index === 0 && many ? <em className="pdp-tag">{t.compare.best}</em> : null}
-                </th>
-                <td className="cmp-price">{egp(p.pricePiastres)}</td>
-                <td className="cmp-with">{perGram(p, "with")}</td>
-                <td className="cmp-without">{perGram(p, "without")}</td>
-                <td className="cmp-add">
-                  <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
-                </td>
-              </tr>
-            ))}
+            {showAll
+              ? groups.map((group) => (
+                  <Fragment key={`${group.kind}-${group.weight}`}>
+                    <tr className="cmp-group">
+                      <th scope="colgroup" colSpan={5}>
+                        {pieceName(group.kind, group.weight)}
+                      </th>
+                    </tr>
+                    {group.rows.map((p, index) => renderRow(p, index, group.rows.length))}
+                  </Fragment>
+                ))
+              : rows.map((p, index) => renderRow(p, index, rows.length))}
           </tbody>
         </table>
       </div>
