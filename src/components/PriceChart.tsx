@@ -4,7 +4,8 @@ import { useId, useRef, useState } from "react";
 import { fmt } from "@/i18n";
 import { api } from "@/lib/client-api";
 import { cairoDate, cairoTime, poundsParts } from "@/lib/format";
-import type { PriceHistory } from "@/lib/types";
+import { useLivePrices } from "@/lib/live-prices";
+import type { PriceHistory, Prices } from "@/lib/types";
 import { useI18n } from "./Providers";
 import { Button } from "./controls";
 
@@ -37,8 +38,9 @@ function stepPath(points: Point[]): { line: string; x: (at: number) => number; y
 }
 
 /** The price history of one metal, with the period chosen by the visitor. */
-export function PriceChart({ metal, initial, initialDays }: { metal: "gold" | "silver"; initial: PriceHistory; initialDays: number }) {
+export function PriceChart({ metal, initial, initialDays, initialPrices }: { metal: "gold" | "silver"; initial: PriceHistory; initialDays: number; initialPrices: Prices }) {
   const { locale, t } = useI18n();
+  const { prices } = useLivePrices({ prices: initialPrices });
   const [days, setDays] = useState(initialDays);
   const [history, setHistory] = useState(initial);
   const [failed, setFailed] = useState(false);
@@ -60,24 +62,32 @@ export function PriceChart({ metal, initial, initialDays }: { metal: "gold" | "s
   }
 
   const points = history.points;
-  const changed = new Set(points.map((p) => p.buyPiastres)).size > 1;
+  const currentBuy = prices ? (metal === "gold" ? prices.karats.find((k) => k.karat === 21)?.buyPiastres : prices.silver.buyPiastres) : undefined;
+  const currentSell = prices ? (metal === "gold" ? prices.karats.find((k) => k.karat === 21)?.sellPiastres : prices.silver.sellPiastres) : undefined;
+  const lastHistory = points[points.length - 1];
+  const live =
+    currentBuy !== undefined && prices && lastHistory && Date.parse(prices.updatedAt) > Date.parse(lastHistory.at)
+      ? { at: prices.updatedAt, buyPiastres: currentBuy, sellPiastres: currentSell ?? currentBuy }
+      : null;
+  const shownPoints = live ? [...points, live] : points;
+  const changed = new Set(shownPoints.map((p) => p.buyPiastres)).size > 1;
   const period = t.prices.periods[PERIOD_DAYS.indexOf(days as (typeof PERIOD_DAYS)[number])];
-  const first = points[0];
-  const last = points[points.length - 1];
-  const values = points.map((p) => p.buyPiastres);
+  const first = shownPoints[0];
+  const last = shownPoints[shownPoints.length - 1];
+  const values = shownPoints.map((p) => p.buyPiastres);
   const change = last && first ? last.buyPiastres - first.buyPiastres : 0;
-  const chart = points.length > 0 ? stepPath(points) : null;
+  const chart = shownPoints.length > 0 ? stepPath(shownPoints) : null;
   const shown = hover ?? last;
 
   function track(event: React.PointerEvent<SVGSVGElement>) {
-    if (!chart || points.length === 0) return;
+    if (!chart || shownPoints.length === 0) return;
     const box = event.currentTarget.getBoundingClientRect();
     // Time runs left to right in both languages, like the axis under it.
     const ratio = (event.clientX - box.left) / box.width;
-    const start = Date.parse(points[0].at);
-    const at = start + ratio * (Date.parse(points[points.length - 1].at) - start);
+    const start = Date.parse(shownPoints[0].at);
+    const at = start + ratio * (Date.parse(shownPoints[shownPoints.length - 1].at) - start);
     // The price in force at that moment: the last point published at or before it.
-    setHover(points.filter((p) => Date.parse(p.at) <= at).pop() ?? points[0]);
+    setHover(shownPoints.filter((p) => Date.parse(p.at) <= at).pop() ?? shownPoints[0]);
   }
 
   return (
