@@ -16,6 +16,7 @@ import { fmt } from "@/i18n";
 import { cart, countItems, qtyLimit, useCart } from "@/lib/cart";
 import { api } from "@/lib/client-api";
 import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
+import { useLivePrices } from "@/lib/live-prices";
 import type { Quote } from "@/lib/types";
 import { Icon, ICONS, MiniArt } from "./chrome";
 import { Button } from "./controls";
@@ -34,6 +35,7 @@ export function CartDrawer() {
   const [open, setOpen] = useState(false);
   const [priced, setPriced] = useState<{ key: string; quote: Quote } | null>(null);
   const [failed, setFailed] = useState(false);
+  const { prices: liveBoard } = useLivePrices();
 
   // The count answers when a piece is added, not on the first paint.
   const seen = useRef(count);
@@ -43,7 +45,7 @@ export function CartDrawer() {
     seen.current = count;
   }, [count]);
 
-  const key = JSON.stringify(lines);
+  const key = JSON.stringify([lines, liveBoard?.updatedAt ?? ""]);
   useEffect(() => {
     if (!open || lines.length === 0) return;
     const controller = new AbortController();
@@ -58,7 +60,7 @@ export function CartDrawer() {
         if (!controller.signal.aborted) setFailed(true);
       });
     return () => controller.abort();
-    // `key` stands for `lines`: the same cart is not priced twice.
+    // `key` stands for `lines` and the live board: the same cart is not priced twice.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, key]);
 
