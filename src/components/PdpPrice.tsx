@@ -1,25 +1,28 @@
 "use client";
 
 import { fmt } from "@/i18n";
-import { pounds, poundsParts } from "@/lib/format";
+import { cairoTime, pounds, poundsParts } from "@/lib/format";
+import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
-import type { Product } from "@/lib/types";
+import type { Prices, Product } from "@/lib/types";
 import { useI18n } from "./Providers";
 
 const money = (piastres: number) => poundsParts(piastres).full;
 
 /** The product page's price and what it is made of, kept current with the live price board. */
-export function PdpPrice({ product, note }: { product: Product; note?: React.ReactNode }) {
+export function PdpPrice({ product, prices: initialPrices }: { product: Product; prices: Prices | null }) {
   const { t } = useI18n();
+  const { prices } = useLivePrices({ prices: initialPrices ?? undefined });
   const [p] = useLiveProducts([product]);
   const silver = (p.karat as number) === 999;
+  const time = prices ? cairoTime(prices.updatedAt) : "";
   return (
     <>
       <div className="pc-price pdp-price">
         {pounds(p.pricePiastres)}
         <u>{t.product.egp}</u>
       </div>
-      {note}
+      {time ? <p className="pdp-note">{fmt(t.pdp.priceNote, { time })}</p> : null}
       {/* What the price is made of: the metal at today's gram price, and the maker's charge. */}
       <dl className="pdp-break" aria-label={t.pdp.breakdown}>
         <div>
