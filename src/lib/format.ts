@@ -110,3 +110,27 @@ export function changeLine(pct: number, locale: Locale, word: string): { text: s
   const { arrow, value, down } = changeParts(pct);
   return { text: locale === "ar" ? `${value} ${arrow} ${word}` : `${arrow} ${value} ${word}`, down };
 }
+
+/** The Cairo calendar day of an instant, as YYYY-MM-DD. */
+const cairoDay = (value: string | Date): string => {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: CAIRO, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(value));
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+};
+
+/**
+ * "Change today" for a metal the board carries no percentage for (silver): today's buy price
+ * against the last point logged before today in Cairo, rounded as the backend's changePct.
+ * null when no earlier point, so the page shows — rather than a made-up 0%.
+ */
+export function changeToday(points: { at: string; buyPiastres: number }[], currentBuyPiastres: number, now = new Date()): number | null {
+  const today = cairoDay(now);
+  let previous: { at: number; buy: number } | null = null;
+  for (const point of points) {
+    if (point.buyPiastres <= 0 || cairoDay(point.at) >= today) continue;
+    const at = Date.parse(point.at);
+    if (!previous || at > previous.at) previous = { at, buy: point.buyPiastres };
+  }
+  if (!previous) return null;
+  return Math.round(((currentBuyPiastres - previous.buy) / previous.buy) * 10000) / 100;
+}

@@ -37,8 +37,8 @@ export default async function MakingChargesPage({ params, searchParams }: PagePr
             {products.length === 0 ? (
               <p className="buy-note">{t.making.empty}</p>
             ) : (
-              // A kind and a weight (the first of each until the visitor picks), then that piece
-              // from every brand: price, cashback with and without packaging, and add to cart.
+              // Every kind and weight from every brand at first, grouped, then the visitor filters
+              // down; "All" in both lists brings the full table back. ?c= and ?w= still pick a view.
               <div className="cmp">
                 <CompareTool
                   products={products}
@@ -46,6 +46,7 @@ export default async function MakingChargesPage({ params, searchParams }: PagePr
                   offered={ALL_KINDS}
                   allKinds
                   details={false}
+                  showAll
                   kind={isKind(query.c) ? query.c : undefined}
                   weight={typeof query.w === "string" ? Number(query.w) : undefined}
                 />

@@ -10,7 +10,7 @@ import { SiteHeader } from "@/components/header-client";
 import { FaqList } from "@/components/home-client";
 import { PriceChart } from "@/components/PriceChart";
 import { fmt, hasLocale } from "@/i18n";
-import { cairoDate, cairoTime, changeLine, karatLabel, pounds, poundsParts, productName, productSub, weightText } from "@/lib/format";
+import { cairoDate, cairoTime, changeLine, changeToday, karatLabel, pounds, poundsParts, productName, productSub, weightText } from "@/lib/format";
 import { isWearable, type Prices, type Product } from "@/lib/types";
 import { getPrices, getPriceHistory, getProducts } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
@@ -40,11 +40,14 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
   if (!hasLocale(locale)) notFound();
   const t = await getTexts(locale);
   // No catch: if the prices cannot be loaded, error.tsx offers a retry.
-  const [prices, history, products] = await Promise.all([getPrices(), getPriceHistory("gold", 30), getProducts()]);
+  const [prices, history, silverHistory, products] = await Promise.all([getPrices(), getPriceHistory("gold", 30), getPriceHistory("silver", 30), getProducts()]);
   const k24 = prices.karats.find((k) => k.karat === 24) ?? prices.karats[0];
   const k21 = prices.karats.find((k) => k.karat === 21) ?? prices.karats[0];
   const ounce = prices.units.find((u) => u.unit === "ounce");
   const today = (pct: number) => changeLine(pct, locale, "");
+  // The board carries no silver percentage; compute it as the backend does for gold.
+  const silverPct = changeToday(silverHistory.points, prices.silver.buyPiastres);
+  const silver = silverPct === null ? null : today(silverPct);
   // Units are priced from a karat, so they move with it: the ounce with 24K, the pound with 21K.
   const unitChange = (unit: "ounce" | "pound") => (unit === "ounce" ? k24.changePct : k21.changePct);
   const unitName = (u: Prices["units"][number]) => `${u.unit === "ounce" ? t.board.ounce : t.board.pound} · ${fmt(t.board.unitWeight, { w: weightText(u.weightGrams) })}`;
@@ -119,7 +122,7 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/pr
                     </th>
                     <td>{poundsParts(prices.silver.buyPiastres).full}</td>
                     <td>{poundsParts(prices.silver.sellPiastres).full}</td>
-                    <td className="pr-today none">—</td>
+                    <td className={silver ? `pr-today${silver.down ? " down" : ""}` : "pr-today none"}>{silver ? silver.text : "—"}</td>
                   </tr>
                 </tbody>
               </table>
