@@ -5,10 +5,17 @@ import { fmt } from "@/i18n";
 import { cairoTime, karatLabel, poundsParts } from "@/lib/format";
 import { useLivePrices } from "@/lib/live-prices";
 import type { Karat, Prices } from "@/lib/types";
-import { NISAB_GOLD_GRAMS, NISAB_GOLD_KARAT, NISAB_SILVER_GRAMS, ZAKAT_KARATS, ZAKAT_PERCENT, zakatOf } from "@/lib/zakat";
+import { NISAB_SILVER_GRAMS, ZAKAT_KARATS, ZAKAT_PERCENT, zakatOf } from "@/lib/zakat";
 import { useI18n } from "./Providers";
 
 const money = (piastres: number) => poundsParts(piastres).full;
+
+/** The gold nisab as three equal karat figures; the due check still uses 97 g at 21K. */
+const NISAB_GOLD_BY_KARAT: readonly { karat: Karat; grams: number }[] = [
+  { karat: 24, grams: 85 },
+  { karat: 21, grams: 97 },
+  { karat: 18, grams: 113 },
+];
 
 /** A typed amount: empty is nothing, a negative or unreadable one is flagged and counted as nothing. */
 function read(text: string): { value: number; bad: boolean } {
@@ -150,15 +157,14 @@ export function ZakatCalculator({ initial }: { initial: Prices | null }) {
         <section className="pr-calc zk-nisab" aria-labelledby="zk-nisab-title">
           <h2 id="zk-nisab-title">{t.zakat.nisabTitle}</h2>
           <dl className="zk-lines">
-            <div>
-              <dt>{fmt(t.zakat.nisabGold, { g: NISAB_GOLD_GRAMS, k: karatLabel(NISAB_GOLD_KARAT, t) })}</dt>
-              <dd data-nisab="gold">
-                {money(z.nisabGoldPiastres)} {egp}
-              </dd>
-            </div>
-          </dl>
-          <p className="zk-nisab-note">{t.zakat.nisabGoldNote}</p>
-          <dl className="zk-lines">
+            {NISAB_GOLD_BY_KARAT.map(({ karat, grams }) => (
+              <div key={karat} data-nisab-karat={karat}>
+                <dt>{karatLabel(karat, t)}</dt>
+                <dd>
+                  {grams} {t.product.grams}
+                </dd>
+              </div>
+            ))}
             <div>
               <dt>{fmt(t.zakat.nisabSilver, { g: NISAB_SILVER_GRAMS })}</dt>
               <dd data-nisab="silver">
