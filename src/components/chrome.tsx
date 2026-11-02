@@ -97,7 +97,7 @@ export async function ContactRows({ t, branchLast = false }: { t: Dict; branchLa
         <u>{t.contact.call}</u>
       </a>
       {links.whatsappUrl && (
-      <a className="rr" href={links.whatsappUrl}>
+      <a className="rr" href={links.whatsappUrl} target="_blank" rel="noopener noreferrer">
         <span>{t.contact.whatsapp}</span>
         <b>{t.contact.message}</b>
         <u>{t.contact.open}</u>
@@ -120,10 +120,11 @@ export async function ContactRows({ t, branchLast = false }: { t: Dict; branchLa
 /** The App Store and Google Play buttons: the home hero and the footer. */
 export async function StoreButtons({ t }: { t: Dict }) {
   const links = await getLinks();
+  if (!links.iosUrl && !links.androidUrl) return null;
   return (
     <div className="stores">
       {links.iosUrl && (
-      <a className="store" href={links.iosUrl}>
+      <a className="store" href={links.iosUrl} target="_blank" rel="noopener noreferrer">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M16.3 12.7c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2s-2.2-.8-2.2-3.2z" />
           <path d="M14.6 6.3c.5-.7.9-1.6.8-2.6-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.8 2.5.9.1 1.8-.4 2.4-1.1z" />
@@ -135,7 +136,7 @@ export async function StoreButtons({ t }: { t: Dict }) {
       </a>
       )}
       {links.androidUrl && (
-      <a className="store" href={links.androidUrl}>
+      <a className="store" href={links.androidUrl} target="_blank" rel="noopener noreferrer">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 3.2v17.6c0 .4.2.7.5.9l9.2-9.7L4.5 2.3c-.3.2-.5.5-.5.9z" />
           <path d="M17.2 8.6 6.1 2.3l8.4 8.9 2.7-2.6z" />
@@ -228,9 +229,10 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
           ))}
         </div>
         <div className="sf-base">
+          {(links.instagramUrl || links.facebookUrl || links.tiktokUrl || links.whatsappUrl) && (
           <div className="social">
             {links.instagramUrl && (
-            <a className="soc" href={links.instagramUrl} aria-label={t.footer.instagram}>
+            <a className="soc" href={links.instagramUrl} target="_blank" rel="noopener noreferrer" aria-label={t.footer.instagram}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5" />
                 <circle cx="12" cy="12" r="4.1" />
@@ -239,14 +241,14 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
             </a>
             )}
             {links.facebookUrl && (
-            <a className="soc" href={links.facebookUrl} aria-label={t.footer.facebook}>
+            <a className="soc" href={links.facebookUrl} target="_blank" rel="noopener noreferrer" aria-label={t.footer.facebook}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14.6 21v-7.4h2.5l.4-2.9h-2.9V8.9c0-.8.2-1.4 1.4-1.4h1.6V4.9c-.3 0-1.2-.1-2.3-.1-2.3 0-3.9 1.4-3.9 4v2.2H8.9v2.9h2.5V21z" />
               </svg>
             </a>
             )}
             {links.tiktokUrl && (
-            <a className="soc" href={links.tiktokUrl} aria-label={t.footer.tiktok}>
+            <a className="soc" href={links.tiktokUrl} target="_blank" rel="noopener noreferrer" aria-label={t.footer.tiktok}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M14.3 3.2v11.3a3 3 0 11-2.6-3v2.6a.9.9 0 100 .9V3.2z" />
                 <path d="M14.3 3.2c.4 2 1.9 3.5 3.9 3.8v2.6a6.6 6.6 0 01-3.9-1.4" />
@@ -254,7 +256,7 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
             </a>
             )}
             {links.whatsappUrl && (
-            <a className="soc" href={links.whatsappUrl} aria-label={t.footer.whatsapp}>
+            <a className="soc" href={links.whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label={t.footer.whatsapp}>
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M20.3 11.7a8.2 8.2 0 01-12.2 7.1L3.9 20l1.3-4a8.2 8.2 0 1115.1-4.3z" />
                 <path d="M9.2 8.7c.3-.1.6 0 .8.3l.8 1.2c.2.3.1.6-.1.8l-.5.5c.5 1 1.3 1.8 2.3 2.3l.5-.5c.2-.2.5-.3.8-.1l1.2.8c.3.2.4.5.3.8-.3.8-1.1 1.3-2 1.2a7.4 7.4 0 01-5.5-5.5c-.1-.9.4-1.7 1.2-2z" />
@@ -262,6 +264,7 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
             </a>
             )}
           </div>
+          )}
           <p>{t.footer.legal}</p>
         </div>
       </div>
