@@ -166,9 +166,9 @@ export function ZakatCalculator({ initial }: { initial: Prices | null }) {
               </div>
             ))}
             <div>
-              <dt>{fmt(t.zakat.nisabSilver, { g: NISAB_SILVER_GRAMS })}</dt>
+              <dt>{t.prices.silverCard}</dt>
               <dd data-nisab="silver">
-                {money(z.nisabSilverPiastres)} {egp}
+                {NISAB_SILVER_GRAMS} {t.product.grams}
               </dd>
             </div>
           </dl>
