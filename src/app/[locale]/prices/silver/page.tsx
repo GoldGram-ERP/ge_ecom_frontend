@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
 import { PriceChart } from "@/components/PriceChart";
 import { fmt, hasLocale } from "@/i18n";
-import { cairoDate, cairoTime, poundsParts } from "@/lib/format";
+import { cairoDate, cairoTime, changeLine, changeToday, poundsParts } from "@/lib/format";
 import { getPrices, getPriceHistory } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 
@@ -22,6 +22,7 @@ export default async function SilverPricesPage({ params }: PageProps<"/[locale]/
   const t = await getTexts(locale);
   const [prices, history] = await Promise.all([getPrices(), getPriceHistory("silver", 30)]);
   const { silver } = prices;
+  const change = changeToday(history.points, silver.buyPiastres);
 
   return (
     <div className="page buy-page">
@@ -54,6 +55,9 @@ export default async function SilverPricesPage({ params }: PageProps<"/[locale]/
                 <span>{t.board.sell}</span>
                 <em>{poundsParts(silver.sellPiastres).full}</em>
               </div>
+              <span className={`pr-chg${change === null ? " none" : change < 0 ? " down" : ""}`}>
+                {change === null ? "—" : changeLine(change, locale, t.board.todayWord).text}
+              </span>
             </article>
           </div>
 
