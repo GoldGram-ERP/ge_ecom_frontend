@@ -26,6 +26,7 @@ html[lang="ar"] .zk-form .f > span{ font-size:13px; letter-spacing:0; }
 .zk-nisab .zk-lines{ margin-top:0; }
 .zk-nisab .zk-lines dt{ color:var(--muted); }
 .zk-nisab .zk-lines dd{ color:var(--navy-deep); }
+.zk-nisab .zk-nisab-note{ font-size:12px; line-height:1.55; font-weight:500; color:var(--navy-deep); margin:6px 0 var(--s2); }
 
 .zk-warn{ border-radius:16px; padding:var(--s3); background:#FBF1E4; border:1px solid rgba(192,69,43,.35); color:#6B2D1C; }
 .zk-warn h2{ font-size:16px; color:#8C3722; margin-bottom:6px; }

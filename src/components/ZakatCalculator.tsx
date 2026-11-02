@@ -156,6 +156,9 @@ export function ZakatCalculator({ initial }: { initial: Prices | null }) {
                 {money(z.nisabGoldPiastres)} {egp}
               </dd>
             </div>
+          </dl>
+          <p className="zk-nisab-note">{t.zakat.nisabGoldNote}</p>
+          <dl className="zk-lines">
             <div>
               <dt>{fmt(t.zakat.nisabSilver, { g: NISAB_SILVER_GRAMS })}</dt>
               <dd data-nisab="silver">
