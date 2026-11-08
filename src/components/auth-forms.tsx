@@ -141,18 +141,22 @@ export function SignInForm({ toCheckout = false }: { toCheckout?: boolean }) {
 /** `email` and `mobile` arrive filled in when a guest's order offered this account. */
 export function SignUpForm({
   toCheckout = false,
+  initialFirstName = "",
+  initialLastName = "",
   initialEmail = "",
   initialMobile = "",
 }: {
   toCheckout?: boolean;
+  initialFirstName?: string;
+  initialLastName?: string;
   initialEmail?: string;
   initialMobile?: string;
 }) {
   const { locale, t, href } = useI18n();
   const { refresh } = useSession();
   const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
   const [email, setEmail] = useState(initialEmail);
   const [mobile, setMobile] = useState(initialMobile);
   const [password, setPassword] = useState("");

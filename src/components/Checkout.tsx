@@ -13,15 +13,15 @@ import type { Fulfilment, PaymentMethod, PaymentMethodInfo, PlacedOrder, Quote, 
 import { GOVERNORATES, isEmail, normalizePhone, type Governorate } from "@/lib/validation";
 import { MiniArt } from "./chrome";
 import { Button, Check, Option, Options, Select } from "./controls";
-import { ProofUpload } from "./proof-upload";
+import { PaymentConfirm } from "./proof-upload";
 import { useI18n, useSession } from "./Providers";
 
-type TextField = "firstName" | "lastName" | "street" | "apartment" | "paymentReference" | "phone" | "email" | "deliveryAddress" | "notes";
+type TextField = "firstName" | "lastName" | "street" | "apartment" | "phone" | "email" | "deliveryAddress" | "notes";
 type ErrorKey = TextField | "terms";
 type Errors = Partial<Record<ErrorKey, "required" | "invalid">>;
 
 const EMPTY_FORM: Record<TextField, string> = {
-  firstName: "", lastName: "", street: "", apartment: "", paymentReference: "", phone: "", email: "", deliveryAddress: "", notes: "",
+  firstName: "", lastName: "", street: "", apartment: "", phone: "", email: "", deliveryAddress: "", notes: "",
 };
 
 // How the backend names fields in a VALIDATION_FAILED answer → the field on this form.
@@ -30,7 +30,6 @@ const SERVER_FIELDS: Record<string, ErrorKey> = {
   "customer.lastName": "lastName",
   "customer.street": "street",
   "customer.apartment": "apartment",
-  "customer.paymentReference": "paymentReference",
   "customer.phone": "phone",
   "customer.email": "email",
   deliveryAddress: "deliveryAddress",
@@ -57,14 +56,21 @@ export function Checkout({
 
   // Delivery cost per governorate and the payment methods on offer, as staff set them in the dashboard.
   const [zones, setZones] = useState<Zone[]>([]);
+  const [governorate, setGovernorate] = useState<Governorate>("cairo");
   const [methods, setMethods] = useState<PaymentMethodInfo[] | null>(null);
   useEffect(() => {
-    api<Zone[]>("/zones").then(setZones, () => setZones([]));
+    api<Zone[]>("/zones").then(
+      (list) => {
+        setZones(list);
+        // The list is what staff keep on the geography page: start on one of its governorates.
+        setGovernorate((current) => (list.length > 0 && !list.some((z) => z.governorate === current) ? (list[0].governorate as Governorate) : current));
+      },
+      () => setZones([]),
+    );
     api<PaymentMethodInfo[]>("/payment-methods").then(setMethods, () => setMethods(null));
   }, []);
 
   const [form, setForm] = useState(EMPTY_FORM);
-  const [governorate, setGovernorate] = useState<Governorate>("cairo");
   const [otherAddress, setOtherAddress] = useState(false);
   // Collection from the branch first when the dashboard offers it, delivery otherwise.
   const [fulfilment, setFulfilment] = useState<Fulfilment>(branchPickup ? "branch" : "delivery");
@@ -94,7 +100,11 @@ export function Checkout({
     guestToken?: string;
     email: string;
     phone: string;
+    firstName: string;
+    lastName: string;
   } | null>(null);
+  // The reference number and the transfer picture were sent from the confirmation step.
+  const [paymentSent, setPaymentSent] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // A signed-in customer starts with their name, email and mobile from their account; all stay editable.
@@ -164,7 +174,6 @@ export function Checkout({
     lastName: t.checkout.lastName,
     street: t.checkout.street,
     apartment: t.checkout.apartment,
-    paymentReference: t.checkout.paymentReference,
     phone: t.checkout.phone,
     email: t.checkout.email,
     deliveryAddress: t.checkout.deliveryAddress,
@@ -185,7 +194,6 @@ export function Checkout({
     // A branch pickup has no address to ask for.
     if (fulfilment === "delivery") need("street", 200, 3);
     if (form.apartment.trim().length > 200) found.apartment = "invalid";
-    need("paymentReference", 60, 2);
     if (!form.phone.trim()) found.phone = "required";
     else if (!normalizePhone(form.phone)) found.phone = "invalid";
     if (!form.email.trim()) found.email = "required";
@@ -246,7 +254,6 @@ export function Checkout({
         ...(fulfilment === "delivery" ? { street: form.street.trim() } : {}),
         ...(fulfilment === "delivery" && form.apartment.trim() ? { apartment: form.apartment.trim() } : {}),
         governorate,
-        paymentReference: form.paymentReference.trim(),
         phone: normalizePhone(form.phone),
         email: form.email.trim().toLowerCase(),
       },
@@ -277,6 +284,8 @@ export function Checkout({
         guestToken: order.guestToken,
         email: body.customer.email,
         phone: body.customer.phone ?? "",
+        firstName: body.customer.firstName,
+        lastName: body.customer.lastName,
       });
       // The account page offered next can claim this order, from this browser only.
       if (order.guestToken) sessionStorage.setItem(CLAIM_KEY, order.guestToken);
@@ -371,6 +380,12 @@ export function Checkout({
 
   const step = done ? 2 : 1;
   const zone = zones.find((z) => z.governorate === governorate);
+  // The governorates staff keep on the dashboard's geography page, in their names for each language;
+  // the built-in list only stands in while none is set.
+  const governorateOptions: (readonly [Governorate, string])[] =
+    zones.length > 0
+      ? zones.map((z) => [z.governorate as Governorate, (locale === "ar" ? z.nameAr : z.nameEn) || t.governorates[z.governorate as Governorate] || z.governorate] as const)
+      : GOVERNORATES.map((g) => [g, t.governorates[g]] as const);
   const deliveryBlocked = fulfilment === "delivery" && quote !== null && quoteFresh && !quote.deliveryAvailable;
   const offers = (code: PaymentMethod) => methods === null || methods.some((m) => m.code === code);
   // Where to send the money for the method of the placed order, as set in the dashboard.
@@ -481,7 +496,11 @@ export function Checkout({
                 ))}
               </ol>
 
-              <ProofUpload orderId={done.id} guestToken={done.guestToken} />
+              {paymentSent ? (
+                <p className="proof-note ok" role="status">{t.checkout.confirmDone}</p>
+              ) : (
+                <PaymentConfirm orderId={done.id} guestToken={done.guestToken} onSent={() => setPaymentSent(true)} />
+              )}
 
               <div className="done-acts">
                 <Link className="gold-btn" href={href("/shop")}>
@@ -495,10 +514,10 @@ export function Checkout({
               </div>
 
               {/* A guest's order can join an account made with the same email (claimed by the token kept in this tab). */}
-              {done.guestToken && (
+              {done.guestToken && paymentSent && (
                 <div className="done-offer">
                   <p>{t.checkout.accountOffer}</p>
-                  <Link className="done-link" href={href(`/sign-up?${new URLSearchParams({ email: done.email, ...(done.phone ? { mobile: done.phone } : {}) })}`)}>
+                  <Link className="done-link" href={href(`/sign-up?${new URLSearchParams({ email: done.email, firstName: done.firstName, lastName: done.lastName, ...(done.phone ? { mobile: done.phone } : {}) })}`)}>
                     {fmt(t.checkout.accountCreate, { email: done.email })}
                   </Link>
                 </div>
@@ -588,7 +607,7 @@ export function Checkout({
                       value={governorate}
                       onChange={setGovernorate}
                       aria-label={t.checkout.governorate}
-                      options={GOVERNORATES.map((g) => [g, t.governorates[g]] as const)}
+                      options={governorateOptions}
                     />
                   </label>
                   <label className="f">
@@ -604,13 +623,6 @@ export function Checkout({
                       <em>*</em>
                     </span>
                     <input id="co-email" dir="ltr" type="email" autoComplete="email" maxLength={254} required placeholder="you@example.com" aria-invalid={Boolean(errors.email)} className={bad("email")} value={form.email} onChange={set("email")} />
-                  </label>
-                  <label className="f wide">
-                    <span>
-                      {t.checkout.paymentReference}
-                      <em>*</em>
-                    </span>
-                    <input id="co-paymentReference" dir="ltr" type="text" autoComplete="off" maxLength={60} required placeholder={t.checkout.paymentReferencePh} aria-invalid={Boolean(errors.paymentReference)} className={bad("paymentReference")} value={form.paymentReference} onChange={set("paymentReference")} />
                   </label>
                 </div>
 
@@ -747,7 +759,9 @@ export function Checkout({
                               ? t.checkout.promoBelowMin
                               : quote.codeStatus === "inactive"
                                 ? t.checkout.promoInactive
-                                : t.checkout.promoInvalid}
+                                : quote.codeStatus === "wrong_area"
+                                  ? t.checkout.promoWrongArea
+                                  : t.checkout.promoInvalid}
                         </p>
                       )}
                     </div>

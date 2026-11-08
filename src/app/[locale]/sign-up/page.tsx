@@ -15,7 +15,7 @@ export default async function SignUpPage({ params, searchParams }: PageProps<"/[
   const text = (value: string | string[] | undefined) => (typeof value === "string" ? value.slice(0, 254) : "");
   return (
     <AuthShell locale={locale} t={t} title={t.auth.signUpTitle} sub={t.auth.signUpSub} steps={t.auth.next}>
-      <SignUpForm toCheckout={toCheckout} initialEmail={text(query.email)} initialMobile={text(query.mobile)} />
+      <SignUpForm toCheckout={toCheckout} initialFirstName={text(query.firstName).slice(0, 60)} initialLastName={text(query.lastName).slice(0, 60)} initialEmail={text(query.email)} initialMobile={text(query.mobile)} />
     </AuthShell>
   );
 }
