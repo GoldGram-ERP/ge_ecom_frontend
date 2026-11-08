@@ -96,6 +96,9 @@ export interface Product {
 
 export interface Zone {
   governorate: string;
+  /** The zone's name as staff wrote it on the geography page. */
+  nameEn?: string;
+  nameAr?: string;
   costPiastres: number;
 }
 

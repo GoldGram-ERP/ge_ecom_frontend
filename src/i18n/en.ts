@@ -520,6 +520,13 @@ export const en = {
     seeOrders: "See your orders",
     accountOffer: "Keep this order in an account: follow its status and send a top-up from one page. Your details are already filled in; you only choose a password.",
     accountCreate: "Create an account with {email}",
+    confirmTitle: "Confirm your payment",
+    confirmHint: "After you transfer, write the reference number of the transfer, attach its screenshot and press send.",
+    confirmSend: "Send reference and screenshot",
+    confirmSending: "Sending…",
+    confirmDone: "Received. We will check your transfer against your order.",
+    confirmErrRef: "Write the reference number of your transfer.",
+    confirmErrFile: "Attach the screenshot of your transfer.",
     doneSteps: [
       "Transfer the exact total and write the order reference in the transfer note.",
       "When the transfer clears we confirm your order and prepare your gold.",

@@ -79,3 +79,85 @@ export function ProofUpload({
     </div>
   );
 }
+
+/**
+ * The step right after an order is placed: the customer writes the reference number of their
+ * transfer and picks the screenshot, then one button sends both. `onSent` runs once the server
+ * has them, so the page can hide this form and move on.
+ */
+export function PaymentConfirm({
+  orderId,
+  guestToken,
+  onSent,
+}: {
+  orderId: number;
+  /** A guest's order is opened by its token instead of a session. */
+  guestToken?: string;
+  onSent: () => void;
+}) {
+  const { t } = useI18n();
+  const picker = useRef<HTMLInputElement>(null);
+  const [reference, setReference] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function pick(event: ChangeEvent<HTMLInputElement>) {
+    const chosen = event.target.files?.[0];
+    event.target.value = "";
+    if (!chosen) return;
+    if (!TYPES.includes(chosen.type)) return setError(t.checkout.proofErrType);
+    if (chosen.size > MAX_BYTES) return setError(t.checkout.proofErrSize);
+    setError(null);
+    setFile(chosen);
+  }
+
+  async function submit() {
+    const text = reference.trim();
+    if (text.length < 2) return setError(t.checkout.confirmErrRef);
+    if (!file) return setError(t.checkout.confirmErrFile);
+    setBusy(true);
+    setError(null);
+    const body = new FormData();
+    body.append("reference", text);
+    body.append("file", file);
+    try {
+      const response = await fetch(`/api/orders/${orderId}/proof`, {
+        method: "POST",
+        body,
+        headers: guestToken ? { "X-Order-Token": guestToken } : undefined,
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      onSent();
+    } catch {
+      setError(t.checkout.proofErrSend);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="pay-confirm">
+      <h3>{t.checkout.confirmTitle}</h3>
+      <p>{t.checkout.confirmHint}</p>
+      <label className="f wide">
+        <span>
+          {t.checkout.paymentReference}
+          <em>*</em>
+        </span>
+        <input id="co-paymentReference" dir="ltr" type="text" autoComplete="off" maxLength={60} placeholder={t.checkout.paymentReferencePh} value={reference} onChange={(event) => setReference(event.target.value)} />
+      </label>
+      <div className="proof">
+        {/* The browser's own file control stays hidden; the button opens its picker. */}
+        <input ref={picker} type="file" accept={TYPES.join(",")} hidden tabIndex={-1} aria-hidden="true" onChange={pick} />
+        <Button type="button" className="proof-btn" disabled={busy} onClick={() => picker.current?.click()}>
+          {file ? t.checkout.proofReplace : t.checkout.proofSend}
+        </Button>
+        <span className="proof-note" dir="auto">{file ? file.name : t.checkout.proofHint}</span>
+      </div>
+      {error && <p className="proof-note bad" role="alert">{error}</p>}
+      <Button type="button" className="gold-btn" disabled={busy} onClick={() => void submit()}>
+        {busy ? t.checkout.confirmSending : t.checkout.confirmSend}
+      </Button>
+    </div>
+  );
+}
