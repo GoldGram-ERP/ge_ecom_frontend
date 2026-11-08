@@ -460,6 +460,7 @@ export const ar: Dict = {
     promoInvalid: "كود الخصم غير صالح.",
     promoInactive: "كود الخصم غير مُفعَّل.",
     promoBelowMin: "طلبك لم يبلغ الحد الأدنى لهذا الكود.",
+    promoWrongArea: "كود الخصم هذا لا ينطبق على محافظتك.",
     total: "الإجمالي",
     payment: "الدفع",
     instapay: "إنستاباي",

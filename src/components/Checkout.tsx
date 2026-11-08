@@ -759,7 +759,9 @@ export function Checkout({
                               ? t.checkout.promoBelowMin
                               : quote.codeStatus === "inactive"
                                 ? t.checkout.promoInactive
-                                : t.checkout.promoInvalid}
+                                : quote.codeStatus === "wrong_area"
+                                  ? t.checkout.promoWrongArea
+                                  : t.checkout.promoInvalid}
                         </p>
                       )}
                     </div>

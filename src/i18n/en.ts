@@ -458,6 +458,7 @@ export const en = {
     promoInvalid: "This promo code is not valid.",
     promoInactive: "This promo code is not active.",
     promoBelowMin: "Your order does not reach this code's minimum.",
+    promoWrongArea: "This promo code does not apply to your governorate.",
     total: "Total",
     payment: "Payment",
     instapay: "InstaPay",

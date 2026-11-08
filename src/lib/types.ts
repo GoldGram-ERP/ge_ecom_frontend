@@ -143,7 +143,7 @@ export interface Quote {
   /** The promo code that gave the discount; null for an automatic rule or none. */
   discountCode: string | null;
   /** Why the entered code did or did not apply; null when no code was entered. */
-  codeStatus: "applied" | "invalid" | "inactive" | "below_min" | null;
+  codeStatus: "applied" | "invalid" | "inactive" | "below_min" | "wrong_area" | null;
   /** total − subtotal: shipping + payment fee − discount. The storefront's single "Handling" line. */
   handlingPiastres: number;
   totalPiastres: number;
