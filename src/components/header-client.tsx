@@ -222,11 +222,6 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
               <DropdownMenu.Item asChild>
                 <Link href={href("/help")}>{t.nav.help}</Link>
               </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <Link href={otherHref} lang={other} hrefLang={other} onClick={switchLanguage}>
-                  {otherName}
-                </Link>
-              </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>
