@@ -415,6 +415,8 @@ export const en = {
     apartment: "Apartment, floor, landmark",
     optional: "Optional",
     governorate: "Governorate",
+    paymentReference: "Reference number",
+    paymentReferencePh: "The reference of your InstaPay or bank transfer",
     nationalId: "National ID",
     nationalIdPh: "14 digits",
     idType: "Identity document",

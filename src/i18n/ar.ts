@@ -417,6 +417,8 @@ export const ar: Dict = {
     apartment: "الشقة والدور وعلامة مميزة",
     optional: "اختياري",
     governorate: "المحافظة",
+    paymentReference: "الرقم المرجعي",
+    paymentReferencePh: "الرقم المرجعي لتحويل إنستاباي أو التحويل البنكي",
     nationalId: "الرقم القومي",
     nationalIdPh: "14 رقمًا",
     idType: "وثيقة الهوية",

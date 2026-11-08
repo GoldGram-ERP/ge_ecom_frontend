@@ -1,19 +1,15 @@
-import { notFound, redirect } from "next/navigation";
-import { localePath } from "@/i18n";
+import { notFound } from "next/navigation";
 import { Checkout } from "@/components/Checkout";
 import { SiteHeader } from "@/components/header-client";
 import { hasLocale } from "@/i18n";
-import { branchPickup, getUser, promoAvailable, requireKycDocPerOrder } from "@/lib/server-api";
+import { branchPickup, promoAvailable, requireKycDocPerOrder } from "@/lib/server-api";
 
-// Checkout requires an account (owner's decision, 2026-10-27): a guest is sent to sign in or
-// register first, then back here, with their name, email and mobile filled in from the account.
+// A guest can check out without an account: they fill in the form (email included), and once the
+// order is placed they are offered an account with that email. A signed-in customer starts with
+// their name, email and mobile filled in from the account (done in <Checkout>).
 export default async function CheckoutPage({ params }: PageProps<"/[locale]/checkout">) {
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
-
-  // A guest cannot check out: send them to sign in / register, then back to checkout.
-  const user = await getUser();
-  if (!user) redirect(localePath(locale, `/sign-in?next=checkout`));
 
   // One parallel read of the settings the checkout needs on the server, so nothing flickers.
   const [branch, kycRequired, promo] = await Promise.all([branchPickup(), requireKycDocPerOrder(), promoAvailable()]);

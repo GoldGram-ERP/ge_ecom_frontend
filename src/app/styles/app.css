@@ -123,9 +123,10 @@ html[lang="ar"] .egp,html[lang="ar"] .pc-price u{ font-size:11.5px; letter-spaci
   .nav-more{ display:grid; }
   .bar .navlink{ display:inline-flex; align-items:center; min-height:44px; }
   .bar .navlink.nav-home,.bar .navlink.nav-dd,.bar .navlink.nav-prices{ display:none; }
-  /* on a phone the language switch is in the menu */
-  .bar .navlink.lang-switch{ display:none; }
+  /* on a phone the language switch stays in the bar, as a compact pill */
+  .bar .navlink.lang-switch{ min-height:34px; padding:0 12px; border:1px solid currentColor; border-radius:999px; font-size:13px; white-space:nowrap; }
 }
+@media (max-width:380px){ .bar{ gap:var(--s2); } .bar .navlink.lang-switch{ padding:0 9px; font-size:12px; } }
 .bar .navlink.lang-switch[lang="ar"]{ font-family:var(--font-cairo), var(--font-body); }
 /* the guest account bar is one item too many for a phone; the card under it says "guest" */
 @media (max-width:480px){ .app-page.is-guest .bar .guest-flag{ display:none; } }

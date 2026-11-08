@@ -10,18 +10,18 @@ import { api, ApiError, CLAIM_KEY, errorText } from "@/lib/client-api";
 import { useLivePrices } from "@/lib/live-prices";
 import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
 import type { Fulfilment, PaymentMethod, PaymentMethodInfo, PlacedOrder, Quote, Zone } from "@/lib/types";
-import { GOVERNORATES, isEmail, normalizeNationalId, normalizePassport, normalizePhone, type Governorate } from "@/lib/validation";
+import { GOVERNORATES, isEmail, normalizePhone, type Governorate } from "@/lib/validation";
 import { MiniArt } from "./chrome";
 import { Button, Check, Option, Options, Select } from "./controls";
 import { ProofUpload } from "./proof-upload";
 import { useI18n, useSession } from "./Providers";
 
-type TextField = "firstName" | "lastName" | "street" | "apartment" | "nationalId" | "phone" | "email" | "deliveryAddress" | "notes";
+type TextField = "firstName" | "lastName" | "street" | "apartment" | "paymentReference" | "phone" | "email" | "deliveryAddress" | "notes";
 type ErrorKey = TextField | "terms";
 type Errors = Partial<Record<ErrorKey, "required" | "invalid">>;
 
 const EMPTY_FORM: Record<TextField, string> = {
-  firstName: "", lastName: "", street: "", apartment: "", nationalId: "", phone: "", email: "", deliveryAddress: "", notes: "",
+  firstName: "", lastName: "", street: "", apartment: "", paymentReference: "", phone: "", email: "", deliveryAddress: "", notes: "",
 };
 
 // How the backend names fields in a VALIDATION_FAILED answer → the field on this form.
@@ -30,7 +30,7 @@ const SERVER_FIELDS: Record<string, ErrorKey> = {
   "customer.lastName": "lastName",
   "customer.street": "street",
   "customer.apartment": "apartment",
-  "customer.nationalId": "nationalId",
+  "customer.paymentReference": "paymentReference",
   "customer.phone": "phone",
   "customer.email": "email",
   deliveryAddress: "deliveryAddress",
@@ -65,9 +65,6 @@ export function Checkout({
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [governorate, setGovernorate] = useState<Governorate>("cairo");
-  // Which document the customer identifies with; each has its own rule.
-  const [idType, setIdType] = useState<"national_id" | "passport">("national_id");
-  const passport = idType === "passport";
   const [otherAddress, setOtherAddress] = useState(false);
   // Collection from the branch first when the dashboard offers it, delivery otherwise.
   const [fulfilment, setFulfilment] = useState<Fulfilment>(branchPickup ? "branch" : "delivery");
@@ -75,7 +72,7 @@ export function Checkout({
   const [picked, setPicked] = useState<PaymentMethod | null>(null);
   const [terms, setTerms] = useState(false);
   // The ID photos are sent first; their tokens are what the order carries (single use each).
-  // A national ID needs front and back; a passport only the one page (kept in `front`).
+  // Both sides of the ID are asked for only while staff have the per-order document rule on.
   const [kycFront, setKycFront] = useState<string | null>(null);
   const [kycBack, setKycBack] = useState<string | null>(null);
   // Starts from the server-read prop; a 409 flips it on if the rule was enabled mid-session.
@@ -167,7 +164,7 @@ export function Checkout({
     lastName: t.checkout.lastName,
     street: t.checkout.street,
     apartment: t.checkout.apartment,
-    nationalId: passport ? t.checkout.passport : t.checkout.nationalId,
+    paymentReference: t.checkout.paymentReference,
     phone: t.checkout.phone,
     email: t.checkout.email,
     deliveryAddress: t.checkout.deliveryAddress,
@@ -185,10 +182,10 @@ export function Checkout({
     };
     need("firstName", 60);
     need("lastName", 60);
-    need("street", 200, 3);
+    // A branch pickup has no address to ask for.
+    if (fulfilment === "delivery") need("street", 200, 3);
     if (form.apartment.trim().length > 200) found.apartment = "invalid";
-    if (!form.nationalId.trim()) found.nationalId = "required";
-    else if (!(passport ? normalizePassport(form.nationalId) : normalizeNationalId(form.nationalId))) found.nationalId = "invalid";
+    need("paymentReference", 60, 2);
     if (!form.phone.trim()) found.phone = "required";
     else if (!normalizePhone(form.phone)) found.phone = "invalid";
     if (!form.email.trim()) found.email = "required";
@@ -228,8 +225,8 @@ export function Checkout({
       return;
     }
     // National ID: front and back; passport: the one page. The back is only kept when not a passport.
-    const kycTokens = [kycFront, ...(passport ? [] : [kycBack])].filter((x): x is string => Boolean(x));
-    if (kycRequired && kycTokens.length < (passport ? 1 : 2)) {
+    const kycTokens = [kycFront, kycBack].filter((x): x is string => Boolean(x));
+    if (kycRequired && kycTokens.length < 2) {
       setMessage(t.checkout.errKycDoc);
       return;
     }
@@ -246,10 +243,10 @@ export function Checkout({
       customer: {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
-        street: form.street.trim(),
-        ...(form.apartment.trim() ? { apartment: form.apartment.trim() } : {}),
+        ...(fulfilment === "delivery" ? { street: form.street.trim() } : {}),
+        ...(fulfilment === "delivery" && form.apartment.trim() ? { apartment: form.apartment.trim() } : {}),
         governorate,
-        ...(passport ? { idType, nationalId: normalizePassport(form.nationalId) } : { nationalId: normalizeNationalId(form.nationalId) }),
+        paymentReference: form.paymentReference.trim(),
         phone: normalizePhone(form.phone),
         email: form.email.trim().toLowerCase(),
       },
@@ -496,6 +493,16 @@ export function Checkout({
                   </Link>
                 )}
               </div>
+
+              {/* A guest's order can join an account made with the same email (claimed by the token kept in this tab). */}
+              {done.guestToken && (
+                <div className="done-offer">
+                  <p>{t.checkout.accountOffer}</p>
+                  <Link className="done-link" href={href(`/sign-up?${new URLSearchParams({ email: done.email, ...(done.phone ? { mobile: done.phone } : {}) })}`)}>
+                    {fmt(t.checkout.accountCreate, { email: done.email })}
+                  </Link>
+                </div>
+              )}
             </div>
           ) : (
             <div className="co-grid">
@@ -521,83 +528,7 @@ export function Checkout({
                     <span>{t.checkout.country}</span>
                     <p>{t.checkout.countryValue}</p>
                   </div>
-                  <label className="f wide">
-                    <span>
-                      {t.checkout.street}
-                      <em>*</em>
-                    </span>
-                    <input id="co-street" type="text" autoComplete="address-line1" maxLength={200} required placeholder={t.checkout.streetPh} aria-invalid={Boolean(errors.street)} className={bad("street")} value={form.street} onChange={set("street")} />
-                  </label>
-                  <label className="f wide">
-                    <span>{t.checkout.apartment}</span>
-                    <input id="co-apartment" type="text" autoComplete="address-line2" maxLength={200} placeholder={t.checkout.optional} aria-invalid={Boolean(errors.apartment)} className={bad("apartment")} value={form.apartment} onChange={set("apartment")} />
-                  </label>
-                  <label className="f">
-                    <span>
-                      {t.checkout.governorate}
-                      <em>*</em>
-                    </span>
-                    <Select
-                      value={governorate}
-                      onChange={setGovernorate}
-                      aria-label={t.checkout.governorate}
-                      options={GOVERNORATES.map((g) => [g, t.governorates[g]] as const)}
-                    />
-                  </label>
-                  <label className="f">
-                    <span>
-                      {t.checkout.idType}
-                      <em>*</em>
-                    </span>
-                    <Select
-                      value={idType}
-                      onChange={(next) => {
-                        setIdType(next);
-                        // a number typed for the other document is judged again, by the new rule
-                        setErrors((prev) => ({ ...prev, nationalId: undefined }));
-                      }}
-                      aria-label={t.checkout.idType}
-                      options={[
-                        ["national_id", t.checkout.nationalId],
-                        ["passport", t.checkout.idPassport],
-                      ]}
-                    />
-                  </label>
-                  <label className="f">
-                    <span>
-                      {passport ? t.checkout.passport : t.checkout.nationalId}
-                      <em>*</em>
-                    </span>
-                    <input id="co-nationalId" dir="ltr" type="text" inputMode={passport ? "text" : "numeric"} autoComplete="off" maxLength={20} required placeholder={passport ? t.checkout.passportPh : t.checkout.nationalIdPh} aria-invalid={Boolean(errors.nationalId)} className={bad("nationalId")} value={form.nationalId} onChange={set("nationalId")} />
-                  </label>
-                  <label className="f">
-                    <span>
-                      {t.checkout.phone}
-                      <em>*</em>
-                    </span>
-                    <input id="co-phone" dir="ltr" type="tel" autoComplete="tel" maxLength={20} required placeholder="01x xxxx xxxx" aria-invalid={Boolean(errors.phone)} className={bad("phone")} value={form.phone} onChange={set("phone")} />
-                  </label>
-                  <label className="f">
-                    <span>
-                      {t.checkout.email}
-                      <em>*</em>
-                    </span>
-                    <input id="co-email" dir="ltr" type="email" autoComplete="email" maxLength={254} required placeholder="you@example.com" aria-invalid={Boolean(errors.email)} className={bad("email")} value={form.email} onChange={set("email")} />
-                  </label>
                 </div>
-
-                <label className="f wide" style={{ marginTop: "var(--s2)" }}>
-                  <span>{t.checkout.notesLabel}</span>
-                  <textarea id="co-notes" maxLength={1000} placeholder={t.checkout.notesPh} className={bad("notes")} value={form.notes} onChange={set("notes")} />
-                </label>
-                <p className="co-legal">{t.checkout.idLegal}</p>
-
-                {kycRequired && (
-                  <>
-                    <KycSlot label={passport ? t.checkout.kycPassportLabel : t.checkout.kycFrontLabel} hint={t.checkout.kycDocHint} token={kycFront} onToken={setKycFront} />
-                    {!passport && <KycSlot label={t.checkout.kycBackLabel} hint={t.checkout.kycBackHint} token={kycBack} onToken={setKycBack} />}
-                  </>
-                )}
 
                 <h2 className="co-h">{t.checkout.how}</h2>
                 <Options value={fulfilment} onChange={setFulfilment} aria-label={t.checkout.how}>
@@ -630,6 +561,69 @@ export function Checkout({
                     <span>{t.checkout.deliveryAddress}</span>
                     <textarea id="co-deliveryAddress" maxLength={500} required placeholder={t.checkout.deliveryAddressPh} aria-invalid={Boolean(errors.deliveryAddress)} className={bad("deliveryAddress")} value={form.deliveryAddress} onChange={set("deliveryAddress")} />
                   </label>
+                )}
+
+                <div className="ff">
+                  {fulfilment === "delivery" && (
+                    <>
+                  <label className="f wide">
+                    <span>
+                      {t.checkout.street}
+                      <em>*</em>
+                    </span>
+                    <input id="co-street" type="text" autoComplete="address-line1" maxLength={200} required placeholder={t.checkout.streetPh} aria-invalid={Boolean(errors.street)} className={bad("street")} value={form.street} onChange={set("street")} />
+                  </label>
+                  <label className="f wide">
+                    <span>{t.checkout.apartment}</span>
+                    <input id="co-apartment" type="text" autoComplete="address-line2" maxLength={200} placeholder={t.checkout.optional} aria-invalid={Boolean(errors.apartment)} className={bad("apartment")} value={form.apartment} onChange={set("apartment")} />
+                  </label>
+                    </>
+                  )}
+                  <label className="f">
+                    <span>
+                      {t.checkout.governorate}
+                      <em>*</em>
+                    </span>
+                    <Select
+                      value={governorate}
+                      onChange={setGovernorate}
+                      aria-label={t.checkout.governorate}
+                      options={GOVERNORATES.map((g) => [g, t.governorates[g]] as const)}
+                    />
+                  </label>
+                  <label className="f">
+                    <span>
+                      {t.checkout.phone}
+                      <em>*</em>
+                    </span>
+                    <input id="co-phone" dir="ltr" type="tel" autoComplete="tel" maxLength={20} required placeholder="01x xxxx xxxx" aria-invalid={Boolean(errors.phone)} className={bad("phone")} value={form.phone} onChange={set("phone")} />
+                  </label>
+                  <label className="f">
+                    <span>
+                      {t.checkout.email}
+                      <em>*</em>
+                    </span>
+                    <input id="co-email" dir="ltr" type="email" autoComplete="email" maxLength={254} required placeholder="you@example.com" aria-invalid={Boolean(errors.email)} className={bad("email")} value={form.email} onChange={set("email")} />
+                  </label>
+                  <label className="f wide">
+                    <span>
+                      {t.checkout.paymentReference}
+                      <em>*</em>
+                    </span>
+                    <input id="co-paymentReference" dir="ltr" type="text" autoComplete="off" maxLength={60} required placeholder={t.checkout.paymentReferencePh} aria-invalid={Boolean(errors.paymentReference)} className={bad("paymentReference")} value={form.paymentReference} onChange={set("paymentReference")} />
+                  </label>
+                </div>
+
+                <label className="f wide" style={{ marginTop: "var(--s2)" }}>
+                  <span>{t.checkout.notesLabel}</span>
+                  <textarea id="co-notes" maxLength={1000} placeholder={t.checkout.notesPh} className={bad("notes")} value={form.notes} onChange={set("notes")} />
+                </label>
+
+                {kycRequired && (
+                  <>
+                    <KycSlot label={t.checkout.kycFrontLabel} hint={t.checkout.kycDocHint} token={kycFront} onToken={setKycFront} />
+                    <KycSlot label={t.checkout.kycBackLabel} hint={t.checkout.kycBackHint} token={kycBack} onToken={setKycBack} />
+                  </>
                 )}
 
                 <h2 className="co-h">{t.checkout.payment}</h2>
