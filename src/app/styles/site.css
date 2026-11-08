@@ -789,6 +789,7 @@ html[lang="ar"] .pr-k{ font-size:13px; letter-spacing:0; }
 .pr-card.main .pr-chg{ color:#7FD6A2; }
 .pr-chg.down{ color:#C0452B; }
 .pr-card.main .pr-chg.down{ color:#E79A8E; }
+.pr-chg.none, .pr-card.main .pr-chg.none{ color:#B9C2D8; }
 .pr-link{ transition:border-color .18s ease, transform .12s ease-out; }
 .pr-link:hover{ border-color:rgba(198,163,98,.7); }
 .pr-link:active{ transform:scale(.98); }

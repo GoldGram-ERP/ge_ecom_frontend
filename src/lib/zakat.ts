@@ -1,8 +1,8 @@
 import type { Karat, Prices } from "./types";
 
 // The zakat rules the calculator applies, in one place so they can be changed.
-// Nisab: 85 g of gold, priced at 21K as Egypt's Dar al-Ifta commonly cites it, or 595 g of silver.
-export const NISAB_GOLD_GRAMS = 85;
+// Nisab: 97 g of 21K gold, or 595 g of silver.
+export const NISAB_GOLD_GRAMS = 97;
 export const NISAB_GOLD_KARAT: Karat = 21;
 export const NISAB_SILVER_GRAMS = 595;
 /** Of the whole zakatable wealth, once it reaches the nisab. */

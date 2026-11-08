@@ -6,9 +6,10 @@ import { AccountLink, SignOutButton, SiteHeader } from "@/components/header-clie
 import type { Dict, Locale } from "@/i18n";
 import { fmt, hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
-import { cairoDate, cairoHour, changeLine, changeParts, durationText, karatLabel, pounds, poundsParts, productShortName } from "@/lib/format";
+import { cairoDate, cairoHour, durationText, pounds } from "@/lib/format";
 import { getMyOrders, getPrices, getProducts, getUser, showOutOfStockHome } from "@/lib/server-api";
 import { type Category, isWearable, type MyOrder } from "@/lib/types";
+import { AccountCrown, AccountPopular } from "@/components/account-live";
 import { ProofUpload } from "@/components/proof-upload";
 
 const TABS = ["home", "balance", "profile"] as const;
@@ -61,8 +62,6 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
 
   const [user, prices, products, withSoldOut, orders] = await Promise.all([getUser(), getPrices(), getProducts(), showOutOfStockHome(), getMyOrders()]);
 
-  const k24 = prices.karats.find((k) => k.karat === 24) ?? prices.karats[0];
-  const change = changeLine(k24.changePct, locale, t.account.today);
   const { market } = prices;
   const hour = cairoHour(new Date());
   const greeting = hour < 12 ? t.account.morning : hour < 18 ? t.account.afternoon : t.account.evening;
@@ -201,10 +200,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
             </span>
           </div>
           <div className="ac-label">{t.account.live}</div>
-          <div className="ac-price">{poundsParts(k24.buyPiastres).full}</div>
-          <div className="ac-chg" style={change.down ? { color: "#E79A8E" } : undefined}>
-            {change.text}
-          </div>
+          <AccountCrown prices={prices} />
         </div>
 
         <div className="app-body">
@@ -259,26 +255,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
                   </Link>
                 </h3>
                 <div className="pop">
-                  {featured.map((p) => {
-                    // Bars show today's move of their karat, the other pieces their karat, as in the prototype.
-                    const move = changeParts(prices.karats.find((k) => k.karat === p.karat)?.changePct ?? 0);
-                    return (
-                      <Link className="pc" href={`${shop}/${p.id}`} key={p.id}>
-                        <MiniArt category={p.category} />
-                        <b>{productShortName(p, t)}</b>
-                        <i>
-                          {pounds(p.pricePiastres)} <small className="egp">{t.product.egp}</small>
-                        </i>
-                        {p.category === "bar" ? (
-                          <em style={move.down ? { color: "#C0452B" } : undefined}>
-                            {move.down ? "↓" : "↑"} {move.value}
-                          </em>
-                        ) : (
-                          <em className="muted">{karatLabel(p.karat, t)}</em>
-                        )}
-                      </Link>
-                    );
-                  })}
+                  <AccountPopular products={featured} prices={prices} />
                 </div>
               </div>
             </div>

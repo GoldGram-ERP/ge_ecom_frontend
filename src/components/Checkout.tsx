@@ -123,6 +123,9 @@ export function Checkout({
   const [failedKey, setFailedKey] = useState<string | null>(null);
   const hasLines = lines.length > 0;
   const quote = hasLines ? (loaded?.quote ?? null) : null;
+  // The live board first: it turns to paused at closing time even with this page left open.
+  const trading = liveBoard?.trading ?? quote?.trading ?? "open";
+  const outsideHours = trading === "paused" && liveBoard?.market.enforced === true && !liveBoard.market.open;
   const quoteFresh = hasLines && loaded?.key === quoteKey;
   const quoteFailed = hasLines && failedKey === quoteKey;
   const unavailableText = t.checkout.errUnavailable;
@@ -759,8 +762,11 @@ export function Checkout({
 
                   {deliveryBlocked && <p className="notice">{t.checkout.errNoZone}</p>}
                   {quote && quote.outOfStock.length > 0 && <p className="notice">{t.checkout.errStock}</p>}
-                  {quote?.trading === "paused" && <p className="notice">{t.checkout.errPaused}</p>}
-                  {quote?.trading === "closed" && <p className="notice">{t.checkout.errStoreClosed}</p>}
+                  {outsideHours && liveBoard && (
+                    <p className="notice">{fmt(t.checkout.errOutsideHours, { open: liveBoard.market.opensAt, close: liveBoard.market.closesAt })}</p>
+                  )}
+                  {trading === "paused" && !outsideHours && <p className="notice">{t.checkout.errPaused}</p>}
+                  {trading === "closed" && <p className="notice">{t.checkout.errStoreClosed}</p>}
 
                   <label className={`chk${errors.terms ? " bad" : ""}`}>
                     <Check
@@ -790,7 +796,7 @@ export function Checkout({
                     </div>
                   )}
 
-                  <Button className="place" type="button" onClick={() => void place()} disabled={busy || (hasLines && !quoteFresh)}>
+                  <Button className="place" type="button" onClick={() => void place()} disabled={busy || trading !== "open" || (hasLines && !quoteFresh)}>
                     {busy ? t.checkout.placing : t.checkout.place}
                   </Button>
                   <p className="co-legal">{t.checkout.priceLegal}</p>

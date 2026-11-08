@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fmt } from "@/i18n";
 import { api, ApiError, errorText } from "@/lib/client-api";
 import { pounds, poundsParts, productName, weightLabel } from "@/lib/format";
@@ -66,6 +66,25 @@ export function SellForm({
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState<Placed | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  // One turn per failed submit: the effect below then reveals the first error.
+  const [focusTick, setFocusTick] = useState(0);
+
+  // After a failed submit, bring the first error in page order into view, clear of the sticky
+  // header, and put the cursor in it. The alert itself is focused when no field carries one.
+  useEffect(() => {
+    if (!focusTick) return;
+    const form = formRef.current;
+    if (!form) return;
+    const target = form.querySelector<HTMLElement>('[aria-invalid="true"], .co-err');
+    if (!target) return;
+    const header = document.querySelector<HTMLElement>("header");
+    const top = target.getBoundingClientRect().top + window.scrollY - (header?.getBoundingClientRect().bottom ?? 0) - 12;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
+    const focusable = target.matches("input, select, textarea") ? target : target.querySelector<HTMLElement>("input, select, textarea");
+    (focusable ?? target).focus({ preventScroll: true });
+  }, [focusTick]);
 
   // A signed-in customer starts with the email and mobile of their account.
   if (user && !prefilled) {
@@ -120,7 +139,10 @@ export function SellForm({
     if (!isEmail(email)) found.email = s.errEmail;
     setErrors(found);
     setMessage(null);
-    if (Object.keys(found).length > 0) return;
+    if (Object.keys(found).length > 0) {
+      setFocusTick((n) => n + 1);
+      return;
+    }
 
     setBusy(true);
     try {
@@ -156,6 +178,7 @@ export function SellForm({
         setErrors(back);
         if (Object.keys(back).length === 0) setMessage(errorText(error, t));
       } else setMessage(errorText(error, t));
+      setFocusTick((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -214,7 +237,7 @@ export function SellForm({
     ) : null;
 
   return (
-    <form className="co-grid sell" onSubmit={submit} noValidate>
+    <form ref={formRef} className="co-grid sell" onSubmit={submit} noValidate>
       <div>
         <h2 className="co-h">
           <i>1</i>
@@ -400,7 +423,7 @@ export function SellForm({
           )}
           <p className="sell-note">{s.estimateNote}</p>
           {message && (
-            <p className="co-err" role="alert">
+            <p className="co-err" role="alert" tabIndex={-1}>
               <i>!</i>
               <span>{message}</span>
             </p>
