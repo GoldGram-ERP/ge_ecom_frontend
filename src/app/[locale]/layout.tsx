@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Analytics } from "@/components/analytics";
+import { CONSENT_DEFAULTS } from "@/lib/analytics";
 import { Footer } from "@/components/chrome";
 import { PriceTicker } from "@/components/PriceTicker";
 import { Providers } from "@/components/Providers";
@@ -62,6 +63,8 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
     // Next.js 16 only makes page changes jump straight to the top when asked to.
     <html lang={locale === "ar" ? "ar-EG" : "en"} dir={dirOf(locale)} className={fontVariables} data-scroll-behavior="smooth">
       <body>
+        {/* The data layer and the Consent Mode defaults, before any custom code, Tag Manager or push (R1, section 10). */}
+        <script dangerouslySetInnerHTML={{ __html: CONSENT_DEFAULTS }} />
         {/* The site-wide custom code (DSH-13, set by a super admin only), then Tag Manager's no-JS frame. */}
         {seo?.headCode ? <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: seo.headCode }} /> : null}
         {seo?.bodyStartCode ? <div style={{ display: "contents" }} dangerouslySetInnerHTML={{ __html: seo.bodyStartCode }} /> : null}

@@ -5,9 +5,11 @@ import { Fragment, useState } from "react";
 import { fmt } from "@/i18n";
 import { buybackPiastres, cairoTime, karatLabel, pounds, poundsParts, productName, weightLabel, weightText } from "@/lib/format";
 import { KINDS, type Kind, pieceKind } from "@/lib/kinds";
+import { LISTS, selectItem, trackEvent } from "@/lib/analytics";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
 import type { Prices, Product } from "@/lib/types";
+import { useListView } from "./analytics";
 import { FaqList } from "./home-client";
 import { useI18n } from "./Providers";
 import { AddButton } from "./ShopGrid";
@@ -69,6 +71,9 @@ export function CompareTool({
   const weights = choice.kind ? weightsOf(rendered, choice.kind) : allWeights(rendered);
 
   const pick = (kind: Kind | undefined, weight: number | undefined) => {
+    // GA4: a kind or weight filter on the table, not a new list (section 5).
+    const changed = kind !== choice.kind ? { filter_type: "product_group", filter_value: kind ?? "all" } : { filter_type: "weight", filter_value: weight === undefined ? "all" : String(weight) };
+    trackEvent("filter_apply", { ...changed, item_list_id: LISTS.makingCharges.id });
     setChoice({ kind, weight });
     // Next.js keeps its router in step with the native history calls.
     const params = new URLSearchParams();
@@ -176,6 +181,9 @@ export function CompareTool({
     };
   }
 
+  // The table's rows top to bottom: the GA4 list and each row's position in it.
+  const shownRows = showAll ? groups.flatMap((g) => g.rows) : rows;
+  useListView(LISTS.makingCharges, shownRows);
   const renderRow = (p: Product, index: number, size: number) => (
     <tr key={p.id} data-product={p.id}>
       <th scope="row">
@@ -186,7 +194,7 @@ export function CompareTool({
       <td className="cmp-with">{perGram(p, "with")}</td>
       <td className="cmp-without">{perGram(p, "without")}</td>
       <td className="cmp-add">
-        <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
+        <AddButton product={p} list={LISTS.makingCharges} index={shownRows.indexOf(p)} />
       </td>
     </tr>
   );
@@ -277,7 +285,7 @@ export function CompareTool({
             <h2 id="cmp-about">{fmt(t.compare.about, { name })}</h2>
             <p>{info.about}</p>
             {time ? <p className="cmp-about-note">{fmt(t.compare.aboutNote, { time })}</p> : null}
-            <Link className="pdp-view cmp-more" href={href(`/shop/${cheapest.slug}`)}>
+            <Link className="pdp-view cmp-more" href={href(`/shop/${cheapest.slug}`)} onClick={() => selectItem(cheapest, LISTS.makingCharges, shownRows.indexOf(cheapest))}>
               {fmt(t.compare.aboutLink, { brand: brand(cheapest), name })}
             </Link>
           </section>

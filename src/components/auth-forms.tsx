@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { api, ApiError, CLAIM_KEY, errorText } from "@/lib/client-api";
 import { isEmail, isPassword, normalizePhone } from "@/lib/validation";
 import { useI18n, useSession } from "./Providers";
@@ -100,6 +101,7 @@ export function SignInForm({ toCheckout = false }: { toCheckout?: boolean }) {
     setError(null);
     try {
       await api("/auth/login", { body: { email: email.trim().toLowerCase(), password } });
+      trackEvent("login", { method: "email" });
       await refresh();
       router.push(href(toCheckout ? "/checkout" : "/account"));
       router.refresh();
@@ -182,6 +184,8 @@ export function SignUpForm({
       const claimToken = sessionStorage.getItem(CLAIM_KEY) ?? undefined;
       const res = await api<{ otpRequired?: boolean; email?: string }>("/auth/register", { body: { firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim().toLowerCase(), mobile: phone, password, locale, claimToken } });
       sessionStorage.removeItem(CLAIM_KEY);
+      // The account exists now, whether or not an emailed code still has to sign it in.
+      trackEvent("sign_up", { method: "email" });
       if (res.otpRequired) {
         // Account made, not signed in yet: ask for the emailed code.
         setOtpEmail(res.email ?? email.trim().toLowerCase());

@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { pageOf, trackEvent } from "@/lib/analytics";
 import { karatLabel, poundsParts } from "@/lib/format";
 import type { Prices } from "@/lib/types";
 import { useI18n } from "./Providers";
@@ -16,6 +17,19 @@ export function GoldCalculator({ karats }: { karats: Prices["karats"] }) {
   const price = karats.find((k) => String(k.karat) === karat);
   const valid = weight.trim() !== "" && Number.isFinite(grams) && grams > 0 && grams <= 100_000 && price;
   const amount = (perGram: number) => (valid ? poundsParts(Math.round(grams * perGram)).full : "—");
+
+  // GA4 price_calculator_use: a second after the visitor changes the weight or karat, when a result shows.
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    if (!valid) return;
+    const timer = setTimeout(() => trackEvent("price_calculator_use", { weight_grams: grams, karat, page_type: pageOf(window.location.pathname).type }), 1000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the visitor's inputs only
+  }, [weight, karat]);
 
   return (
     <section className="pr-calc" aria-labelledby="pr-calc-title">

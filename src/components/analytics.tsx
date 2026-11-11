@@ -2,21 +2,26 @@
 
 import Script from "next/script";
 import { useEffect } from "react";
+import { fromProduct, itemFor, markNotFound, onPage, pageOf, trackEcommerce, trackEvent, viewItemList, type ListRef } from "@/lib/analytics";
+import type { Product } from "@/lib/types";
 
-declare global {
-  interface Window {
-    dataLayer?: Record<string, unknown>[];
-  }
-}
+const STORE: Record<string, string> = { ios: "app_store", android: "google_play" };
+// The store links keep their campaign names (ct=website-home); the event uses the spec's placements.
+const STORE_PLACEMENT: Record<string, string> = { home: "home_app_band", product: "product_buyback", app: "app_page", footer: "footer", header: "header" };
+const MAP_LINK = /^https?:\/\/(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/;
 
-/** One GA4 event into the Tag Manager data layer (ANL-02). Harmless when GTM is not set. */
-export function track(event: string, params: Record<string, unknown> = {}) {
-  (window.dataLayer ??= []).push({ event, ...params });
+/** Which contact a link is: phone, WhatsApp, email or map; null for any other link. */
+export function contactMethod(href: string): "phone" | "whatsapp" | "email" | "map" | null {
+  if (href.startsWith("tel:")) return "phone";
+  if (href.startsWith("mailto:")) return "email";
+  if (/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(href)) return "whatsapp";
+  if (MAP_LINK.test(href)) return "map";
+  return null;
 }
 
 /**
- * Tag Manager, loaded once after the page is interactive (DSH-13, PRF-03), and the click events
- * every page shares: a store badge (data-store, data-placement), a phone link, a WhatsApp link.
+ * Tag Manager, loaded once after the page is interactive, and the clicks every page shares: a
+ * store badge (data-store, data-placement) and a hotline, WhatsApp, email or map link.
  */
 export function Analytics({ gtmId }: { gtmId: string }) {
   useEffect(() => {
@@ -24,11 +29,15 @@ export function Analytics({ gtmId }: { gtmId: string }) {
       const link = (event.target as Element | null)?.closest?.("a");
       if (!link) return;
       const store = link.getAttribute("data-store");
-      const placement = link.getAttribute("data-placement") ?? "";
-      const href = link.getAttribute("href") ?? "";
-      if (store) track("app_store_click", { store, placement });
-      else if (href.startsWith("tel:")) track("phone_click", { placement });
-      else if (/^https:\/\/(wa\.me|api\.whatsapp\.com)\//.test(href)) track("whatsapp_click", { placement });
+      if (store) {
+        const placement = link.getAttribute("data-placement") ?? "";
+        trackEvent("app_store_click", { store: STORE[store] ?? store, placement: STORE_PLACEMENT[placement] ?? placement });
+        return;
+      }
+      const method = contactMethod(link.getAttribute("href") ?? "");
+      if (!method) return;
+      const placement = link.closest("footer") ? "footer" : link.closest("header") ? "header" : pageOf(window.location.pathname).type;
+      trackEvent("contact_click", { method, placement });
     };
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
@@ -41,11 +50,31 @@ export function Analytics({ gtmId }: { gtmId: string }) {
   );
 }
 
-/** A page-view event (view_item, view_item_list, price_page_view), sent once when the page opens. */
-export function TrackView({ event, params }: { event: string; params?: Record<string, unknown> }) {
+/** view_item on the product page, once per page view, with the price it rendered with (R8, R15). */
+export function ViewItem({ product }: { product: Product }) {
   useEffect(() => {
-    track(event, params);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page
-  }, [event]);
+    onPage(`view_item:${product.id}`, () => {
+      const item = itemFor(fromProduct(product));
+      trackEcommerce("view_item", { currency: "EGP", value: item.price, items: [item] });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per product page
+  }, [product.id]);
+  return null;
+}
+
+/** view_item_list once per list per page view, with the products it rendered first. */
+export function useListView(list: ListRef | undefined, products: Product[]): void {
+  // The pieces' ids too: a product page opened from another keeps this component mounted.
+  const ids = products.map((p) => p.id).join();
+  useEffect(() => {
+    if (!list) return;
+    onPage(`list:${list.id}`, () => viewItemList(list, products));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page view (onPage), as it first rendered
+  }, [list?.id, ids]);
+}
+
+/** Rendered by the 404 page: its page view says not_found. */
+export function NotFoundMark() {
+  useEffect(markNotFound, []);
   return null;
 }

@@ -109,7 +109,13 @@ function subscribe(listener: () => void) {
 }
 
 export const cart = {
-  add: (productId: number, stock?: number | null) => commit(addLine(snapshot(), productId, stock)),
+  /** True when a piece went in (false at the piece's limit or a full cart). */
+  add: (productId: number, stock?: number | null): boolean => {
+    const before = snapshot();
+    const next = addLine(before, productId, stock);
+    commit(next);
+    return next !== before;
+  },
   removeOne: (productId: number) => commit(removeOne(snapshot(), productId)),
   drop: (ids: number[]) => commit(dropProducts(snapshot(), ids)),
   clear: () => commit([]),

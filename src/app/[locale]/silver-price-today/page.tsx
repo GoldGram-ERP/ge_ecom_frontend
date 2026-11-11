@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { TrackView } from "@/components/analytics";
 import { SiteHeader } from "@/components/header-client";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
 import { SilverPricesView } from "@/components/silver-prices-live";
@@ -42,7 +41,6 @@ export default async function SilverPricesPage({ params }: PageProps<"/[locale]/
         ]}
       />
       <EntryHeadCode entry={entry} />
-      <TrackView event="price_page_view" params={{ metal: "silver" }} />
       <SiteHeader />
       <SilverPricesView initial={prices} history={history} h1={name}>
         <EntryIntro entry={entry} locale={locale} />

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { TrackView } from "@/components/analytics";
 import { SiteHeader } from "@/components/header-client";
 import { GoldPricesView } from "@/components/prices-live";
 import { EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
@@ -61,7 +60,6 @@ export default async function GoldPricesPage({ params }: PageProps<"/[locale]/go
         ]}
       />
       <EntryHeadCode entry={entry} />
-      <TrackView event="price_page_view" params={{ metal: "gold" }} />
       <SiteHeader />
       <GoldPricesView
         initial={prices}

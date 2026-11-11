@@ -1,6 +1,7 @@
 "use client"; // reads the language from context: not-found receives no params
 
 import Link from "next/link";
+import { NotFoundMark } from "@/components/analytics";
 import { PlainPage } from "@/components/PlainPage";
 import { useI18n } from "@/components/Providers";
 
@@ -9,6 +10,7 @@ export default function NotFound() {
   const { t, href } = useI18n();
   return (
     <PlainPage title={t.errors.notFoundTitle}>
+      <NotFoundMark />
       <p>{t.errors.notFoundText}</p>
       <div className="plain-acts">
         <Link className="gold-btn" href={href("/shop")}>

@@ -161,6 +161,8 @@ export interface PlacedOrder {
   createdAt: string;
   /** Only for a guest's order: proves it is theirs (transfer picture, claiming it with a new account). */
   guestToken?: string;
+  /** The GA4 place_order values from the order record (only in the create answer). */
+  tracking?: import("./analytics").OrderTracking;
 }
 
 /** A row of `GET /orders/mine` (the parts the account screen shows). */
@@ -189,6 +191,8 @@ export interface User {
   lastName: string;
   role: "customer" | "admin";
   createdAt: string;
+  /** Identity check state ("Documents required", "Pending approval", "Approved"); absent on an older backend. */
+  kycStatus?: string;
 }
 
 export interface ApiErrorBody {

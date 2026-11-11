@@ -6,9 +6,11 @@ import { MiniArt } from "@/components/chrome";
 import { FaqList } from "@/components/home-client";
 import { fmt, localePath } from "@/i18n";
 import { buybackPiastres, cairoTime, pounds, poundsParts, productName, productSub, weightLabel } from "@/lib/format";
+import { LISTS, selectItem } from "@/lib/analytics";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
 import type { Prices, Product } from "@/lib/types";
+import { useListView } from "./analytics";
 import { useI18n } from "./Providers";
 
 const money = (piastres: number) => poundsParts(piastres).full;
@@ -45,6 +47,7 @@ export function PdpFaq({ product, prices: initialPrices }: { product: Product; p
 export function PdpCompare({ product, sameWeight }: { product: Product; sameWeight: Product[] }) {
   const { t, locale } = useI18n();
   const rows = useLiveProducts(sameWeight).sort((a, b) => a.pricePiastres - b.pricePiastres);
+  useListView(rows.length < 2 ? undefined : LISTS.pdpSameWeight, rows);
   if (rows.length < 2) return null;
   const shop = localePath(locale, `/shop`);
 
@@ -78,7 +81,7 @@ export function PdpCompare({ product, sameWeight }: { product: Product; sameWeig
                   {other.id === product.id ? (
                     <span className="pdp-this">{t.pdp.thisOne}</span>
                   ) : (
-                    <Link className="pdp-view" href={`${shop}/${other.slug}`}>
+                    <Link className="pdp-view" href={`${shop}/${other.slug}`} onClick={() => selectItem(other, LISTS.pdpSameWeight, index)}>
                       {t.pdp.view}
                     </Link>
                   )}
@@ -100,11 +103,12 @@ export function PdpCompare({ product, sameWeight }: { product: Product; sameWeig
 export function PdpRelated({ related }: { related: Product[] }) {
   const { t, locale } = useI18n();
   const rows = useLiveProducts(related);
+  useListView(LISTS.pdpOtherWeights, rows);
   const shop = localePath(locale, `/shop`);
   return (
     <div className="pdp-related">
-      {rows.map((other) => (
-        <Link className="pdp-card" href={`${shop}/${other.slug}`} key={other.id}>
+      {rows.map((other, index) => (
+        <Link className="pdp-card" href={`${shop}/${other.slug}`} key={other.id} onClick={() => selectItem(other, LISTS.pdpOtherWeights, index)}>
           <div className="pdp-card-art">
             {other.imageIds[0] ? (
               <Image unoptimized src={`/api/products/${other.id}/images/${other.imageIds[0]}`} alt="" width={240} height={240} loading="lazy" />

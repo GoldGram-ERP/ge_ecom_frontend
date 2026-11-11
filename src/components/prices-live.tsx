@@ -9,9 +9,11 @@ import { FaqList } from "@/components/home-client";
 import { PriceChart } from "@/components/PriceChart";
 import { fmt, localePath } from "@/i18n";
 import { cairoDate, cairoTime, changeLine, changeToday, karatLabel, pounds, poundsParts, productName, productSub, weightText } from "@/lib/format";
+import { LISTS, selectItem } from "@/lib/analytics";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
 import { isWearable, type PriceHistory, type Prices, type Product } from "@/lib/types";
+import { useListView } from "./analytics";
 import { useI18n } from "./Providers";
 
 /** A sentence whose {placeholders} are filled with elements: the numbers keep their own font. */
@@ -66,6 +68,7 @@ export function GoldPricesView({
   const unitChange = (unit: "ounce" | "pound") => (unit === "ounce" ? (k24?.changePct ?? 0) : (k21?.changePct ?? 0));
   const unitName = (u: Prices["units"][number]) => `${u.unit === "ounce" ? t.board.ounce : t.board.pound} · ${fmt(t.board.unitWeight, { w: weightText(u.weightGrams) })}`;
   const toBuy = picks(products);
+  useListView(LISTS.pricesBars, toBuy);
 
   if (!prices || !k24 || !k21) return null;
 
@@ -208,10 +211,10 @@ export function GoldPricesView({
           <section className="pr-sec">
             <h2>{t.prices.buyTitle}</h2>
             <div className="pr-buyrow">
-              {toBuy.map((p) => {
+              {toBuy.map((p, index) => {
                 const photo = p.imageIds?.[0];
                 return (
-                  <Link className="pr-pick" href={localePath(locale, `/shop/${p.slug}`)} key={p.id}>
+                  <Link className="pr-pick" href={localePath(locale, `/shop/${p.slug}`)} key={p.id} onClick={() => selectItem(p, LISTS.pricesBars, index)}>
                     {photo ? (
                       <span className="pr-pick-art">
                         <Image unoptimized src={`/api/products/${p.id}/images/${photo}`} alt="" width={160} height={160} loading="lazy" />

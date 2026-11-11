@@ -5,21 +5,24 @@ import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
 import { artClass, artStyle, pounds, productName, productSub } from "@/lib/format";
+import { LISTS, selectItem } from "@/lib/analytics";
 import { useLiveProducts } from "@/lib/live-products";
 import type { Product } from "@/lib/types";
+import { useListView } from "./analytics";
 import { CarouselScroller } from "./carousel-scroller";
 import { AddButton } from "./ShopGrid";
 
 /** Horizontal scroll-snap row of the shop's product cards, priced from the live catalogue. */
 export function StarterCarousel({ products: rendered, locale, t }: { products: Product[]; locale: Locale; t: Dict }) {
   const products = useLiveProducts(rendered);
+  useListView(LISTS.homePicks, products);
   return (
     <CarouselScroller label={t.starter.title} locale={locale}>
-      {products.map((p) => {
+      {products.map((p, index) => {
         const photo = p.imageIds?.[0];
         return (
           <article className="pcard" key={p.id}>
-            <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)}>
+            <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)} onClick={() => selectItem(p, LISTS.homePicks, index)}>
               {photo ? (
                 <div className="pc-frame">
                   <Image unoptimized className="pc-photo" src={`/api/products/${p.id}/images/${photo}`} alt="" width={328} height={328} loading="lazy" />
@@ -39,7 +42,7 @@ export function StarterCarousel({ products: rendered, locale, t }: { products: P
               {pounds(p.pricePiastres)}
               <u>{t.product.egp}</u>
             </div>
-            <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
+            <AddButton product={p} list={LISTS.homePicks} index={index} />
           </article>
         );
       })}

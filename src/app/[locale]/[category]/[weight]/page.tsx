@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TrackView } from "@/components/analytics";
 import { SiteHeader } from "@/components/header-client";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
 import { ShopGrid } from "@/components/ShopGrid";
+import { weightList } from "@/lib/analytics";
 import { fmt, hasLocale, type Locale, localePath } from "@/i18n";
 import { buybackPiastres, cairoDate, cairoTime, pounds, poundsParts, productName, weightText } from "@/lib/format";
 import { breadcrumbList, itemListJsonLd } from "@/lib/seo";
@@ -68,7 +68,6 @@ export default async function WeightPage({ params }: PageProps<"/[locale]/[categ
     <div className="page buy-page">
       <JsonLd data={[breadcrumbList(trail), itemListJsonLd(locale, bars.map((p) => ({ name: productName(p, locale), path: `/shop/${p.slug}` })))]} />
       <EntryHeadCode entry={entry} />
-      <TrackView event="view_item_list" params={{ item_list_id: `weight-${slug}`, items: bars.map((p) => ({ item_id: p.slug, item_name: p.nameEn, weight: p.weightGrams, karat: p.karat, item_brand: p.manufacturerEn })) }} />
       <SiteHeader />
       <div className="band-off pr-band">
         <div className="wrap">
@@ -133,7 +132,7 @@ export default async function WeightPage({ params }: PageProps<"/[locale]/[categ
           </section>
 
           <section className="pr-sec">
-            <ShopGrid products={mergeBars(bars)} initial="all" />
+            <ShopGrid products={mergeBars(bars)} initial="all" list={weightList(slug, found.weight.grams)} />
           </section>
 
           {neighbours.length ? (

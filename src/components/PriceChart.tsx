@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState } from "react";
 import { fmt } from "@/i18n";
+import { trackEvent } from "@/lib/analytics";
 import { api } from "@/lib/client-api";
 import { cairoDate, cairoTime, poundsParts } from "@/lib/format";
 import { useLivePrices } from "@/lib/live-prices";
@@ -10,6 +11,7 @@ import { useI18n } from "./Providers";
 import { Button } from "./controls";
 
 export const PERIOD_DAYS = [1, 7, 30, 90, 180, 365] as const;
+const RANGE: Record<number, string> = { 1: "24h", 7: "7d", 30: "30d", 90: "3m", 180: "6m", 365: "1y" };
 const W = 640;
 const H = 220;
 
@@ -49,6 +51,7 @@ export function PriceChart({ metal, initial, initialDays, initialPrices }: { met
   const gradient = useId();
 
   async function choose(next: number) {
+    if (next !== days) trackEvent("price_chart_range", { range: RANGE[next] });
     setDays(next);
     setFailed(false);
     asked.current = next;
