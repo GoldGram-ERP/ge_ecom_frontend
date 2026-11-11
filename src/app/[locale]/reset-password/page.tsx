@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ResetForm } from "@/components/auth-forms";
 import { AuthShell } from "@/components/AuthShell";
@@ -6,6 +7,12 @@ import { getTexts } from "@/lib/site-texts";
 
 // Opened from the emailed link: /{locale}/reset-password?token=... (also used to set the
 // first password of an account created at checkout).
+export async function generateMetadata({ params }: PageProps<"/[locale]/reset-password">): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(locale)) return {};
+  return { title: `${(await getTexts(locale)).auth.resetTitle} · GoldGram` };
+}
+
 export default async function ResetPasswordPage({ params, searchParams }: PageProps<"/[locale]/reset-password">) {
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();

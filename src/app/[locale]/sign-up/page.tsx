@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SignUpForm } from "@/components/auth-forms";
 import { AuthShell } from "@/components/AuthShell";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
+
+export async function generateMetadata({ params }: PageProps<"/[locale]/sign-up">): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(locale)) return {};
+  return { title: `${(await getTexts(locale)).auth.signUpTitle} · GoldGram` };
+}
 
 export default async function SignUpPage({ params, searchParams }: PageProps<"/[locale]/sign-up">) {
   const { locale } = await params;

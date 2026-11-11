@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/header-client";
 import { articleBody, articleTitle } from "@/components/home-sections";
 import { hasLocale } from "@/i18n";
 import { cairoDate } from "@/lib/format";
+import { SITE_URL, absoluteUrl, jsonLd } from "@/lib/seo";
 import { getArticle } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 
@@ -23,6 +24,26 @@ export default async function ArticlePage({ params }: PageProps<"/[locale]/artic
 
   return (
     <div className="page buy-page">
+      {/* Article data (SCH-07); text goes through jsonLd, which escapes "<". */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd([
+            {
+              "@context": "https://schema.org",
+              "@type": "Article",
+              headline: articleTitle(article, locale),
+              datePublished: article.publishedAt,
+              dateModified: article.publishedAt,
+              inLanguage: locale === "ar" ? "ar-EG" : "en",
+              mainEntityOfPage: absoluteUrl(locale, `/articles/${article.id}`),
+              ...(article.imageIds[0] ? { image: [`${SITE_URL}/api/articles/${article.id}/images/${article.imageIds[0]}`] } : {}),
+              author: { "@type": "Organization", name: "GoldGram", url: SITE_URL },
+              publisher: { "@type": "Organization", name: "GoldGram", url: SITE_URL },
+            },
+          ]),
+        }}
+      />
       <SiteHeader />
       <div className="band-off">
         <div className="wrap">
