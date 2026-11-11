@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Fragment, useState } from "react";
 import { fmt } from "@/i18n";
-import { cairoTime, karatLabel, pounds, poundsParts, productName, weightLabel, weightText } from "@/lib/format";
+import { buybackPiastres, cairoTime, karatLabel, pounds, poundsParts, productName, weightLabel, weightText } from "@/lib/format";
 import { KINDS, type Kind, pieceKind } from "@/lib/kinds";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
@@ -98,15 +98,7 @@ export function CompareTool({
   // its cashback per gram × weight, each to the piastre as the sell page adds them; null with no
   // price board.
   type Packaging = "with" | "without";
-  const sellGram = (p: Product) =>
-    (p.karat as number) === 999
-      ? (prices?.silver.sellPiastres ?? null)
-      : (prices?.karats.find((k) => k.karat === p.karat)?.sellPiastres ?? null);
-  const buyback = (p: Product, packaging: Packaging): number | null => {
-    const gram = sellGram(p);
-    const cashbackGram = p.cashback ? (packaging === "with" ? p.cashback.withPackagingPiastres : p.cashback.withoutPackagingPiastres) : 0;
-    return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
-  };
+  const buyback = (p: Product, packaging: Packaging): number | null => buybackPiastres(p, prices, packaging);
 
   const pieceName = (kind: Kind, weight: number) => {
     const template = kind === "silver" ? t.compare.nameSilver : kind === "pounds" ? t.compare.namePound : kind === "wear" ? t.compare.nameWear : t.compare.nameBar;

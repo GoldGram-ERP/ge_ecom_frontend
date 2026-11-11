@@ -6,7 +6,7 @@ import { useI18n } from "./Providers";
 import { Button } from "./controls";
 
 /** The help centre list: search, category pills, live count and the empty state. */
-export function HelpCentre({ content }: { content: HelpContent }) {
+export function HelpCentre({ content, h1 }: { content: HelpContent; h1?: string }) {
   const { t } = useI18n();
   const [term, setTerm] = useState("");
   const [filter, setFilter] = useState("all");
@@ -35,7 +35,7 @@ export function HelpCentre({ content }: { content: HelpContent }) {
       <div className="hc-crown">
         <div className="wrap hc-crown-in">
           <div className="hc-kick">{t.help.kicker}</div>
-          <h1>{t.help.title}</h1>
+          <h1>{h1 || t.help.title}</h1>
           <p>{t.help.sub}</p>
 
           <div className="hc-search" role="search">
@@ -83,8 +83,10 @@ export function HelpCentre({ content }: { content: HelpContent }) {
                       {item.q}
                       <i />
                     </Button>
-                    {isOpen && (
-                      <div className="hc-a" id={`hc-a-${index}`}>
+                    {/* Every answer stays in the HTML (TEC-01, SCH-06); a closed one is only hidden. */}
+                    {(
+                      <div className="hc-a" id={`hc-a-${index}`} style={isOpen ? undefined : { display: "none" }}>
+
                         <p>
                           {item.a.map((part, n) =>
                             typeof part === "string" ? (

@@ -7,12 +7,14 @@ import { SiteHeader } from "@/components/header-client";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
 import { getProducts } from "@/lib/server-api";
+import { priceVars } from "@/lib/seo-data";
+import { seoMetadata } from "@/lib/seo-page";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/brands">): Promise<Metadata> {
   const { locale } = await params;
   if (!hasLocale(locale)) return {};
   const t = await getTexts(locale);
-  return { title: `${t.brands.title} · GoldGram` };
+  return seoMetadata({ locale, path: "/brands", type: "static", entryType: "static", key: "brands", vars: { ...priceVars(null, locale), name: t.brands.title } });
 }
 
 export default async function BrandsPage({ params }: PageProps<"/[locale]/brands">) {

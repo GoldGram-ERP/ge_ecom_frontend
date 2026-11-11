@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { cart, qtyLimit, qtyOf, useCart } from "@/lib/cart";
 import { useI18n } from "./Providers";
 import { Button } from "./controls";
+import { track } from "./analytics";
 
 /** The product page's buying row: how many, then into the cart, or straight to checkout. */
 export function ProductBuy({ productId, inStock, stock }: { productId: number; inStock: boolean; stock?: number | null }) {
@@ -20,6 +21,7 @@ export function ProductBuy({ productId, inStock, stock }: { productId: number; i
 
   const put = () => {
     for (let n = 0; n < qty; n++) cart.add(productId, stock);
+    track("add_to_cart", { items: [{ item_id: productId, quantity: qty }] });
   };
 
   if (!inStock) {

@@ -6,7 +6,7 @@ export type Category = string;
 
 /**
  * The slugs the wearable category goes by: "wear" from the start, "pendants" since the dashboard
- * renamed it to match /pendants. Either one is the wearable category, everywhere on the site.
+ * renamed it to match its page. Either one is the wearable category, everywhere on the site.
  */
 export const WEARABLE: readonly Category[] = ["wear", "pendants"];
 export const isWearable = (category: Category): boolean => WEARABLE.includes(category);
@@ -79,6 +79,8 @@ export interface Product {
   descriptionAr: string;
   /** Its photos, first one first: `/api/products/:id/images/:imageId`. */
   imageIds: number[];
+  /** Alt text per photo (MED-01), set in the dashboard; absent on an older backend. */
+  imageAlts?: { id: number; ar: string; en: string; decorative: boolean }[];
   manufacturerId: number;
   manufacturerEn: string;
   manufacturerAr: string;
@@ -198,6 +200,8 @@ export interface ApiErrorBody {
 
 export type Article = {
   id: number;
+  /** Its URL handle (/guides/{slug}); absent on an older backend, where the id stands in. */
+  slug?: string;
   titleEn: string;
   titleAr: string;
   type: "financial" | "educational" | "news" | "guide";

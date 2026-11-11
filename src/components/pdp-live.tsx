@@ -5,7 +5,7 @@ import Link from "next/link";
 import { MiniArt } from "@/components/chrome";
 import { FaqList } from "@/components/home-client";
 import { fmt, localePath } from "@/i18n";
-import { cairoTime, pounds, poundsParts, productName, productSub, weightLabel } from "@/lib/format";
+import { buybackPiastres, cairoTime, pounds, poundsParts, productName, productSub, weightLabel } from "@/lib/format";
 import { useLivePrices } from "@/lib/live-prices";
 import { useLiveProducts } from "@/lib/live-products";
 import type { Prices, Product } from "@/lib/types";
@@ -20,12 +20,21 @@ export function PdpFaq({ product, prices: initialPrices }: { product: Product; p
   const { prices } = useLivePrices({ prices: initialPrices ?? undefined });
   const name = productName(p, locale);
   const time = prices ? cairoTime(prices.updatedAt) : "";
+  const withPack = buybackPiastres(p, prices, "with");
+  const withoutPack = buybackPiastres(p, prices, "without");
   const faq = [
     {
       q: fmt(t.pdp.faqPrice, { name }),
       a: fmt(t.pdp.faqPriceA, { price: pounds(p.pricePiastres), time, metal: money(p.metalPiastres), making: money(p.laborPiastres) }),
     },
-    { q: t.pdp.faqSell, a: t.pdp.faqSellNone },
+    // Selling back is in the app (SELL-03): today's buyback figures when the board is known.
+    {
+      q: t.pdp.faqSell,
+      a:
+        withPack !== null && withoutPack !== null
+          ? fmt(t.pdp.faqSellA, { with: pounds(withPack), without: pounds(withoutPack) })
+          : t.pdp.faqSellNone,
+    },
     { q: t.pdp.faqGet, a: t.pdp.faqGetA },
     { q: t.pdp.faqMakers, a: t.pdp.faqMakersA },
   ];
@@ -79,7 +88,8 @@ export function PdpCompare({ product, sameWeight }: { product: Product; sameWeig
           </tbody>
         </table>
       </div>
-      <Link className="pdp-view cmp-more" href={localePath(locale, `/compare?g=${product.category}-${product.karat}-${product.weightGrams}`)}>
+      <Link className="pdp-view cmp-more" href={localePath(locale, "/making-charges")}
+>
         {t.compare.link}
       </Link>
     </section>

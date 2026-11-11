@@ -54,7 +54,7 @@ export function PriceTicker({ initial }: { initial: Prices | null }) {
     });
 
   return (
-    <Link className="ticker" href={href("/prices")} aria-label={t.prices.nav}>
+    <Link className="ticker" href={href("/gold-price-today")} aria-label={t.prices.nav}>
       {items.length > 0 && (
         <span className="tk-track">
           <span className="tk-run">{row(0)}</span>

@@ -39,7 +39,7 @@ export function AuthShell(props: {
 
           <div className="login-legal">
             <Link href={localePath(locale, `/terms`)}>{t.auth.terms}</Link> · <Link href={localePath(locale, `/privacy`)}>{t.auth.privacy}</Link> ·{" "}
-            <Link href={localePath(locale, `/help`)}>{t.auth.help}</Link>
+            <Link href={localePath(locale, `/faq`)}>{t.auth.help}</Link>
           </div>
         </div>
       </div>

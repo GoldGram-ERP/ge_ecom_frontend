@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { localePath } from "@/i18n";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTexts as textsForTitle } from "@/lib/site-texts";
 import { Icon, ICONS, MiniArt } from "@/components/chrome";
 import { AccountLink, SignOutButton, SiteHeader } from "@/components/header-client";
 import type { Dict, Locale } from "@/i18n";
@@ -53,6 +55,12 @@ function OrderList({ orders, locale, t }: { orders: MyOrder[]; locale: Locale; t
 // The prototype's "app" screen: what a customer lands on after signing in, or in guest mode
 // after "Continue as a guest". Market and Price Chart lead somewhere on the site; Gift, Save
 // and the lower tabs belong to the mobile app and are drawn as the prototype drew them.
+export async function generateMetadata({ params }: PageProps<"/[locale]/account">): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(locale)) return {};
+  return { title: { absolute: `${(await textsForTitle(locale)).seoNames.account} | GoldGram` } };
+}
+
 export default async function AccountPage({ params, searchParams }: PageProps<"/[locale]/account">) {
   const { locale } = await params;
   const wanted = (await searchParams).tab;
@@ -180,7 +188,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
                 </dl>
                 <div className="profile-acts">
                   <Link href={localePath(locale, `/account/password`)}>{t.account.changePassword}</Link>
-                  <Link href={localePath(locale, `/help`)}>{t.help.kicker}</Link>
+                  <Link href={localePath(locale, `/faq`)}>{t.help.kicker}</Link>
                   <SignOutButton />
                 </div>
               </div>
@@ -239,7 +247,7 @@ export default async function AccountPage({ params, searchParams }: PageProps<"/
                   </i>
                   <span>{t.account.save}</span>
                 </span>
-                <Link className="q" href={localePath(locale, `/prices`)}>
+                <Link className="q" href={localePath(locale, `/gold-price-today`)}>
                   <i>
                     <Icon d={ICONS.chart} />
                   </i>

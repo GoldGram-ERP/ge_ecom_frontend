@@ -4,20 +4,35 @@ import { notFound } from "next/navigation";
 import { ContactRows, StoreButtons } from "@/components/chrome";
 import { SiteHeader } from "@/components/header-client";
 import { FaqList, WhyPanels } from "@/components/home-client";
-import { BrandsStrip, HowToBuy, SellCta } from "@/components/home-extra";
+import { BrandsStrip, HowToBuy } from "@/components/home-extra";
 import { Phones } from "@/components/phones";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
 import { ArticleCards, starterProducts } from "@/components/home-sections";
 import { StarterCarousel } from "@/components/starter-carousel";
 import { getArticles, getFaq, getPricesOrNull, getProducts, getSpotOrNull } from "@/lib/server-api";
-import { site } from "@/lib/site";
 import { Reveal } from "@/components/controls";
+import { EntryHeadCode, entryH1, JsonLd } from "@/components/seo-blocks";
+import type { Metadata } from "next";
+import { faqPageJsonLd, jewelryStoreJsonLd } from "@/lib/seo";
+import { getBusiness, getSeoEntry, getSeoSite, priceVars } from "@/lib/seo-data";
+import { seoMetadata } from "@/lib/seo-page";
+
+export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(locale)) return {};
+  const [prices, seo] = await Promise.all([getPricesOrNull(), getSeoSite()]);
+  const meta = await seoMetadata({ locale, path: "/", type: "home", entryType: "static", key: "home", vars: priceVars(prices, locale) });
+  // Search Console, Bing and Meta verification on the home page only (DSH-13).
+  const v = seo?.verification;
+  const other = { ...(v?.bing ? { "msvalidate.01": v.bing } : {}), ...(v?.meta ? { "facebook-domain-verification": v.meta } : {}) };
+  return { ...meta, verification: { ...(v?.google ? { google: v.google } : {}), ...(Object.keys(other).length ? { other } : {}) } };
+}
 
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
-  const t = await getTexts(locale);
+  const [t, entry, business] = await Promise.all([getTexts(locale), getSeoEntry("static", "home"), getBusiness()]);
   // The home page still renders if the backend is down; the price phone says so.
   const [prices, spot, faq, articles, products] = await Promise.all([
     getPricesOrNull(),
@@ -28,9 +43,12 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   ]);
   const faqItems = faq.map((f) => ({ q: locale === "ar" ? f.questionAr : f.questionEn, a: locale === "ar" ? f.answerAr : f.answerEn }));
   const starter = starterProducts(products);
+  const h1 = entryH1(entry, locale, "");
 
   return (
     <div className="page">
+      <JsonLd data={[jewelryStoreJsonLd(business, locale), faqPageJsonLd(faqItems.length ? faqItems : [...t.faq.items])]} />
+      <EntryHeadCode entry={entry} />
       <SiteHeader />
       <a id="top" />
 
@@ -42,13 +60,17 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         <div className="wrap">
           <section className="hero">
             <div>
-              <h1>
-                {t.hero.titleA}
-                <em>{t.hero.titleEm}</em>
-                {t.hero.titleB}
-              </h1>
+              {h1 ? (
+                <h1>{h1}</h1>
+              ) : (
+                <h1>
+                  {t.hero.titleA}
+                  <em>{t.hero.titleEm}</em>
+                  {t.hero.titleB}
+                </h1>
+              )}
               <p>{t.hero.sub}</p>
-              <StoreButtons t={t} />
+              <StoreButtons t={t} placement="home" />
             </div>
             <Phones prices={prices} spot={spot} board={t.board} karat={t.product.karat} locale={locale} />
           </section>
@@ -114,14 +136,6 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
         </div>
       )}
 
-      <div className="band-navy">
-        <div className="wrap">
-          <Reveal as="section" id="sell-cta">
-            <SellCta t={t} locale={locale} />
-          </Reveal>
-        </div>
-      </div>
-
       <div className="band-white">
         <div className="wrap">
           <Reveal as="section" id="faq">
@@ -131,7 +145,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
 
           <Reveal as="section" id="contact" style={{ paddingTop: 0 }}>
               <h2 className="ask">{t.contact.title}</h2>
-              <ContactRows t={t} />
+              <ContactRows t={t} locale={locale} />
             </Reveal>
         </div>
       </div>
@@ -165,15 +179,15 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 <div className="record">
                   <div className="cred">
                     <span>{t.record.cr}</span>
-                    <b>{site.commercialRegister}</b>
+                    <b>{business.commercialRegister}</b>
                   </div>
                   <div className="cred">
                     <span>{t.record.tax}</span>
-                    <b>{site.taxRegistration}</b>
+                    <b>{business.taxRegistration}</b>
                   </div>
                   <div className="cred">
                     <span>{t.record.hallmark}</span>
-                    <b>{site.hallmarking}</b>
+                    <b>{business.hallmarking}</b>
                   </div>
                   <div className="cred">
                     <span>{t.record.legal}</span>

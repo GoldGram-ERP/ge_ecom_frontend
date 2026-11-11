@@ -2,9 +2,9 @@ import Image from "next/image";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
+import { getBusiness } from "@/lib/seo-data";
 import { SHOP_LINKS } from "@/lib/shop-links";
-import { site } from "@/lib/site";
-import { getLinks } from "@/lib/site-links";
+import { socialHref, storeHref } from "@/lib/site-links";
 import type { Category } from "@/lib/types";
 
 const MINI_ART: Record<Category, React.ReactNode> = {
@@ -78,53 +78,70 @@ export function BackLink({ href, children }: { href: string; children: React.Rea
   );
 }
 
-/** The ways to reach GoldGram. The home page lists the branch first, the help centre last, as each prototype does. */
-export async function ContactRows({ t, branchLast = false }: { t: Dict; branchLast?: boolean }) {
-  const links = await getLinks();
-  const branch = (
-    <a className="rr" href={site.mapUrl} target="_blank" rel="noopener noreferrer">
+/**
+ * The ways to reach GoldGram, from the business details (DSH-10): a detail left empty hides its row.
+ * The home page lists the branch first, the help centre last, as each prototype does.
+ */
+export async function ContactRows({ t, locale, branchLast = false }: { t: Dict; locale: Locale; branchLast?: boolean }) {
+  const b = await getBusiness();
+  const whatsappUrl = socialHref(b.whatsapp, true);
+  const address = b.address[locale];
+  const hours = b.openingHours[locale];
+  const branch = address ? (
+    <a className="rr" href={b.mapUrl || undefined} target="_blank" rel="noopener noreferrer">
       <span>{t.contact.branch}</span>
-      <b>{t.contact.branchValue}</b>
+      <b>{address}</b>
       <u>{t.contact.maps}</u>
     </a>
-  );
+  ) : null;
   return (
     <div className="reach">
       {!branchLast && branch}
-      <a className="rr" href={`tel:${site.hotline}`}>
+      {b.hotline && (
+      <a className="rr" href={`tel:${b.hotline}`}>
         <span>{t.contact.hotline}</span>
-        <b>{site.hotline}</b>
+        <b>{b.hotline}</b>
         <u>{t.contact.call}</u>
       </a>
-      {links.whatsappUrl && (
-      <a className="rr" href={links.whatsappUrl} target="_blank" rel="noopener noreferrer">
+      )}
+      {whatsappUrl && (
+      <a className="rr" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
         <span>{t.contact.whatsapp}</span>
         <b>{t.contact.message}</b>
         <u>{t.contact.open}</u>
       </a>
       )}
-      <a className="rr" href={`mailto:${site.email}`}>
+      {b.email && (
+      <a className="rr" href={`mailto:${b.email}`}>
         <span>{t.contact.email}</span>
-        <b>{site.email}</b>
+        <b>{b.email}</b>
         <u>{t.contact.write}</u>
       </a>
+      )}
       {branchLast && branch}
+      {hours && (
       <div className="rr rr-plain">
         <span>{t.contact.hours}</span>
-        <b>{t.contact.hoursValue}</b>
+        <b>{hours}</b>
       </div>
+      )}
     </div>
   );
 }
 
-/** The App Store and Google Play buttons: the home hero and the footer. */
-export async function StoreButtons({ t }: { t: Dict }) {
-  const links = await getLinks();
-  if (!links.iosUrl && !links.androidUrl) return null;
+/**
+ * The App Store and Google Play buttons (SELL-04): shown only once a store URL is set, each link
+ * tagged with where it was clicked, for the store's campaign report and the app_store_click event.
+ */
+export async function StoreButtons({ t, placement }: { t: Dict; placement: string }) {
+  const b = await getBusiness();
+  const ios = socialHref(b.appStoreUrl);
+  const android = socialHref(b.googlePlayUrl);
+  if (!ios && !android) return null;
   return (
     <div className="stores">
-      {links.iosUrl && (
-      <a className="store" href={links.iosUrl} target="_blank" rel="noopener noreferrer">
+      {ios && (
+      <a className="store" href={storeHref(ios, "ios", placement)} target="_blank" rel="noopener noreferrer" data-store="ios" data-placement={placement}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M16.3 12.7c0-2 1.6-3 1.7-3.1-.9-1.4-2.4-1.6-2.9-1.6-1.2-.1-2.4.7-3 .7-.6 0-1.6-.7-2.6-.7-1.3 0-2.6.8-3.2 2-1.4 2.4-.4 6 1 8 .7 1 1.5 2 2.5 2 1 0 1.4-.6 2.6-.6 1.2 0 1.5.6 2.6.6 1.1 0 1.8-1 2.4-1.9.8-1.1 1.1-2.2 1.1-2.2s-2.2-.8-2.2-3.2z" />
           <path d="M14.6 6.3c.5-.7.9-1.6.8-2.6-.8 0-1.8.5-2.4 1.2-.5.6-1 1.6-.8 2.5.9.1 1.8-.4 2.4-1.1z" />
@@ -135,8 +152,8 @@ export async function StoreButtons({ t }: { t: Dict }) {
         </span>
       </a>
       )}
-      {links.androidUrl && (
-      <a className="store" href={links.androidUrl} target="_blank" rel="noopener noreferrer">
+      {android && (
+      <a className="store" href={storeHref(android, "android", placement)} target="_blank" rel="noopener noreferrer" data-store="android" data-placement={placement}>
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 3.2v17.6c0 .4.2.7.5.9l9.2-9.7L4.5 2.3c-.3.2-.5.5-.5.9z" />
           <path d="M17.2 8.6 6.1 2.3l8.4 8.9 2.7-2.6z" />
@@ -158,7 +175,13 @@ export async function StoreButtons({ t }: { t: Dict }) {
  * what to shop, the services offered today, the company, and the legal line.
  */
 export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
-  const links = await getLinks();
+  const b = await getBusiness();
+  const links = {
+    instagramUrl: socialHref(b.socialUrls.instagram),
+    facebookUrl: socialHref(b.socialUrls.facebook),
+    tiktokUrl: socialHref(b.socialUrls.tiktok),
+    whatsappUrl: socialHref(b.whatsapp, true),
+  };
   const to = (path: string) => localePath(locale, `${path}`);
   const columns: { title: string; links: [string, string][] }[] = [
     {
@@ -169,20 +192,22 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
     {
       title: t.footer.services,
       links: [
-        [t.footer.sell, to("/sell")],
+        [t.footer.app, to("/app")],
         [t.nav.makingCharge, to("/making-charges")],
-        [t.footer.compare, to("/compare")],
-        [t.footer.zakat, to("/zakat")],
-        [t.footer.goldPrice, to("/prices")],
-        [t.footer.silverPrice, to("/prices/silver")],
+        [t.footer.zakat, to("/zakat-calculator")],
+        [t.footer.goldPrice, to("/gold-price-today")],
+        [t.footer.silverPrice, to("/silver-price-today")],
+        [t.footer.guides, to("/guides")],
       ],
     },
     {
       title: t.footer.company,
       links: [
-        [t.footer.about, to("#about")],
-        [t.footer.contact, to("#contact")],
-        [t.footer.help, to("/help")],
+        [t.footer.about, to("/about")],
+        [t.footer.contact, to("/contact")],
+        [t.footer.help, to("/faq")],
+        [t.footer.shipping, to("/policies/shipping")],
+        [t.footer.buyback, to("/policies/buyback")],
         [t.footer.terms, to("/terms")],
         [t.footer.privacy, to("/privacy")],
       ],
@@ -196,24 +221,28 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
             <Brand locale={locale} />
             <p>{t.footer.tagline}</p>
             <dl>
+              {b.hotline && (
               <div>
                 <dt>{t.footer.hotline}</dt>
                 <dd>
-                  <a href={`tel:${site.hotline}`} dir="ltr">
-                    {site.hotline}
+                  <a href={`tel:${b.hotline}`} dir="ltr">
+                    {b.hotline}
                   </a>
                 </dd>
               </div>
+              )}
+              {b.email && (
               <div>
                 <dt>{t.footer.email}</dt>
                 <dd>
-                  <a href={`mailto:${site.email}`} dir="ltr">
-                    {site.email}
+                  <a href={`mailto:${b.email}`} dir="ltr">
+                    {b.email}
                   </a>
                 </dd>
               </div>
+              )}
             </dl>
-            <StoreButtons t={t} />
+            <StoreButtons t={t} placement="footer" />
           </div>
           {columns.map((column) => (
             <nav className="sf-col" key={column.title} aria-label={column.title}>

@@ -1,7 +1,7 @@
 /* ---------- compare the same piece across brands: two lists, the table, then the piece ---------- */
 .cmp .cmp-pick{ display:grid; grid-template-columns:repeat(2,minmax(0,240px)); gap:var(--s2) var(--s3); margin:var(--s6) 0 var(--s4); }
 .cmp .cmp-pick .sel{ width:100%; }
-html[lang="ar"] .cmp .f > span{ font-size:12px; letter-spacing:0; }
+html[lang|="ar"] .cmp .f > span{ font-size:12px; letter-spacing:0; }
 
 /* the button column has no title of its own (a cell, so the table keeps its four headers) */
 .cmp-table thead td{ border-top:0; background:var(--warm); }
@@ -11,7 +11,7 @@ html[lang="ar"] .cmp .f > span{ font-size:12px; letter-spacing:0; }
 
 .cmp-info{ margin-top:var(--s8); }
 .cmp-info h2{ font-size:clamp(20px,2vw,24px); margin-bottom:var(--s2); }
-html[lang="ar"] .cmp-info h2{ letter-spacing:0; }
+html[lang|="ar"] .cmp-info h2{ letter-spacing:0; }
 .cmp-info .cmp-about-note{ font-size:12.5px; line-height:1.6; color:var(--muted); }
 .cmp-info .cmp-more{ display:inline-flex; margin-top:var(--s3); }
 
@@ -27,7 +27,7 @@ html[lang="ar"] .cmp-info h2{ letter-spacing:0; }
 /* making charges opens on everything: a heading row per kind and weight, then its brands */
 .cmp-table tr.cmp-group th{ border-top:1px solid var(--line); background:var(--warm); color:var(--navy-deep); font:600 13px var(--font-body); letter-spacing:.2px; padding-top:12px; padding-bottom:10px; white-space:normal; }
 .cmp-table tr.cmp-group:first-child th{ border-top:0; }
-html[lang="ar"] .cmp-table tr.cmp-group th{ letter-spacing:0; font-size:13.5px; }
+html[lang|="ar"] .cmp-table tr.cmp-group th{ letter-spacing:0; font-size:13.5px; }
 @media (max-width:600px){
   .cmp-table tr.cmp-group th{ padding:12px 14px; font-size:12.5px; }
 }

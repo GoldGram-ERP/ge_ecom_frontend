@@ -9,6 +9,7 @@ import { cart, useCart } from "@/lib/cart";
 import { api, ApiError, CLAIM_KEY, errorText } from "@/lib/client-api";
 import { useLivePrices } from "@/lib/live-prices";
 import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
+import { track } from "./analytics";
 import type { Fulfilment, PaymentMethod, PaymentMethodInfo, PlacedOrder, Quote, Zone } from "@/lib/types";
 import { GOVERNORATES, isEmail, normalizePhone, type Governorate } from "@/lib/validation";
 import { MiniArt } from "./chrome";
@@ -276,6 +277,7 @@ export function Checkout({
         headers: { "Idempotency-Key": attempt.current.key },
       });
       cart.clear();
+      track("purchase", { transaction_id: order.reference, value: order.totalPiastres / 100, currency: "EGP", payment_type: payment });
       setDone({
         id: order.id,
         reference: order.reference,

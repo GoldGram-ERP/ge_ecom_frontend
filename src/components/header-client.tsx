@@ -12,8 +12,6 @@ import { Brand, Icon, ICONS } from "./chrome";
 import { localePath } from "@/i18n";
 import { useI18n, useSession } from "./Providers";
 import { Button } from "./controls";
-// The sell page and its header link (loaded with the header, so the link's phone rule holds everywhere).
-import "../app/styles/sell.css";
 
 type NavItem = { label: string; href?: string; onSelect?: () => void };
 
@@ -151,17 +149,16 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
   };
 
   // Each kind has its own clean URL (the URL Map); the footer lists the same ones.
-  // shortcut: "GoldGram app" has no page of its own yet; it leads to the home hero.
   const shopItems: NavItem[] = SHOP_LINKS.map((link) => ({ label: t.nav[link.label], href: href(link.path) }));
   const serviceItems: NavItem[] = [
-    { label: t.nav.app, href: href("#top") },
-    { label: t.sell.nav, href: href("/sell") },
-    { label: t.zakat.nav, href: href("/zakat") },
+    { label: t.nav.app, href: href("/app") },
+    { label: t.zakat.nav, href: href("/zakat-calculator") },
     { label: t.nav.makingCharge, href: href("/making-charges") },
+    { label: t.nav.guides, href: href("/guides") },
   ];
   const aboutItems: NavItem[] = [
     { label: t.nav.whoWeAre, onSelect: () => setOpen(true) },
-    { label: t.nav.branches, href: href("#contact") },
+    { label: t.nav.branches, href: href("/contact") },
     { label: t.nav.register, href: href("/sign-up") },
   ];
 
@@ -181,7 +178,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
         <Link className="navlink nav-home" href={localePath(locale, ``)}>
           {t.nav.home}
         </Link>
-        <Link className="navlink nav-prices" href={href("/prices")}>
+        <Link className="navlink nav-prices" href={href("/gold-price-today")}>
           {t.prices.nav}
         </Link>
         <NavDropdown className="nav-shop" label={t.nav.shop} items={shopItems} href={href("/shop")} />
@@ -202,7 +199,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
                 <Link href={localePath(locale, ``)}>{t.nav.home}</Link>
               </DropdownMenu.Item>
               <DropdownMenu.Item asChild>
-                <Link href={href("/prices")}>{t.prices.nav}</Link>
+                <Link href={href("/gold-price-today")}>{t.prices.nav}</Link>
               </DropdownMenu.Item>
               {[
                 [t.nav.shop, shopItems],
@@ -217,10 +214,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
                 </DropdownMenu.Group>
               ))}
               <DropdownMenu.Item asChild>
-                <Link href={href("/compare")}>{t.footer.compare}</Link>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <Link href={href("/help")}>{t.nav.help}</Link>
+                <Link href={href("/faq")}>{t.nav.help}</Link>
               </DropdownMenu.Item>
             </DropdownMenu.Content>
           </DropdownMenu.Portal>

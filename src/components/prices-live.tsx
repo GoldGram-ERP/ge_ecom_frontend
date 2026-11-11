@@ -32,11 +32,25 @@ export function GoldPricesView({
   history,
   silverHistory,
   products: rendered,
+  h1,
+  intro,
+  weights = [],
+  faq,
+  children,
 }: {
   initial: Prices;
   history: PriceHistory;
   silverHistory: PriceHistory;
   products: Product[];
+  /** The SEO entry's H1, when set (DSH-01). */
+  h1?: string;
+  /** Server-rendered: the entry's intro text, then its FAQ at the end. */
+  intro?: ReactNode;
+  /** Bar prices by weight (PG-02): each row links to its weight page. */
+  weights?: { slug: string; label: string; fromPiastres: number }[];
+  /** The entry's FAQ, in place of the built-in questions when set. */
+  faq?: { q: string; a: string }[];
+  children?: ReactNode;
 }) {
   const { t, locale } = useI18n();
   const { prices } = useLivePrices({ prices: initial });
@@ -65,7 +79,7 @@ export function GoldPricesView({
         </nav>
 
         <section className="pr-head">
-          <h1>{t.prices.titleEgypt}</h1>
+          <h1>{h1 || t.prices.titleEgypt}</h1>
           <p className="pr-summary">
             {rich(t.prices.summary, {
               k24: poundsParts(k24.buyPiastres).full,
@@ -77,6 +91,7 @@ export function GoldPricesView({
             <span className="live" />
             {fmt(t.prices.updated, { time: cairoTime(prices.updatedAt), date: cairoDate(prices.updatedAt, locale) })}
           </p>
+          {intro}
         </section>
 
         <div className="pr-layout">
@@ -86,8 +101,8 @@ export function GoldPricesView({
               <thead>
                 <tr>
                   <th scope="col">{t.board.perGram}</th>
-                  <th scope="col">{t.board.buy}</th>
-                  <th scope="col">{t.board.sell}</th>
+                  <th scope="col">{t.prices.colBuy}</th>
+                  <th scope="col">{t.prices.colSell}</th>
                   <th scope="col">{t.prices.colToday}</th>
                 </tr>
               </thead>
@@ -116,7 +131,7 @@ export function GoldPricesView({
                 })}
                 <tr>
                   <th scope="row">
-                    <Link className="pr-row-link" href={localePath(locale, `/prices/silver`)}>
+                    <Link className="pr-row-link" href={localePath(locale, `/silver-price-today`)}>
                       {t.prices.silverCard}
                     </Link>
                   </th>
@@ -127,6 +142,10 @@ export function GoldPricesView({
               </tbody>
             </table>
             <p className="pr-note">{t.prices.perGram} · {t.prices.goldSub}</p>
+            {/* Selling back is in the app (SELL-02): the column stays, as information. */}
+            <Link className="pr-row-link" href={localePath(locale, `/app`)}>
+              {t.prices.sellInApp}
+            </Link>
           </section>
 
           <aside className="pr-side">
@@ -156,6 +175,34 @@ export function GoldPricesView({
           </p>
           <PriceChart metal="gold" initial={history} initialDays={30} initialPrices={prices} />
         </section>
+
+        {weights.length > 0 ? (
+          <section className="pr-sec">
+            <h2>{t.prices.weightsTitle}</h2>
+            <table className="pr-table">
+              <thead>
+                <tr>
+                  <th scope="col">{t.prices.weightCol}</th>
+                  <th scope="col">{t.prices.fromCol}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {weights.map((w) => (
+                  <tr key={w.slug}>
+                    <th scope="row">
+                      <Link className="pr-row-link" href={localePath(locale, `/gold-bars/${w.slug}`)}>
+                        {w.label}
+                      </Link>
+                    </th>
+                    <td>
+                      {pounds(w.fromPiastres)} <small className="egp">{t.product.egp}</small>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        ) : null}
 
         {toBuy.length > 0 ? (
           <section className="pr-sec">
@@ -193,13 +240,16 @@ export function GoldPricesView({
           </section>
           <section>
             <h2>{t.prices.faqTitle}</h2>
-            <FaqList items={t.prices.faq} id="pr-faq" />
+            <FaqList items={faq?.length ? faq : t.prices.faq} id="pr-faq" />
           </section>
         </div>
+
+        {children}
 
         <Link className="gold-btn pr-cta" href={localePath(locale, `/shop`)}>
           {t.prices.shop}
         </Link>
+
       </div>
     </div>
   );

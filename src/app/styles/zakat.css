@@ -5,7 +5,7 @@
 .zk-lede{ font-size:13px; line-height:1.6; color:var(--muted); margin:calc(var(--s1) * -1) 0 var(--s2) 0; }
 .zk-grid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s2); }
 .zk-form .f > span{ font-size:11.5px; letter-spacing:1.2px; }
-html[lang="ar"] .zk-form .f > span{ font-size:13px; letter-spacing:0; }
+html[lang|="ar"] .zk-form .f > span{ font-size:13px; letter-spacing:0; }
 .zk-form .f em{ display:block; margin-top:6px; font-style:normal; font-size:11.5px; line-height:1.5; }
 .zk-hint{ color:var(--muted); }
 .zk-err{ color:#8C3722; }

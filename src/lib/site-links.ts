@@ -39,7 +39,7 @@ export const getLinks = cache(async (): Promise<SiteLinks> => {
   try {
     const response = await fetch(`${API_URL}/api/settings`, {
       headers: { Accept: "application/json" },
-      cache: "no-store",
+      next: { revalidate: 60, tags: ["seo-site"] },
       signal: AbortSignal.timeout(3000),
     });
     if (!response.ok) return {};
@@ -56,3 +56,18 @@ export const getLinks = cache(async (): Promise<SiteLinks> => {
     return {};
   }
 });
+
+/**
+ * A store link that can be traced (SELL-04): the App Store campaign token (ct) and the Play
+ * install referrer carry where on the site the badge was clicked.
+ */
+export function storeHref(url: string, store: "ios" | "android", placement: string): string {
+  try {
+    const link = new URL(url);
+    if (store === "ios") link.searchParams.set("ct", `website-${placement}`);
+    else link.searchParams.set("referrer", `utm_source=goldgram.eg&utm_medium=website&utm_campaign=${placement}`);
+    return link.toString();
+  } catch {
+    return url;
+  }
+}

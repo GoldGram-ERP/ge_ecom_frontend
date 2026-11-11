@@ -4,14 +4,21 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { SiteHeader } from "@/components/header-client";
+import { TrackView } from "@/components/analytics";
+import { StoreButtons } from "@/components/chrome";
 import { PdpCompare, PdpFaq, PdpRelated } from "@/components/pdp-live";
+import { EntryFaq, EntryHeadCode, entryH1 } from "@/components/seo-blocks";
 import { PdpPrice } from "@/components/PdpPrice";
 import { ProductBuy } from "@/components/ProductBuy";
 import { ProductGallery } from "@/components/ProductGallery";
 import { ProductTabs } from "@/components/ProductTabs";
 import { fmt, hasLocale } from "@/i18n";
-import { artClass, artStyle, karatLabel, poundsParts, productName, productPurity, productSub, weightLabel } from "@/lib/format";
-import { absoluteUrl, alternatesFor, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
+import { artClass, artStyle, buybackPiastres, karatLabel, pounds, poundsParts, productName, productPurity, productSub, weightLabel, weightText } from "@/lib/format";
+import { absoluteUrl, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
+import { cairoToday, egp, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
+import { seoMetadata } from "@/lib/seo-page";
+import { filterPath } from "@/lib/shop-links";
+import type { Product } from "@/lib/types";
 import { getTexts } from "@/lib/site-texts";
 import { getPricesOrNull, getProducts } from "@/lib/server-api";
 
@@ -41,28 +48,40 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id
   if (!hasLocale(locale)) return {};
   const found = await findProduct(id);
   if (!found) return {};
-  const t = await getTexts(locale);
-  const { product } = found;
-  const description = locale === "ar" ? product.descriptionAr : product.descriptionEn;
-  const title = `${productName(product, locale)} · GoldGram`;
-  const text = (description || productSub(product, t)).replace(/\s+/g, " ").trim();
-  const image = product.imageIds[0] ? [absoluteUrl("ar", `/api/products/${product.id}/images/${product.imageIds[0]}`)] : undefined;
-  return {
-    title,
-    description: text,
-    alternates: alternatesFor(locale, `/shop/${product.slug}`),
-    openGraph: {
-      type: "website", // og:type "product" is not in Next's typed set; website is valid for every crawler
-      siteName: "GoldGram",
-      title,
-      description: text,
-      url: absoluteUrl(locale, `/shop/${product.slug}`),
-      locale: locale === "ar" ? "ar_EG" : "en_US",
-      alternateLocale: locale === "ar" ? "en_US" : "ar_EG",
-      images: image,
+  const { product: p } = found;
+  const prices = await getPricesOrNull();
+  const first = p.imageIds[0];
+  // The template's values are the ones the page shows: the total, and the making charge per gram (DSH-02).
+  return seoMetadata({
+    locale,
+    path: `/shop/${p.slug}`,
+    type: "product",
+    entryType: "product",
+    key: p.slug,
+    vars: {
+      ...priceVars(prices, locale),
+      name: productName(p, locale),
+      price_buy: egp(p.pricePiastres),
+      price: egp(p.pricePiastres),
+      making_per_gram: egp(p.laborPiastres / p.weightGrams),
+      weight: weightText(p.weightGrams),
+      karat: (p.karat as number) === 999 ? "999" : String(p.karat),
+      brand: locale === "ar" ? p.manufacturerAr : p.manufacturerEn,
     },
-    twitter: { card: image ? "summary_large_image" : "summary", title, description: text, images: image },
-  };
+    image: first ? absoluteUrl("ar", `/api/products/${p.id}/images/${first}`) : undefined,
+    imageAlt: altOf(p, first, locale, 0),
+  });
+}
+
+/**
+ * A photo's alt text (MED-01): the dashboard's, "" for a decorative one, else the product's name
+ * with the photo's number after the first.
+ */
+function altOf(p: Product, imageId: number | undefined, locale: "ar" | "en", index: number): string {
+  const own = p.imageAlts?.find((a) => a.id === imageId);
+  if (own?.decorative) return "";
+  const name = productName(p, locale);
+  return own?.[locale]?.trim() || (index === 0 ? name : `${name} (${index + 1})`);
 }
 
 const money = (piastres: number) => poundsParts(piastres).full;
@@ -74,7 +93,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
   if (!found) notFound();
   // Reached by the old numeric id (or any non-canonical handle): send on to the name URL, once.
   if (found.product.slug !== id) permanentRedirect(localePath(locale, `/shop/${found.product.slug}`));
-  const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
+  const [t, prices, entry, business] = await Promise.all([getTexts(locale), getPricesOrNull(), getSeoEntry("product", id), getBusiness()]);
   const { product: p, rank, sameWeight, related } = found;
   const name = productName(p, locale);
   const maker = locale === "ar" ? p.manufacturerAr : p.manufacturerEn;
@@ -83,6 +102,8 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
   // Silver is priced at 999, which the shop's karat type does not list.
   const silver = (p.karat as number) === 999;
   const shop = localePath(locale, `/shop`);
+  const buyback = buybackPiastres(p, prices);
+  const kindPath = filterPath(p.category);
 
   const specs: [string, string][] = [
     ...(kind ? ([[t.pdp.specType, kind]] as [string, string][]) : []),
@@ -110,14 +131,26 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
               pricePiastres: p.pricePiastres,
               inStock: p.inStock !== false,
               sku: p.slug,
+              karat: p.karat,
+              purity: productPurity(p, t),
+              makingPerGramPiastres: Math.round(p.laborPiastres / p.weightGrams),
+              seller: business.siteName[locale],
+              priceValidUntil: cairoToday(),
             }),
+            // The same steps as the visible trail (SCH-03).
             breadcrumbList([
               { name: t.pdp.home, path: "/", locale },
               { name: t.nav.shop, path: "/shop", locale },
-              { name, path: `/shop/${p.slug}`, locale },
+              ...(kind ? [{ name: kind, path: kindPath, locale }] : []),
+              { name: entry?.breadcrumbLabel?.[locale] || name, path: `/shop/${p.slug}`, locale },
             ]),
           ]),
         }}
+      />
+      <EntryHeadCode entry={entry} />
+      <TrackView
+        event="view_item"
+        params={{ currency: "EGP", value: p.pricePiastres / 100, items: [{ item_id: p.slug, item_name: p.nameEn, weight: p.weightGrams, karat: p.karat, item_brand: p.manufacturerEn, price: p.pricePiastres / 100 }] }}
       />
       <SiteHeader />
 
@@ -130,16 +163,16 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
             {kind ? (
               <>
                 <span aria-hidden="true">/</span>
-                <Link href={`${shop}?c=${p.category}`}>{kind}</Link>
+                <Link href={localePath(locale, kindPath)}>{kind}</Link>
               </>
             ) : null}
             <span aria-hidden="true">/</span>
-            <span aria-current="page">{name}</span>
+            <span aria-current="page">{entry?.breadcrumbLabel?.[locale] || name}</span>
           </nav>
 
           <article className="pdp">
             {p.imageIds.length > 0 ? (
-              <ProductGallery productId={p.id} imageIds={p.imageIds} name={name} />
+              <ProductGallery productId={p.id} imageIds={p.imageIds} name={name} alts={p.imageIds.map((imageId, i) => altOf(p, imageId, locale, i))} />
             ) : (
               <div className="pdp-gallery">
                 <div className="niche pdp-niche">
@@ -153,9 +186,16 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
 
             <div className="pdp-info">
               {maker ? <p className="pdp-maker">{fmt(t.pdp.by, { maker })}</p> : null}
-              <h1 className="pdp-name">{name}</h1>
+              <h1 className="pdp-name">{entryH1(entry, locale, name)}</h1>
               <p className="pdp-sub">{productSub(p, t)}</p>
               <PdpPrice product={p} prices={prices} />
+              {/* Buyback as information, selling in the app (SELL-02), with the store badges once set (SELL-04). */}
+              {buyback !== null ? (
+                <p className="pdp-note">
+                  {fmt(t.pdp.buybackLine, { amount: pounds(buyback) })} <Link href={localePath(locale, "/app")}>{t.pdp.buybackApp}</Link>
+                </p>
+              ) : null}
+              <StoreButtons t={t} placement="product" />
 
               <ProductBuy productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
               <p className={`pdp-stock${p.inStock === false ? " out" : ""}`}>{p.inStock === false ? t.pdp.soldOut : t.pdp.inStock}</p>
@@ -206,6 +246,8 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
             <h2 id="pdp-faq">{fmt(t.pdp.faqTitle, { name })}</h2>
             <PdpFaq product={p} prices={prices} />
           </section>
+          <EntryFaq entry={entry} locale={locale} title={t.pages.faqTitle} className="pdp-section" />
+
 
           {related.length > 0 ? (
             <section className="pdp-section" aria-labelledby="pdp-related">
