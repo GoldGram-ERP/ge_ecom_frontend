@@ -7,7 +7,11 @@ import { ShopGrid } from "@/components/ShopGrid";
 import { hasLocale } from "@/i18n";
 import { isSilver, isSmall } from "@/lib/kinds";
 import { getTexts } from "@/lib/site-texts";
-import { getProducts } from "@/lib/server-api";
+import { getPricesOrNull, getProducts } from "@/lib/server-api";
+import { getSeoEntry, priceVars } from "@/lib/seo-data";
+import { seoMetadata } from "@/lib/seo-page";
+import { EntryFaq, EntryHeadCode, entryH1, EntryIntro } from "@/components/seo-blocks";
+import { mergeBars } from "@/lib/shop-links";
 
 // The footer's ready-made selections: metal (`m`) and size (`w`), by the rule the compare page uses too.
 type Preset = { metal?: "gold" | "silver"; size?: "small" | "large" };
@@ -29,19 +33,21 @@ function presetName(preset: Preset, t: Awaited<ReturnType<typeof getTexts>>): st
 export async function generateMetadata({ params, searchParams }: PageProps<"/[locale]/shop">): Promise<Metadata> {
   const { locale } = await params;
   if (!hasLocale(locale)) return {};
-  const t = await getTexts(locale);
-  return { title: `${presetName(presetOf(await searchParams), t) ?? t.nav.shop} · GoldGram` };
+  const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
+  const preset = presetName(presetOf(await searchParams), t);
+  // A preset or filter (?m=, ?w=, ?c=) is noindex with a self canonical (IDX-07, in pageMetadata).
+  return seoMetadata({ locale, path: "/shop", type: "static", entryType: "static", key: "shop", vars: { ...priceVars(prices, locale), name: preset ?? t.seoNames.shop } });
 }
 
 export default async function ShopPage({ params, searchParams }: PageProps<"/[locale]/shop">) {
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
-  const t = await getTexts(locale);
+  const [t, entry] = await Promise.all([getTexts(locale), getSeoEntry("static", "shop")]);
   const query = await searchParams;
   const preset = presetOf(query);
   const c = typeof query.c === "string" ? query.c : undefined;
   // No catch: if the catalogue cannot be loaded, error.tsx offers a retry.
-  const products = (await getProducts()).filter(
+  const products = mergeBars(await getProducts()).filter(
     (p) =>
       (!preset.metal || (preset.metal === "silver") === isSilver(p)) &&
       (!preset.size || (preset.size === "small") === isSmall(p.weightGrams)),
@@ -64,9 +70,12 @@ export default async function ShopPage({ params, searchParams }: PageProps<"/[lo
                 <Link href={localePath(locale, `/shop`)}>{t.shop.all}</Link>
               </div>
             ) : (
-              <h1 className="vh">{t.nav.shop}</h1>
+              <h1 className="vh">{entryH1(entry, locale, t.nav.shop)}</h1>
             )}
+            <EntryHeadCode entry={entry} />
+            <EntryIntro entry={entry} locale={locale} />
             <ShopGrid products={products} initial={initial} />
+            <EntryFaq entry={entry} locale={locale} title={t.pages.faqTitle} />
 
             <div className="assure">
               {t.shop.assure.map((item) => (

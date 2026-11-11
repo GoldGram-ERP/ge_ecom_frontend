@@ -8,7 +8,7 @@ import { useLivePrices } from "@/lib/live-prices";
 import type { PriceHistory, Prices } from "@/lib/types";
 import { useI18n } from "./Providers";
 
-export function SilverPricesView({ initial, history }: { initial: Prices; history: PriceHistory }) {
+export function SilverPricesView({ initial, history, h1, children }: { initial: Prices; history: PriceHistory; h1?: string; children?: React.ReactNode }) {
   const { t, locale } = useI18n();
   const { prices } = useLivePrices({ prices: initial });
   const silver = prices?.silver;
@@ -18,14 +18,15 @@ export function SilverPricesView({ initial, history }: { initial: Prices; histor
   return (
     <div className="band-off pr-band">
       <div className="wrap">
-        <Link className="back pdp-back" href={localePath(locale, `/prices`)}>
+        <Link className="back pdp-back" href={localePath(locale, `/gold-price-today`)}>
           <svg viewBox="0 0 16 16" aria-hidden="true">
             <path d="M10 3 5 8l5 5" />
           </svg>
           {t.prices.backToGold}
         </Link>
         <section className="pr-head">
-          <h1>{t.prices.silverTitle}</h1>
+          <h1>{h1 || t.prices.silverTitle}</h1>
+
           <p>{t.prices.silverSub}</p>
           <p className="pr-updated">
             <span className="live" />
@@ -54,6 +55,8 @@ export function SilverPricesView({ initial, history }: { initial: Prices; histor
           <h2>{t.prices.chartSilver}</h2>
           <PriceChart metal="silver" initial={history} initialDays={30} initialPrices={prices} />
         </section>
+
+        {children}
 
         <Link className="gold-btn pr-cta" href={localePath(locale, `/shop`)}>
           {t.prices.shop}

@@ -68,10 +68,15 @@ export function ShopGrid({
   products: rendered,
   initial,
   heading,
+  intro,
+  before,
 }: {
   products: Product[];
   initial: Filter;
   heading?: { name: string; allHref: string };
+  /** Server-rendered blocks under the heading: the page's intro text, then (the bars hub) its weight tiles. */
+  intro?: React.ReactNode;
+  before?: React.ReactNode;
 }) {
   const { locale, t } = useI18n();
   const products = useLiveProducts(rendered);
@@ -96,10 +101,13 @@ export function ShopGrid({
   const shown = filter === "all" ? products : products.filter((p) => p.category === filter);
   const title =
     filter === initial ? heading?.name : filter === "all" ? t.nav.shop : filters.find((f) => f.id === filter)?.label;
-  // The browser tab's title follows the heading too, in the pages' own "Name · GoldGram" form.
+  // The browser tab's title follows another filter's name; the page's own filter keeps its SEO title.
+  const ownTitle = useRef<string | null>(null);
   useEffect(() => {
-    if (heading && title) document.title = `${title} · GoldGram`;
-  }, [heading, title]);
+    if (!heading) return;
+    ownTitle.current ??= document.title;
+    document.title = filter === initial || !title ? ownTitle.current : `${title} · GoldGram`;
+  }, [heading, title, filter, initial]);
 
   return (
     <>
@@ -109,6 +117,8 @@ export function ShopGrid({
           <Link href={heading.allHref}>{t.shop.all}</Link>
         </div>
       ) : null}
+      {intro}
+      {before}
       <div className="filters" role="group" aria-label={t.shop.filterLabel}>
         {filters.map((f) => (
           <Button

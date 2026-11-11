@@ -10,7 +10,7 @@ html{
 }
 /* Arabic: Almarai for headings and titles, Cairo for text, and Lora for every digit
    (the digits-only Lora face sits first in both stacks). */
-html[lang="ar"]{
+html[lang|="ar"]{
   --font-heading: var(--font-lora-digits), var(--font-almarai), system-ui, sans-serif;
   --font-body: var(--font-lora-digits), var(--font-cairo), system-ui, sans-serif;
   --font-num: var(--font-lora), var(--font-cairo), Georgia, serif;
@@ -20,12 +20,12 @@ html[lang="ar"]{
 .brand span,.store b,.sc-head b,.sc-row b,.sc-row em,.ac-price,.pc-price,.o-total b,.ol em,.cred b,
 .tv-quote,.done .ref,.o-line b,.rate b,.pc i,.nx span,.row .n{ font-family:var(--font-num); }
 /* running Arabic text that the prototype had left in the serif reads as body copy */
-html[lang="ar"] .ap-row p,html[lang="ar"] .sc-row span,html[lang="ar"] .session em,
-html[lang="ar"] .opt div u{ font-family:var(--font-body); }
+html[lang|="ar"] .ap-row p,html[lang|="ar"] .sc-row span,html[lang|="ar"] .session em,
+html[lang|="ar"] .opt div u{ font-family:var(--font-body); }
 /* Almarai has no 500 or 600: headings carry at 700 */
-html[lang="ar"] h1,html[lang="ar"] h2,html[lang="ar"] h3,html[lang="ar"] .lead,html[lang="ar"] .ask,
-html[lang="ar"] blockquote,html[lang="ar"] .login-title,html[lang="ar"] .co-h,html[lang="ar"] .qa .q button,
-html[lang="ar"] .hc-q,html[lang="ar"] .hc-empty b{ font-weight:700; }
+html[lang|="ar"] h1,html[lang|="ar"] h2,html[lang|="ar"] h3,html[lang|="ar"] .lead,html[lang|="ar"] .ask,
+html[lang|="ar"] blockquote,html[lang|="ar"] .login-title,html[lang|="ar"] .co-h,html[lang|="ar"] .qa .q button,
+html[lang|="ar"] .hc-q,html[lang|="ar"] .hc-empty b{ font-weight:700; }
 
 /* ---------- needed by the markup, no visual change ---------- */
 .vh{ position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
@@ -46,8 +46,8 @@ button:disabled{ opacity:.6; cursor:default; }
 .btn-top{ font-size:12.5px; letter-spacing:.6px; padding:11px 22px;
   border:1px solid rgba(231,210,160,.45); color:var(--gold-l); }
 .btn-top:hover{ background:var(--gold); color:var(--navy-deep); border-color:var(--gold); }
-html[lang="ar"] .hc-kick,html[lang="ar"] .hc-count,html[lang="ar"] .hc-cat,html[lang="ar"] .hc-pill,
-html[lang="ar"] .btn-top{ letter-spacing:0; }
+html[lang|="ar"] .hc-kick,html[lang|="ar"] .hc-count,html[lang|="ar"] .hc-cat,html[lang|="ar"] .hc-pill,
+html[lang|="ar"] .btn-top{ letter-spacing:0; }
 
 /* ---------- states the prototypes did not draw ---------- */
 .notice{ font-size:12.5px; color:var(--navy-deep); background:var(--warm); border:1px solid rgba(198,163,98,.4);
@@ -93,12 +93,12 @@ html[lang="ar"] .btn-top{ letter-spacing:0; }
   transition:transform .12s ease-out, filter .16s ease; }
 .gold-btn:hover{ filter:brightness(1.05); }
 .gold-btn:active{ transform:scale(.97); }
-html[lang="ar"] .gold-btn{ letter-spacing:0; font-size:13.5px; }
+html[lang|="ar"] .gold-btn{ letter-spacing:0; font-size:13.5px; }
 /* Cairo's own line height made the Arabic chips and buttons taller than the English ones */
 .fp,.hc-pill,.pc-buy,.place,.login-btn,.guest-btn{ line-height:1.5; }
 /* the unit beside every amount, as the shop card writes it */
 .egp,.pc-price u{ font:500 10px/1 var(--font-body); letter-spacing:1.2px; text-transform:uppercase; text-decoration:none; color:var(--muted); }
-html[lang="ar"] .egp,html[lang="ar"] .pc-price u{ font-size:11.5px; letter-spacing:0; }
+html[lang|="ar"] .egp,html[lang|="ar"] .pc-price u{ font-size:11.5px; letter-spacing:0; }
 .money{ white-space:nowrap; }
 /* "Remove", the same in the cart and at checkout */
 .drop{ min-height:36px; padding:0 2px; border:0; background:none; cursor:pointer; font:400 12.5px var(--font-body); color:var(--muted);
@@ -170,17 +170,17 @@ html[lang="ar"] .egp,html[lang="ar"] .pc-price u{ font-size:11.5px; letter-spaci
 
 /* ---------- shop ---------- */
 .pc-sub{ font-size:13px; font-weight:500; color:var(--navy-deep); }
-html[lang="ar"] .pc-sub{ font-size:14px; }
+html[lang|="ar"] .pc-sub{ font-size:14px; }
 .fcount{ margin-left:0; margin-inline-start:auto; font-size:11.5px; }
-html[lang="ar"] .fcount{ font-size:13px; }
+html[lang|="ar"] .fcount{ font-size:13px; }
 @media (max-width:900px){ .filters .fcount{ display:block; flex-basis:100%; margin:6px 0 0; } }
 
 /* ---------- forms ---------- */
 .field > span,.f > span{ font-size:11.5px; letter-spacing:1.5px; color:var(--gold-ink); }
-html[lang="ar"] .field > span,html[lang="ar"] .f > span{ font-size:13px; letter-spacing:0; }
+html[lang|="ar"] .field > span,html[lang|="ar"] .f > span{ font-size:13px; letter-spacing:0; }
 .f > span em{ margin-left:0; margin-inline-start:2px; }
 /* email, phone and national ID are typed left to right; in Arabic they sit where the other values sit */
-html[lang="ar"] input[dir="ltr"]{ text-align:end; }
+html[lang|="ar"] input[dir="ltr"]{ text-align:end; }
 .field-hint{ display:block; margin-top:7px; font-size:12px; color:var(--muted); }
 /* a fact, not a field */
 .f-fixed p{ font-size:13.5px; color:var(--muted); }

@@ -6,7 +6,10 @@ import { SiteHeader } from "@/components/header-client";
 import { ShopGrid } from "@/components/ShopGrid";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
-import { getProducts } from "@/lib/server-api";
+import { getPricesOrNull, getProducts } from "@/lib/server-api";
+import { getSeoEntry, priceVars } from "@/lib/seo-data";
+import { seoMetadata } from "@/lib/seo-page";
+import { EntryFaq, EntryHeadCode, entryH1, EntryIntro } from "@/components/seo-blocks";
 
 // A brand's own page: every piece that brand makes. /en/brands/btc, /ar/brands/btc.
 export async function generateMetadata({ params }: PageProps<"/[locale]/brands/[brand]">): Promise<Metadata> {
@@ -15,13 +18,14 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/brands/[
   const product = (await getProducts()).find((p) => p.manufacturerSlug === brand);
   if (!product) return {};
   const name = locale === "ar" ? product.manufacturerAr : product.manufacturerEn;
-  return { title: `${name} · GoldGram` };
+  const prices = await getPricesOrNull();
+  return seoMetadata({ locale, path: `/brands/${brand}`, type: "brand", entryType: "brand", key: brand, vars: { ...priceVars(prices, locale), name, brand: name } });
 }
 
 export default async function BrandPage({ params }: PageProps<"/[locale]/brands/[brand]">) {
   const { locale, brand } = await params;
   if (!hasLocale(locale)) notFound();
-  const t = await getTexts(locale);
+  const [t, entry] = await Promise.all([getTexts(locale), getSeoEntry("brand", brand)]);
   const products = (await getProducts()).filter((p) => p.manufacturerSlug === brand);
   if (products.length === 0) notFound();
   const name = locale === "ar" ? products[0].manufacturerAr : products[0].manufacturerEn;
@@ -33,10 +37,13 @@ export default async function BrandPage({ params }: PageProps<"/[locale]/brands/
         <div className="wrap">
           <section style={{ paddingTop: "var(--s8)" }}>
             <div className="shop-preset">
-              <h1>{name}</h1>
+              <h1>{entryH1(entry, locale, name)}</h1>
               <Link href={localePath(locale, `/brands`)}>{t.brands.title}</Link>
             </div>
+            <EntryHeadCode entry={entry} />
+            <EntryIntro entry={entry} locale={locale} />
             <ShopGrid products={products} initial="all" />
+            <EntryFaq entry={entry} locale={locale} title={t.pages.faqTitle} />
             <p className="buy-note">{t.shop.note}</p>
           </section>
         </div>

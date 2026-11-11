@@ -1,5 +1,5 @@
 import { fmt, type Dict, type Locale } from "@/i18n";
-import { type Category, isWearable, type Product } from "./types";
+import { type Category, isWearable, type Prices, type Product } from "./types";
 
 // Western digits and separators in both languages, as in the Arabic prototype.
 const whole = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -133,4 +133,18 @@ export function changeToday(points: { at: string; buyPiastres: number }[], curre
   }
   if (!previous) return null;
   return Math.round(((currentBuyPiastres - previous.buy) / previous.buy) * 10000) / 100;
+}
+
+/**
+ * What GoldGram pays to buy a piece back today (SELL-02): today's sell price per gram of its metal
+ * and karat × weight, plus its cashback per gram × weight, each to the piastre; null with no board.
+ */
+export function buybackPiastres(
+  p: Pick<Product, "karat" | "weightGrams" | "cashback">,
+  prices: Pick<Prices, "karats" | "silver"> | null | undefined,
+  packaging: "with" | "without" = "with",
+): number | null {
+  const gram = (p.karat as number) === 999 ? (prices?.silver.sellPiastres ?? null) : (prices?.karats.find((k) => k.karat === p.karat)?.sellPiastres ?? null);
+  const cashbackGram = p.cashback ? (packaging === "with" ? p.cashback.withPackagingPiastres : p.cashback.withoutPackagingPiastres) : 0;
+  return gram === null ? null : Math.round(p.weightGrams * gram) + Math.round(p.weightGrams * cashbackGram);
 }

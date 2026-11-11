@@ -12,6 +12,9 @@ const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g
 export const articleTitle = (a: Article, locale: Locale) => (locale === "ar" ? a.titleAr : a.titleEn);
 export const articleBody = (a: Article, locale: Locale) => (locale === "ar" ? a.bodyAr : a.bodyEn);
 
+/** A guide's address (PG-12): its slug, or its id on a backend that has no slugs yet. */
+export const guidePath = (a: Article) => `/guides/${a.slug || a.id}`;
+
 /** Featured pieces first, filled up to four with the rest of the catalogue in its own order. */
 export function starterProducts(products: Product[]): Product[] {
   const featured = products.filter((p) => p.featured);
@@ -28,7 +31,7 @@ export function ArticleCards({ articles, locale, t }: { articles: Article[]; loc
         const first = stripHtml(articleBody(a, locale));
         const photo = a.imageIds?.[0];
         return (
-          <Link className="art-card" key={a.id} href={localePath(locale, `/articles/${a.id}`)}>
+          <Link className="art-card" key={a.id} href={localePath(locale, guidePath(a))}>
             {photo ? (
               <Image unoptimized className="art-img" src={`/api/articles/${a.id}/images/${photo}`} alt="" width={400} height={225} loading="lazy" />
             ) : null}

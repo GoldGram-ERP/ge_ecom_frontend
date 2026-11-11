@@ -36,10 +36,13 @@ describe("shop addresses", () => {
   it("send a filter to its own page, the wearable one by either slug", () => {
     expect(filterPath("all")).toBe("/shop");
     expect(filterPath("coin")).toBe("/gold-coins");
-    expect(filterPath("wear")).toBe("/pendants");
-    expect(filterPath("pendants")).toBe("/pendants");
+    expect(filterPath("wear")).toBe("/gold-bar-pendants");
+    expect(filterPath("pendants")).toBe("/gold-bar-pendants");
+    expect(filterPath("ingot")).toBe("/gold-bars");
+    expect(filterPath("bar")).toBe("/gold-bars");
     expect(filterPath("silver")).toBe("/silver");
     expect(filterPath("gift sets")).toBe("/shop?c=gift%20sets");
-    expect(CATEGORY_URLS.pendants).toEqual(["wear", "pendants"]);
+    expect(CATEGORY_URLS["gold-bar-pendants"]).toEqual(["wear", "pendants"]);
+    expect(CATEGORY_URLS["gold-ingots"]).toBeUndefined();
   });
 });
