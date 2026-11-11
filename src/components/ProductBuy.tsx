@@ -3,13 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { cart, qtyLimit, qtyOf, useCart } from "@/lib/cart";
+import { cartEvent, fromProduct, itemFor } from "@/lib/analytics";
+import { useLiveProducts } from "@/lib/live-products";
+import type { Product } from "@/lib/types";
 import { useI18n } from "./Providers";
 import { Button } from "./controls";
-import { track } from "./analytics";
 
 /** The product page's buying row: how many, then into the cart, or straight to checkout. */
-export function ProductBuy({ productId, inStock, stock }: { productId: number; inStock: boolean; stock?: number | null }) {
+export function ProductBuy({ product }: { product: Product }) {
   const { t, href } = useI18n();
+  // The live product: add_to_cart carries the price on screen now, not the one the page opened with (R15, T4).
+  const [live] = useLiveProducts([product]);
+  const { id: productId, stock } = product;
+  const inStock = product.inStock !== false;
   const router = useRouter();
   // What can still go into the cart: the stock less what the cart already holds.
   const room = qtyLimit(stock) - qtyOf(useCart(), productId);
@@ -20,8 +26,9 @@ export function ProductBuy({ productId, inStock, stock }: { productId: number; i
   useEffect(() => () => void (timer.current && clearTimeout(timer.current)), []);
 
   const put = () => {
-    for (let n = 0; n < qty; n++) cart.add(productId, stock);
-    track("add_to_cart", { items: [{ item_id: productId, quantity: qty }] });
+    let added = 0;
+    for (let n = 0; n < qty; n++) if (cart.add(productId, stock)) added++;
+    if (added) cartEvent("add_to_cart", [itemFor(fromProduct(live), added)]);
   };
 
   if (!inStock) {

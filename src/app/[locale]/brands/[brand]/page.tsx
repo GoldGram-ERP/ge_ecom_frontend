@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/header-client";
 import { ShopGrid } from "@/components/ShopGrid";
 import { hasLocale } from "@/i18n";
+import { brandList } from "@/lib/analytics";
 import { getTexts } from "@/lib/site-texts";
 import { getPricesOrNull, getProducts } from "@/lib/server-api";
 import { getSeoEntry, priceVars } from "@/lib/seo-data";
@@ -42,7 +43,7 @@ export default async function BrandPage({ params }: PageProps<"/[locale]/brands/
             </div>
             <EntryHeadCode entry={entry} />
             <EntryIntro entry={entry} locale={locale} />
-            <ShopGrid products={products} initial="all" />
+            <ShopGrid products={products} initial="all" list={brandList(brand, products[0].manufacturerEn)} />
             <EntryFaq entry={entry} locale={locale} title={t.pages.faqTitle} />
             <p className="buy-note">{t.shop.note}</p>
           </section>

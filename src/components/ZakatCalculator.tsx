@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics";
 import { fmt } from "@/i18n";
 import { cairoTime, karatLabel, poundsParts } from "@/lib/format";
 import { useLivePrices } from "@/lib/live-prices";
@@ -62,6 +63,20 @@ export function ZakatCalculator({ initial }: { initial: Prices | null }) {
   const [gold, setGold] = useState<Record<Karat, string>>({ 24: "", 21: "", 18: "" });
   const [silver, setSilver] = useState("");
   const [cash, setCash] = useState("");
+
+  // GA4 zakat_calculate: a second after the inputs settle on a result that has gold or silver in it.
+  const goldIn = Object.values(gold).some((v) => read(v).value > 0);
+  const silverIn = read(silver).value > 0;
+  const savings = read(cash).value > 0;
+  useEffect(() => {
+    if (!prices || (!goldIn && !silverIn)) return;
+    const timer = setTimeout(
+      () => trackEvent("zakat_calculate", { metals: goldIn && silverIn ? "gold_silver" : goldIn ? "gold" : "silver", has_savings: savings ? "yes" : "no" }),
+      1000,
+    );
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the visitor's inputs only
+  }, [gold, silver, cash]);
 
   if (!prices) return <p className="zk-warn">{t.zakat.unavailable}</p>;
 

@@ -9,8 +9,8 @@ import { cart, useCart } from "@/lib/cart";
 import { api, ApiError, CLAIM_KEY, errorText } from "@/lib/client-api";
 import { useLivePrices } from "@/lib/live-prices";
 import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
-import { track } from "./analytics";
-import type { Fulfilment, PaymentMethod, PaymentMethodInfo, PlacedOrder, Quote, Zone } from "@/lib/types";
+import { cartEvent, checkoutValue, gaClientId, lineItems, onPage, orderAnalytics, pageView, placeOrderOnce, totalGrams, trackEcommerce, trackEvent } from "@/lib/analytics";
+import type { Fulfilment, PaymentMethod, PaymentMethodInfo, PlacedOrder, Quote, QuoteLine, Zone } from "@/lib/types";
 import { GOVERNORATES, isEmail, normalizePhone, type Governorate } from "@/lib/validation";
 import { MiniArt } from "./chrome";
 import { Button, Check, Option, Options, Select } from "./controls";
@@ -40,6 +40,41 @@ const SERVER_FIELDS: Record<string, ErrorKey> = {
 
 const KYC_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const KYC_MAX_BYTES = 2 * 1024 * 1024;
+
+// GA4 values (section 6, fixed values).
+const SHIPPING_TIER: Record<Fulfilment, string> = { branch: "Branch pickup", delivery: "Insured delivery", storage: "Storage" };
+const PAYMENT_TYPE: Record<PaymentMethod, string> = { instapay: "InstaPay", bank: "Bank transfer" };
+/** sessionStorage: the checkout steps this tab already sent to GA4, until the order is placed (R8). */
+const STEPS_KEY = "gg_ga_checkout";
+let stepsMemory: Record<string, string> = {};
+
+/** True (and remembered) the first time a step is sent with this value. */
+function stepIsNew(step: string, value: string): boolean {
+  let steps = stepsMemory;
+  try {
+    steps = JSON.parse(sessionStorage.getItem(STEPS_KEY) ?? "{}") as Record<string, string>;
+  } catch {
+    // storage blocked: this page's memory
+  }
+  if (steps[step] === value) return false;
+  stepsMemory = { ...steps, [step]: value };
+  try {
+    sessionStorage.setItem(STEPS_KEY, JSON.stringify(stepsMemory));
+  } catch {
+    // storage blocked
+  }
+  return true;
+}
+
+/** A placed order ends the checkout: the next one sends its steps again. */
+function forgetSteps(): void {
+  stepsMemory = {};
+  try {
+    sessionStorage.removeItem(STEPS_KEY);
+  } catch {
+    // storage blocked
+  }
+}
 
 export function Checkout({
   branchPickup,
@@ -209,6 +244,54 @@ export function Checkout({
     return fmt(t.checkout.errFields, { fields: names.join(locale === "ar" ? "، " : ", ") });
   }
 
+  // ---- GA4 checkout events (section 6). Each waits for the page view (R7) and the priced lines. ----
+  const checkoutParams = async (q: Quote) => {
+    const items = await lineItems(q.lines, q.outOfStock);
+    return { currency: "EGP", value: checkoutValue(items, q.discountPiastres), coupon: q.discountCode ?? "", items };
+  };
+  // begin_checkout once per checkout; add_shipping_info / add_payment_info again only when the
+  // choice changes. Remembered for the tab, so a refresh sends none of them twice (R8).
+  const send = (step: "begin" | "shipping" | "payment", value: string, push: (params: Awaited<ReturnType<typeof checkoutParams>>) => void) => {
+    if (!quote || !stepIsNew(step, value)) return;
+    void checkoutParams(quote).then((params) => onPage(`${step}:${value}:${Math.random()}`, () => push(params)));
+  };
+  useEffect(() => {
+    if (quote && quoteFresh && !done) send("begin", "1", (params) => trackEcommerce("begin_checkout", { ...params, total_grams: totalGrams(params.items) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the first priced cart
+  }, [quoteFresh]);
+  // The details are valid and a fulfilment is chosen.
+  const detailsValid = Object.keys(validate()).length === 0;
+  useEffect(() => {
+    if (detailsValid && quote && quoteFresh && !done) send("shipping", fulfilment, (params) => trackEcommerce("add_shipping_info", { ...params, shipping_tier: SHIPPING_TIER[fulfilment] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailsValid, fulfilment, quoteFresh, done]);
+  // A method is chosen and the terms are ticked.
+  useEffect(() => {
+    if (payment && terms && quote && quoteFresh && !done) send("payment", payment, (params) => trackEcommerce("add_payment_info", { ...params, payment_type: PAYMENT_TYPE[payment] }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payment, terms, quoteFresh, done]);
+  // checkout_price_update: the same order re-priced (a new board, or PRICE_CHANGED) to another total.
+  const lastTotal = useRef<{ inputs: string; total: number } | null>(null);
+  useEffect(() => {
+    if (!loaded || done) return;
+    // The quote key without the retry count and the board time: what the visitor chose.
+    const inputs = JSON.stringify((JSON.parse(loaded.key) as unknown[]).slice(0, 5));
+    const total = loaded.quote.totalPiastres;
+    const previous = lastTotal.current;
+    lastTotal.current = { inputs, total };
+    if (previous && previous.inputs === inputs && previous.total !== total) {
+      trackEvent("checkout_price_update", { previous_value: previous.total / 100, new_value: total / 100, currency: "EGP", direction: total > previous.total ? "up" : "down" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+  // id_verification_start: the ID photos step is on this checkout.
+  useEffect(() => {
+    if (kycRequired && !done) onPage("id_verification_start", () => trackEvent("id_verification_start", { placement: "checkout" }));
+  }, [kycRequired, done]);
+  const removed = (line: QuoteLine) => {
+    if (quote) void lineItems([line], quote.outOfStock, () => 1).then((items) => cartEvent("remove_from_cart", items));
+  };
+
   async function place() {
     setNotice(null);
     if (!hasLines) {
@@ -268,16 +351,22 @@ export function Checkout({
     };
     const payload = JSON.stringify(body);
     if (attempt.current?.payload !== payload) attempt.current = { payload, key: crypto.randomUUID() };
+    // GA identifiers and each line's list (section 13-A), kept out of the retry key: a new GA session never makes a second order.
+    const analytics = orderAnalytics(lines.map((l) => l.productId), document.cookie);
 
     setBusy(true);
     setMessage(null);
     try {
       const order = await api<PlacedOrder>("/orders", {
-        body,
+        body: analytics ? { ...body, analytics } : body,
         headers: { "Idempotency-Key": attempt.current.key },
       });
       cart.clear();
-      track("purchase", { transaction_id: order.reference, value: order.totalPiastres / 100, currency: "EGP", payment_type: payment });
+      // The confirmation step is its own page view, then place_order from the order record, once (section 6).
+      forgetSteps();
+      pageView(user ?? null, "order_confirmation");
+      if (kycTokens.length) trackEvent("id_verification_submit", { placement: "checkout" });
+      if (order.tracking) placeOrderOnce(order.tracking);
       setDone({
         id: order.id,
         reference: order.reference,
@@ -635,8 +724,8 @@ export function Checkout({
 
                 {kycRequired && (
                   <>
-                    <KycSlot label={t.checkout.kycFrontLabel} hint={t.checkout.kycDocHint} token={kycFront} onToken={setKycFront} />
-                    <KycSlot label={t.checkout.kycBackLabel} hint={t.checkout.kycBackHint} token={kycBack} onToken={setKycBack} />
+                    <KycSlot side="front" label={t.checkout.kycFrontLabel} hint={t.checkout.kycDocHint} token={kycFront} onToken={setKycFront} />
+                    <KycSlot side="back" label={t.checkout.kycBackLabel} hint={t.checkout.kycBackHint} token={kycBack} onToken={setKycBack} />
                   </>
                 )}
 
@@ -683,7 +772,10 @@ export function Checkout({
                             {pounds(line.lineTotalPiastres)} <small className="egp">{t.product.egp}</small>
                           </em>
                           <i>{productPurity(line, t)}</i>
-                          <Button type="button" className="drop" aria-label={fmt(t.checkout.removeLabel, { name: productName(line, locale) })} onClick={() => cart.removeOne(line.productId)}>
+                          <Button type="button" className="drop" aria-label={fmt(t.checkout.removeLabel, { name: productName(line, locale) })} onClick={() => {
+                            cart.removeOne(line.productId);
+                            removed(line);
+                          }}>
                             {t.checkout.remove}
                           </Button>
                         </div>
@@ -828,11 +920,13 @@ export function Checkout({
 
 /** One ID-photo upload: picks a file, sends it, and reports its single-use token up. */
 function KycSlot({
+  side,
   label,
   hint,
   token,
   onToken,
 }: {
+  side: "front" | "back";
   label: string;
   hint: string;
   token: string | null;
@@ -847,17 +941,30 @@ function KycSlot({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
-    if (!KYC_TYPES.includes(file.type)) return setError(t.checkout.proofErrType);
-    if (file.size > KYC_MAX_BYTES) return setError(t.checkout.proofErrSize);
+    const upload = (status: "success" | "error", error_reason?: "too_large" | "wrong_type" | "network") =>
+      trackEvent("id_upload", { side, status, ...(error_reason ? { error_reason } : {}) });
+    if (!KYC_TYPES.includes(file.type)) {
+      upload("error", "wrong_type");
+      return setError(t.checkout.proofErrType);
+    }
+    if (file.size > KYC_MAX_BYTES) {
+      upload("error", "too_large");
+      return setError(t.checkout.proofErrSize);
+    }
     setSending(true);
     setError(null);
     const body = new FormData();
     body.append("file", file);
+    // The visitor's GA client id, so the identity decision can reach GA4 later (optional, never personal).
+    const clientId = gaClientId(document.cookie);
+    if (clientId) body.append("gaClientId", clientId);
     try {
       const response = await fetch("/api/orders/kyc-document", { method: "POST", body });
       if (!response.ok) throw new Error(String(response.status));
       onToken(((await response.json()) as { token: string }).token);
+      upload("success");
     } catch {
+      upload("error", "network");
       setError(t.checkout.proofErrSend);
       onToken(null);
     } finally {

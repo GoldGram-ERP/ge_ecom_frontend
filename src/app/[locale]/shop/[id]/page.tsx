@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { SiteHeader } from "@/components/header-client";
-import { TrackView } from "@/components/analytics";
+import { ViewItem } from "@/components/analytics";
 import { StoreButtons } from "@/components/chrome";
 import { PdpCompare, PdpFaq, PdpRelated } from "@/components/pdp-live";
 import { EntryFaq, EntryHeadCode, entryH1 } from "@/components/seo-blocks";
@@ -148,10 +148,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
         }}
       />
       <EntryHeadCode entry={entry} />
-      <TrackView
-        event="view_item"
-        params={{ currency: "EGP", value: p.pricePiastres / 100, items: [{ item_id: p.slug, item_name: p.nameEn, weight: p.weightGrams, karat: p.karat, item_brand: p.manufacturerEn, price: p.pricePiastres / 100 }] }}
-      />
+      <ViewItem product={p} />
       <SiteHeader />
 
       <div className="band-off pdp-band">
@@ -197,7 +194,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
               ) : null}
               <StoreButtons t={t} placement="product" />
 
-              <ProductBuy productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
+              <ProductBuy product={p} />
               <p className={`pdp-stock${p.inStock === false ? " out" : ""}`}>{p.inStock === false ? t.pdp.soldOut : t.pdp.inStock}</p>
             </div>
           </article>

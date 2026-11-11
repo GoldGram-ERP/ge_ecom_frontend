@@ -14,10 +14,11 @@ import {
 } from "@/components/animate-ui/primitives/radix/sheet";
 import { fmt } from "@/i18n";
 import { cart, countItems, qtyLimit, useCart } from "@/lib/cart";
+import { cartEvent, lineItems } from "@/lib/analytics";
 import { api } from "@/lib/client-api";
 import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
 import { useLivePrices } from "@/lib/live-prices";
-import type { Quote } from "@/lib/types";
+import type { Quote, QuoteLine } from "@/lib/types";
 import { Icon, ICONS, MiniArt } from "./chrome";
 import { Button } from "./controls";
 import { useI18n } from "./Providers";
@@ -67,8 +68,28 @@ export function CartDrawer() {
   const quote = priced?.quote ?? null;
   const fresh = priced?.key === key;
 
+  // GA4 view_cart once per opening, when the drawer shows its priced lines.
+  const opened = useRef(0);
+  const viewed = useRef(0);
+  useEffect(() => {
+    if (!open || !fresh || !quote || viewed.current === opened.current) return;
+    viewed.current = opened.current;
+    void lineItems(quote.lines, quote.outOfStock).then((items) => cartEvent("view_cart", items));
+  }, [open, fresh, quote]);
+
+  // add_to_cart / remove_from_cart for a change made here, with the units of this action only.
+  const changed = (event: "add_to_cart" | "remove_from_cart", line: QuoteLine, units: number) => {
+    if (units > 0 && quote) void lineItems([line], quote.outOfStock, () => units).then((items) => cartEvent(event, items));
+  };
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        if (next && !open) opened.current += 1;
+        setOpen(next);
+      }}
+    >
       <SheetTrigger asChild>
         <Button className="navlink cart-chip" type="button" aria-label={fmt(t.cart.open, { count })}>
           {t.nav.cart}{" "}
@@ -117,15 +138,23 @@ export function CartDrawer() {
                         {pounds(line.lineTotalPiastres)} <small className="egp">{t.product.egp}</small>
                       </div>
                       <div className="cart-qty" role="group" aria-label={fmt(t.cart.qtyOf, { name })}>
-                        <Button type="button" aria-label={fmt(t.checkout.removeLabel, { name })} onClick={() => cart.removeOne(line.productId)}>
+                        <Button type="button" aria-label={fmt(t.checkout.removeLabel, { name })} onClick={() => {
+                            cart.removeOne(line.productId);
+                            changed("remove_from_cart", line, 1);
+                          }}>
                           <Icon d={ICONS.minus} size={16} />
                         </Button>
                         <output>{line.qty}</output>
-                        <Button type="button" aria-label={fmt(t.cart.addOne, { name })} disabled={line.qty >= qtyLimit(line.stock)} onClick={() => cart.add(line.productId, line.stock)}>
+                        <Button type="button" aria-label={fmt(t.cart.addOne, { name })} disabled={line.qty >= qtyLimit(line.stock)} onClick={() => {
+                            if (cart.add(line.productId, line.stock)) changed("add_to_cart", line, 1);
+                          }}>
                           <Icon d={ICONS.plus} size={16} />
                         </Button>
                       </div>
-                      <Button type="button" className="drop cart-drop" aria-label={fmt(t.cart.removeAll, { name })} onClick={() => cart.drop([line.productId])}>
+                      <Button type="button" className="drop cart-drop" aria-label={fmt(t.cart.removeAll, { name })} onClick={() => {
+                          cart.drop([line.productId]);
+                          changed("remove_from_cart", line, line.qty);
+                        }}>
                         {t.checkout.remove}
                       </Button>
                     </div>

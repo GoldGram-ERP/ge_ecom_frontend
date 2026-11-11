@@ -12,6 +12,7 @@ import { getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro } from "@/components/seo-blocks";
 import { mergeBars } from "@/lib/shop-links";
+import { LISTS } from "@/lib/analytics";
 
 // The footer's ready-made selections: metal (`m`) and size (`w`), by the rule the compare page uses too.
 type Preset = { metal?: "gold" | "silver"; size?: "small" | "large" };
@@ -74,7 +75,7 @@ export default async function ShopPage({ params, searchParams }: PageProps<"/[lo
             )}
             <EntryHeadCode entry={entry} />
             <EntryIntro entry={entry} locale={locale} />
-            <ShopGrid products={products} initial={initial} />
+            <ShopGrid products={products} initial={initial} list={LISTS.shopAll} />
             <EntryFaq entry={entry} locale={locale} title={t.pages.faqTitle} />
 
             <div className="assure">

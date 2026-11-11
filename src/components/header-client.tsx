@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { DropdownMenu } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
+import { clearUser, trackEvent } from "@/lib/analytics";
 import { api } from "@/lib/client-api";
 import { SHOP_LINKS } from "@/lib/shop-links";
 import { CartDrawer } from "./cart-drawer";
@@ -113,6 +114,7 @@ export function SignOutButton() {
     } catch {
       // the cookie may already be gone; fall through and leave the account screen either way
     }
+    clearUser(); // the customer id must not stick to the next visitor (GA4, section 7)
     await refresh();
     router.push(href("/"));
     router.refresh();
@@ -143,6 +145,7 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
   const router = useRouter();
   // The query (an account tab, a shop filter) goes along, so the switch lands on exactly this view.
   const switchLanguage = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    trackEvent("language_switch", { from_language: locale, to_language: other });
     if (!window.location.search || event.metaKey || event.ctrlKey || event.shiftKey) return;
     event.preventDefault();
     router.push(otherHref + window.location.search);

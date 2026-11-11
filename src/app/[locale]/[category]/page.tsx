@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TrackView } from "@/components/analytics";
 import { SiteHeader } from "@/components/header-client";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
 import { ShopGrid } from "@/components/ShopGrid";
 import { type Dict, fmt, hasLocale, type Locale, localePath } from "@/i18n";
+import { categoryList } from "@/lib/analytics";
 import { pounds, productName } from "@/lib/format";
 import { isSilver } from "@/lib/kinds";
 import { itemListJsonLd } from "@/lib/seo";
@@ -96,7 +96,6 @@ export default async function CategoryPage({ params }: PageProps<"/[locale]/[cat
     <div className="page buy-page">
       <JsonLd data={products.length ? itemListJsonLd(locale, products.map((p) => ({ name: productName(p, locale), path: `/shop/${p.slug}` }))) : null} />
       <EntryHeadCode entry={entry} />
-      <TrackView event="view_item_list" params={{ item_list_id: category, items: products.map((p) => ({ item_id: p.slug, item_name: p.nameEn, weight: p.weightGrams, karat: p.karat, item_brand: p.manufacturerEn })) }} />
       <SiteHeader />
       <div className="band-off">
         <div className="wrap">
@@ -104,6 +103,7 @@ export default async function CategoryPage({ params }: PageProps<"/[locale]/[cat
             <ShopGrid
               products={all}
               initial={initial}
+              list={categoryList(category)}
               heading={{ name, allHref: localePath(locale, "/shop") }}
               intro={<EntryIntro entry={entry} locale={locale} />}
               before={<WeightTiles weights={weights} bars={bars} locale={locale} t={t} />}

@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getTexts as textsForTitle } from "@/lib/site-texts";
 import { Checkout } from "@/components/Checkout";
 import { SiteHeader } from "@/components/header-client";
-import { TrackView } from "@/components/analytics";
 import { hasLocale } from "@/i18n";
 import { branchPickup, promoAvailable, requireKycDocPerOrder } from "@/lib/server-api";
 
@@ -24,7 +23,6 @@ export default async function CheckoutPage({ params }: PageProps<"/[locale]/chec
   const [branch, kycRequired, promo] = await Promise.all([branchPickup(), requireKycDocPerOrder(), promoAvailable()]);
   return (
     <div className="page checkout-page">
-      <TrackView event="begin_checkout" />
       <SiteHeader />
       <Checkout branchPickup={branch} requireKycDoc={kycRequired} promoAvailable={promo} />
     </div>

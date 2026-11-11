@@ -6,17 +6,22 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { fmt } from "@/i18n";
 import { cart, qtyLimit, qtyOf, useCart } from "@/lib/cart";
+import { cartEvent, contextOf, fromProduct, itemFor, rememberList, samePage, selectItem, trackEvent, type ListRef } from "@/lib/analytics";
 import { useLiveProducts } from "@/lib/live-products";
 import { filterPath } from "@/lib/shop-links";
 import { artClass, artStyle, pounds, productName, productSub } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
 import { useI18n } from "./Providers";
+import { useListView } from "./analytics";
 import { Button, Reveal } from "./controls";
 
 type Filter = "all" | Category;
 
-export function AddButton({ productId, inStock, stock }: { productId: number; inStock: boolean; stock?: number | null }) {
+/** Adds one piece; `list` and `index` say where it was added from (GA4 list context). */
+export function AddButton({ product, list, index }: { product: Product; list?: ListRef; index?: number }) {
   const { t } = useI18n();
+  const { id: productId, stock } = product;
+  const inStock = product.inStock !== false;
   const inCart = qtyOf(useCart(), productId);
   const [added, setAdded] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,7 +50,12 @@ export function AddButton({ productId, inStock, stock }: { productId: number; in
       disabled={added}
       onClick={() => {
         if (timer.current) return; // a second click before the button has turned off
-        cart.add(productId, stock);
+        // add_to_cart once the cart holds it (R3), at the price on screen (R15).
+        if (cart.add(productId, stock)) {
+          const context = list && index !== undefined ? contextOf(list, index) : undefined;
+          if (context) rememberList(productId, context);
+          cartEvent("add_to_cart", [itemFor(fromProduct(product), 1, context)]);
+        }
         setAdded(true);
         timer.current = setTimeout(() => {
           timer.current = null;
@@ -67,12 +77,15 @@ export function AddButton({ productId, inStock, stock }: { productId: number; in
 export function ShopGrid({
   products: rendered,
   initial,
+  list,
   heading,
   intro,
   before,
 }: {
   products: Product[];
   initial: Filter;
+  /** The GA4 list these cards are (shop_all, category_…, weight_…). */
+  list?: ListRef;
   heading?: { name: string; allHref: string };
   /** Server-rendered blocks under the heading: the page's intro text, then (the bars hub) its weight tiles. */
   intro?: React.ReactNode;
@@ -99,6 +112,7 @@ export function ShopGrid({
   }
 
   const shown = filter === "all" ? products : products.filter((p) => p.category === filter);
+  useListView(list, shown);
   const title =
     filter === initial ? heading?.name : filter === "all" ? t.nav.shop : filters.find((f) => f.id === filter)?.label;
   // The browser tab's title follows another filter's name; the page's own filter keeps its SEO title.
@@ -128,9 +142,13 @@ export function ShopGrid({
             aria-pressed={filter === f.id}
             onClick={() => {
               setFilter(f.id);
+              if (list && f.id !== filter) trackEvent("filter_apply", { filter_type: "category", filter_value: f.id, item_list_id: list.id });
               // On a menu category page the address follows the filter (its clean URL), so a
               // copied or reloaded link opens on it. Next.js keeps its router in step.
-              if (heading) window.history.replaceState(null, "", localePath(locale, filterPath(f.id)));
+              if (heading) {
+                window.history.replaceState(null, "", localePath(locale, filterPath(f.id)));
+                samePage(); // the same page under the filter's address: no new page view
+              }
             }}
           >
             {f.label}
@@ -152,7 +170,7 @@ export function ShopGrid({
             return (
             <Reveal as="article" className="pcard" key={p.id} delay={Math.min(index, 5) * 40}>
                 {/* The picture, name and description open the piece's own page; the button stays outside the link. */}
-                <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)}>
+                <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)} onClick={() => list && selectItem(p, list, index)}>
                   {photo ? (
                     <div className="pc-frame">
                       {/* The name follows as text, so the picture adds nothing for a screen reader. Served as stored: it is small already. */}
@@ -174,7 +192,7 @@ export function ShopGrid({
                   {pounds(p.pricePiastres)}
                   <u>{t.product.egp}</u>
                 </div>
-                <AddButton productId={p.id} inStock={p.inStock !== false} stock={p.stock} />
+                <AddButton product={p} list={list} index={index} />
               </Reveal>
             );
           })}
