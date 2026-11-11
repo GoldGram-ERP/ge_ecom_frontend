@@ -11,6 +11,7 @@ import { ProductGallery } from "@/components/ProductGallery";
 import { ProductTabs } from "@/components/ProductTabs";
 import { fmt, hasLocale } from "@/i18n";
 import { artClass, artStyle, karatLabel, poundsParts, productName, productPurity, productSub, weightLabel } from "@/lib/format";
+import { absoluteUrl, alternatesFor, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
 import { getTexts } from "@/lib/site-texts";
 import { getPricesOrNull, getProducts } from "@/lib/server-api";
 
@@ -43,7 +44,25 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id
   const t = await getTexts(locale);
   const { product } = found;
   const description = locale === "ar" ? product.descriptionAr : product.descriptionEn;
-  return { title: `${productName(product, locale)} · GoldGram`, description: description || productSub(product, t) };
+  const title = `${productName(product, locale)} · GoldGram`;
+  const text = (description || productSub(product, t)).replace(/\s+/g, " ").trim();
+  const image = product.imageIds[0] ? [absoluteUrl("ar", `/api/products/${product.id}/images/${product.imageIds[0]}`)] : undefined;
+  return {
+    title,
+    description: text,
+    alternates: alternatesFor(locale, `/shop/${product.slug}`),
+    openGraph: {
+      type: "website", // og:type "product" is not in Next's typed set; website is valid for every crawler
+      siteName: "GoldGram",
+      title,
+      description: text,
+      url: absoluteUrl(locale, `/shop/${product.slug}`),
+      locale: locale === "ar" ? "ar_EG" : "en_US",
+      alternateLocale: locale === "ar" ? "en_US" : "ar_EG",
+      images: image,
+    },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description: text, images: image },
+  };
 }
 
 const money = (piastres: number) => poundsParts(piastres).full;
@@ -76,6 +95,30 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
 
   return (
     <div className="page buy-page">
+      {/* Product + Offer (price = the total shown on the page, availability follows stock) and the visible trail. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: jsonLd([
+            productJsonLd({
+              name,
+              description: (description || productSub(p, t)).replace(/\s+/g, " ").trim(),
+              url: absoluteUrl(locale, `/shop/${p.slug}`),
+              images: p.imageIds.map((imageId) => absoluteUrl("ar", `/api/products/${p.id}/images/${imageId}`)),
+              brand: maker ?? "",
+              weightGrams: p.weightGrams,
+              pricePiastres: p.pricePiastres,
+              inStock: p.inStock !== false,
+              sku: p.slug,
+            }),
+            breadcrumbList([
+              { name: t.pdp.home, path: "/", locale },
+              { name: t.nav.shop, path: "/shop", locale },
+              { name, path: `/shop/${p.slug}`, locale },
+            ]),
+          ]),
+        }}
+      />
       <SiteHeader />
 
       <div className="band-off pdp-band">

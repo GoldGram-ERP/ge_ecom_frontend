@@ -4,8 +4,11 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/chrome";
 import { PriceTicker } from "@/components/PriceTicker";
 import { Providers } from "@/components/Providers";
-import { dirOf, hasLocale, locales, localePath } from "@/i18n";
+import { dirOf, hasLocale, locales } from "@/i18n";
+import { SITE_URL, absoluteUrl, alternatesFor, jsonLd } from "@/lib/seo";
 import { getPricesOrNull } from "@/lib/server-api";
+import { site } from "@/lib/site";
+import { getLinks } from "@/lib/site-links";
 import { getTexts } from "@/lib/site-texts";
 import { fontVariables } from "../fonts";
 import "../styles/site.css";
@@ -24,23 +27,24 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
   const { locale } = await params;
   if (!hasLocale(locale)) return {};
   const t = await getTexts(locale);
-  const request = await headers();
-  const rest = request.get("x-gg-path") ?? "";
-  const host = request.get("x-forwarded-host") ?? request.get("host") ?? "localhost";
-  const scheme = request.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const rest = (await headers()).get("x-gg-path") ?? "";
+  const path = rest || "/";
+  const other = locale === "ar" ? "en_US" : "ar_EG";
   return {
-    metadataBase: new URL(`${scheme}://${host}`),
+    metadataBase: new URL(SITE_URL),
     title: t.meta.title,
     description: t.meta.description,
-    // This page in each language. Arabic is at the root, English under /en (middleware sets x-gg-path).
-    alternates: {
-      canonical: localePath(locale, rest || "/"),
-      languages: {
-        en: localePath("en", rest || "/"),
-        ar: localePath("ar", rest || "/"),
-        "x-default": localePath("en", rest || "/"),
-      },
+    // Absolute canonical (never with the query string) and hreflang (middleware sets x-gg-path).
+    alternates: alternatesFor(locale, path),
+    // Pages that set their own title/description repeat them through `socialFor`; these are the shared parts.
+    openGraph: {
+      type: "website",
+      siteName: "GoldGram",
+      url: absoluteUrl(locale, path),
+      locale: locale === "ar" ? "ar_EG" : "en_US",
+      alternateLocale: other,
     },
+    twitter: { card: "summary" },
   };
 }
 
@@ -48,12 +52,31 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
   const t = await getTexts(locale);
+  const links = await getLinks();
 
   return (
     // data-scroll-behavior: the stylesheet sets smooth scrolling for in-page anchors, and
     // Next.js 16 only makes page changes jump straight to the top when asked to.
     <html lang={locale} dir={dirOf(locale)} className={fontVariables} data-scroll-behavior="smooth">
       <body>
+        {/* Organization + WebSite on every page (SCH-01). Built from our own constants, escaped by jsonLd. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonLd([
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "GoldGram",
+                url: SITE_URL,
+                logo: `${SITE_URL}/logo.png`,
+                contactPoint: [{ "@type": "ContactPoint", telephone: site.hotline, contactType: "customer service", availableLanguage: ["ar", "en"] }],
+                sameAs: [links.instagramUrl, links.facebookUrl, links.tiktokUrl].filter((u): u is string => Boolean(u)),
+              },
+              { "@context": "https://schema.org", "@type": "WebSite", name: "GoldGram", url: SITE_URL, inLanguage: locale === "ar" ? "ar-EG" : "en" },
+            ]),
+          }}
+        />
         <Providers locale={locale} dict={t}>
           {/* Seeded on the server so the strip is never empty; the price stream keeps it live. */}
           <PriceTicker initial={await getPricesOrNull()} />
