@@ -1,17 +1,17 @@
 import { sitemapXml, type SitemapEntry } from "@/lib/seo";
 import { getArticles, getProducts } from "@/lib/server-api";
+import { SHOP_LINKS } from "@/lib/shop-links";
 
 // One sitemap per kind of page (IDX-02). Only public, indexable, self-canonical URLs; never the
 // private pages. lastmod is only given where the data has a real date (articles).
 const builders: Record<string, () => Promise<SitemapEntry[]>> = {
-  pages: async () => {
-    const categories = new Set((await getProducts().catch(() => [])).map((p) => p.category));
-    const kinds = { bar: "/gold-bars", coin: "/gold-coins", ingot: "/gold-ingots", wear: "/gold-bar-pendants" };
-    return [
+  // The shop's kinds come from the same list as the menus (/gold-bars … /pendants, /silver),
+  // so the sitemap never lists an old address that now redirects.
+  pages: async () =>
+    [
       "/", "/prices", "/prices/silver", "/shop", "/making-charges", "/compare", "/zakat", "/help", "/articles", "/terms", "/privacy",
-      ...Object.entries(kinds).filter(([c]) => categories.has(c)).map(([, path]) => path),
-    ].map((path) => ({ path }));
-  },
+      ...SHOP_LINKS.map((l) => l.path),
+    ].map((path) => ({ path })),
   products: async () => (await getProducts().catch(() => [])).map((p) => ({ path: `/shop/${p.slug}` })),
   brands: async () => {
     const slugs = new Set((await getProducts().catch(() => [])).map((p) => p.manufacturerSlug).filter(Boolean));
