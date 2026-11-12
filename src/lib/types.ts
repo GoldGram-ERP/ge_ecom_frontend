@@ -159,6 +159,8 @@ export interface PlacedOrder {
   status: OrderStatus;
   totalPiastres: number;
   createdAt: string;
+  /** When the unpaid order is cancelled without a transfer screenshot; null when expiry is off, absent on an older API. */
+  paymentDeadline?: string | null;
   /** Only for a guest's order: proves it is theirs (transfer picture, claiming it with a new account). */
   guestToken?: string;
   /** The GA4 place_order values from the order record (only in the create answer). */
@@ -180,6 +182,8 @@ export interface MyOrder {
   fulfilment: Fulfilment;
   totalPiastres: number;
   createdAt: string;
+  /** See `PlacedOrder.paymentDeadline`. */
+  paymentDeadline?: string | null;
   items: { nameEn: string; nameAr: string; category: Category; weightGrams: number; karat: Karat; qty: number }[];
 }
 

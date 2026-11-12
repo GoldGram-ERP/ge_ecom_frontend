@@ -8,7 +8,7 @@ import { fmt } from "@/i18n";
 import { cart, useCart } from "@/lib/cart";
 import { api, ApiError, CLAIM_KEY, errorText } from "@/lib/client-api";
 import { useLivePrices } from "@/lib/live-prices";
-import { pounds, productName, productPurity, shortWeight } from "@/lib/format";
+import { deadlineText, pounds, productName, productPurity, shortWeight } from "@/lib/format";
 import { cartEvent, checkoutValue, gaClientId, lineItems, onPage, orderAnalytics, pageView, placeOrderOnce, totalGrams, trackEcommerce, trackEvent } from "@/lib/analytics";
 import type { Fulfilment, PaymentMethod, PaymentMethodInfo, PlacedOrder, Quote, QuoteLine, Zone } from "@/lib/types";
 import { GOVERNORATES, isEmail, normalizePhone, type Governorate } from "@/lib/validation";
@@ -132,6 +132,8 @@ export function Checkout({
     id: number;
     reference: string;
     totalPiastres: number;
+    createdAt: string;
+    paymentDeadline?: string | null;
     payment: PaymentMethod;
     guestToken?: string;
     email: string;
@@ -371,6 +373,8 @@ export function Checkout({
         id: order.id,
         reference: order.reference,
         totalPiastres: order.totalPiastres,
+        createdAt: order.createdAt,
+        paymentDeadline: order.paymentDeadline,
         payment,
         guestToken: order.guestToken,
         email: body.customer.email,
@@ -540,6 +544,7 @@ export function Checkout({
               </motion.div>
               <h2>{t.checkout.doneTitle}</h2>
               <p>{t.checkout.doneText}</p>
+              {done.paymentDeadline && <p>{deadlineText(done, t)}</p>}
 
               <div className="done-card">
                 <div className="done-row">
