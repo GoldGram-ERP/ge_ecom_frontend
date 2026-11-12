@@ -3,7 +3,7 @@ import { getDictionary } from "@/i18n";
 import { ar } from "@/i18n/ar";
 import { en } from "@/i18n/en";
 import {
-  cairoDate, cairoTime, changeParts, durationText, pounds, poundsParts, productPurity, productShortName, productSub, shortWeight, weightLabel,
+  cairoDate, cairoTime, changeParts, deadlineText, durationText, pounds, poundsParts, productPurity, productShortName, productSub, shortWeight, weightLabel,
 } from "./format";
 
 const tEn = getDictionary("en");
@@ -54,6 +54,15 @@ describe("product text matches the prototypes", () => {
 describe("time and change", () => {
   it("formats the clock in Cairo", () => {
     expect(cairoTime("2026-01-15T12:32:00Z")).toBe("14:32"); // UTC+2 in winter
+  });
+  it("states the payment deadline from the API, in Cairo time, and nothing without one", () => {
+    const placed = { createdAt: "2026-01-15T12:32:00.000Z", paymentDeadline: "2026-01-15T12:42:00.000Z" };
+    expect(deadlineText(placed, tEn)).toBe(
+      "Please pay and upload the transfer screenshot within 10 minutes (by 14:42, Cairo time), or the order is cancelled automatically.",
+    );
+    expect(deadlineText(placed, tAr)).toBe("يرجى الدفع ورفع صورة التحويل خلال 10 دقيقة (قبل 14:42 بتوقيت القاهرة)، وإلا يُلغى الطلب تلقائيًا.");
+    expect(deadlineText({ ...placed, paymentDeadline: null }, tEn)).toBeNull();
+    expect(deadlineText({ createdAt: placed.createdAt }, tEn)).toBeNull(); // an older API
   });
   it("formats what is left of the session", () => {
     expect(durationText(368, tEn)).toBe("6h 8m");

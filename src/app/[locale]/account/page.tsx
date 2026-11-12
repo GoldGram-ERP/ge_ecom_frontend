@@ -8,7 +8,7 @@ import { AccountLink, SignOutButton, SiteHeader } from "@/components/header-clie
 import type { Dict, Locale } from "@/i18n";
 import { fmt, hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
-import { cairoDate, cairoHour, durationText, pounds } from "@/lib/format";
+import { cairoDate, cairoHour, deadlineText, durationText, pounds } from "@/lib/format";
 import { getMyOrders, getPrices, getProducts, getUser, showOutOfStockHome } from "@/lib/server-api";
 import { type Category, isWearable, type MyOrder } from "@/lib/types";
 import { AccountCrown, AccountPopular } from "@/components/account-live";
@@ -33,7 +33,14 @@ function OrderList({ orders, locale, t }: { orders: MyOrder[]; locale: Locale; t
               higher price only the difference is asked for, and nothing once the payment covers it. */}
           {order.status === "initiated" || order.status === "pending" ? (
             !order.hasProof ? (
-              <ProofUpload orderId={order.id} />
+              order.paymentDeadline ? (
+                <div className="proof-due">
+                  <p>{deadlineText(order, t)}</p>
+                  <ProofUpload orderId={order.id} />
+                </div>
+              ) : (
+                <ProofUpload orderId={order.id} />
+              )
             ) : order.remainingPiastres > 0 ? (
               <div className="proof-due">
                 <p>

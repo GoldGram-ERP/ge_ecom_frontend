@@ -507,6 +507,8 @@ export const en = {
     doneTitle: "Your order is placed.",
     doneText:
       "Pay into the account below; we have emailed you the same details. Once the transfer clears, we prepare your gold and issue the invoice in your name.",
+    payBy:
+      "Please pay and upload the transfer screenshot within {n} minutes (by {time}, Cairo time), or the order is cancelled automatically.",
     backToShop: "Back to the shop",
     refLabel: "Order reference",
     payTo: "Pay into",

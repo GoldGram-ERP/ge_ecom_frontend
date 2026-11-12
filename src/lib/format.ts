@@ -89,6 +89,13 @@ export const cairoDate = (iso: string, locale: Locale): string =>
     new Date(iso),
   );
 
+/** "Please pay … within 10 minutes (by 14:42, Cairo time) …", or null when the API sends no deadline. */
+export function deadlineText(order: { createdAt: string; paymentDeadline?: string | null }, t: Dict): string | null {
+  if (!order.paymentDeadline) return null;
+  const n = Math.round((Date.parse(order.paymentDeadline) - Date.parse(order.createdAt)) / 60_000);
+  return fmt(t.checkout.payBy, { n, time: cairoTime(order.paymentDeadline) });
+}
+
 export const cairoHour = (date: Date): number =>
   Number(new Intl.DateTimeFormat("en-GB", { timeZone: CAIRO, hour: "2-digit", hour12: false }).format(date)) % 24;
 
