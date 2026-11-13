@@ -42,8 +42,28 @@ const GONE_HTML = (isEn: boolean) =>
     isEn ? "This page has been removed." : "تمت إزالة هذه الصفحة."
   } <a href="${isEn ? "/en" : "/"}">${isEn ? "Home" : "الرئيسية"}</a></p></body></html>`;
 
+// Calls to /api go on to the backend (next.config.ts rewrite), which would see this server's IP for
+// every visitor. They carry the visitor's IP instead, vouched for by a secret only this server knows;
+// whatever the browser sent in those two headers is dropped first. The staff API is not served here
+// (the dashboard has its own address); the backend matches routes case-insensitively, hence /i.
+function toApi(request: NextRequest) {
+  if (/^\/api\/admin(\/|$)/i.test(request.nextUrl.pathname)) return new NextResponse(null, { status: 404 });
+  const headers = new Headers(request.headers);
+  headers.delete("x-gg-client-ip");
+  headers.delete("x-gg-proxy-key");
+  const key = process.env.PROXY_SHARED_SECRET;
+  // Vercel's edge sets x-forwarded-for (and x-real-ip) itself; the first entry is the visitor.
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || request.headers.get("x-real-ip")?.trim();
+  if (key && ip) {
+    headers.set("x-gg-client-ip", ip);
+    headers.set("x-gg-proxy-key", key);
+  }
+  return NextResponse.next({ request: { headers } });
+}
+
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname, search } = request.nextUrl;
+  if (pathname === "/api" || pathname.startsWith("/api/")) return toApi(request);
 
   // Old Arabic URLs (/ar/...) are gone: Arabic is at the root now. Send them there, once.
   if (pathname === "/ar" || pathname.startsWith("/ar/")) {
@@ -95,6 +115,6 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
   return NextResponse.rewrite(url, { request: { headers } });
 }
 
-// Everything except the API proxy, the dashboard's built-in wording feed, the revalidation hook,
-// Next internals and files with an extension.
-export const config = { matcher: ["/((?!api|site-texts|revalidate|_next|.*\\.).*)"] };
+// Pages: everything except the API proxy, the dashboard's built-in wording feed, the revalidation hook,
+// Next internals and files with an extension. Then the API proxy itself, for toApi.
+export const config = { matcher: ["/((?!api|site-texts|revalidate|_next|.*\\.).*)", "/api/:path*"] };
