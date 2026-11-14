@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          // Only directives that cannot break the marketing tags the SEO team adds in the
+          // site-wide head code: no plugins, no <base> hijack, forms post only here, no framing by
+          // other sites, and any stray http:// asset is fetched over HTTPS.
+          {
+            key: "Content-Security-Policy",
+            value: "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests",
+          },
+          { key: "Permissions-Policy", value: "microphone=(), geolocation=(), payment=(), usb=()" },
         ],
       },
     ];
