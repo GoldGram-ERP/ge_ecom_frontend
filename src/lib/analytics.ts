@@ -13,11 +13,12 @@ type Params = Record<string, unknown>;
 
 /**
  * Consent Mode v2 defaults (section 10), inline at the top of <body> so they run before Tag
- * Manager and before any push (R1). No banner yet: the ad keys stay denied until the owner decides.
+ * Manager and before any push (R1). The owner's decision (15 Nov 2026): everything granted by
+ * default, no cookie banner. A future banner only needs to call gtag('consent','update', …).
  */
 export const CONSENT_DEFAULTS =
   "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}" +
-  "gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'granted',wait_for_update:500});";
+  "gtag('consent','default',{ad_storage:'granted',ad_user_data:'granted',ad_personalization:'granted',analytics_storage:'granted'});";
 
 /** The page-context keys every later event keeps until the next page view or logout. */
 const PERSISTENT = new Set(["page_location", "page_path", "page_title", "page_type", "page_language", "login_status", "id_verification", "user_id"]);

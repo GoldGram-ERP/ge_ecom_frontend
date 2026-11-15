@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  CONSENT_DEFAULTS,
   buildItem,
   checkoutValue,
   cleanUrl,
@@ -241,5 +242,15 @@ describe("page context (section 7)", () => {
     const url = cleanUrl("https://goldgram.eg/en/sign-up?email=a%40b.c&firstName=Ali&mobile=0100&next=checkout&utm_source=x");
     expect(url.href).toBe("https://goldgram.eg/en/sign-up?next=checkout&utm_source=x");
     expect(cleanUrl("https://goldgram.eg/reset-password?token=abc").search).toBe("");
+  });
+});
+
+describe("consent defaults (section 10, owner's decision 15 Nov 2026)", () => {
+  it("grants analytics and all three advertising signals before Tag Manager loads", () => {
+    const calls: unknown[][] = [];
+    const scope = { dataLayer: undefined as unknown[] | undefined };
+    new Function("window", "dataLayer", CONSENT_DEFAULTS.replace("window.dataLayer=window.dataLayer||[];", "window.dataLayer=window.dataLayer||[];dataLayer=window.dataLayer;"))(scope, undefined);
+    for (const entry of scope.dataLayer ?? []) calls.push(Array.from(entry as ArrayLike<unknown>));
+    expect(calls).toEqual([["consent", "default", { ad_storage: "granted", ad_user_data: "granted", ad_personalization: "granted", analytics_storage: "granted" }]]);
   });
 });
