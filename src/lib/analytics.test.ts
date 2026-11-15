@@ -6,6 +6,7 @@ import {
   gaClientId,
   gaSessionId,
   itemsValue,
+  metaCookie,
   orderAnalytics,
   pageOf,
   placeOrderOnce,
@@ -154,6 +155,23 @@ describe("GA cookies (section 6 rule 4)", () => {
       lines: [{ productId: 31, itemListId: "category_gold_bars", itemListName: "Category: Gold bars", index: 2 }],
     });
     expect(orderAnalytics([7], "", lists)).toBeUndefined();
+  });
+});
+
+describe("Meta cookies on the order (section 13-A.2)", () => {
+  it("reads _fbp and _fbc when they have Meta's shape", () => {
+    const jar = "a=1; _fbp=fb.1.1558571054389.1098115397; _fbc=fb.1.1554763741205.IwAR2-AbC_dEf; b=2";
+    expect(metaCookie(jar, "_fbp")).toBe("fb.1.1558571054389.1098115397");
+    expect(metaCookie(jar, "_fbc")).toBe("fb.1.1554763741205.IwAR2-AbC_dEf");
+    expect(orderAnalytics([], jar)).toStrictEqual({ fbp: "fb.1.1558571054389.1098115397", fbc: "fb.1.1554763741205.IwAR2-AbC_dEf" });
+  });
+
+  it("sends nothing when absent, similarly named or malformed", () => {
+    expect(metaCookie("", "_fbp")).toBeUndefined();
+    expect(metaCookie("x_fbp=fb.1.1.2", "_fbp")).toBeUndefined();
+    expect(metaCookie("_fbp=junk", "_fbp")).toBeUndefined();
+    expect(metaCookie("_fbc=fb.1.1.<script>", "_fbc")).toBeUndefined();
+    expect(orderAnalytics([], "_fbp=junk")).toBeUndefined();
   });
 });
 

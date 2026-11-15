@@ -296,9 +296,19 @@ export function gaSessionId(cookies: string): string | undefined {
   return value?.match(/^GS\d\.\d\.s?(\d{1,20})(?:[.$]|$)/)?.[1];
 }
 
+const META_COOKIE = /^fb\.\d\.\d{1,20}\.[A-Za-z0-9_-]{1,150}$/;
+
+/** Meta's `_fbp` / `_fbc` cookie (only there once a Meta pixel runs); undefined when absent or oddly shaped. */
+export function metaCookie(cookies: string, name: "_fbp" | "_fbc"): string | undefined {
+  const value = cookie(cookies, new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+  return value && META_COOKIE.test(value) ? value : undefined;
+}
+
 export interface OrderAnalytics {
   gaClientId?: string;
   gaSessionId?: string;
+  fbp?: string;
+  fbc?: string;
   lines?: { productId: number; itemListId?: string; itemListName?: string; index?: number }[];
 }
 
@@ -312,6 +322,8 @@ export function orderAnalytics(productIds: number[], cookies: string, lists: (id
   const out: OrderAnalytics = {
     ...(gaClientId(cookies) ? { gaClientId: gaClientId(cookies) } : {}),
     ...(gaSessionId(cookies) ? { gaSessionId: gaSessionId(cookies) } : {}),
+    ...(metaCookie(cookies, "_fbp") ? { fbp: metaCookie(cookies, "_fbp") } : {}),
+    ...(metaCookie(cookies, "_fbc") ? { fbc: metaCookie(cookies, "_fbc") } : {}),
     ...(lines.length ? { lines } : {}),
   };
   return Object.keys(out).length ? out : undefined;
