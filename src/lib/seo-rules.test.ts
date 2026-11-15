@@ -4,6 +4,7 @@ import {
   DEFAULT_TEMPLATES,
   applyRedirect,
   canonicalQuery,
+  isSiteQuery,
   customJsonLd,
   faqPageJsonLd,
   filterSitemap,
@@ -374,5 +375,15 @@ describe("the language segment carries a page's canonical query (TEC-02)", () =>
     expect(queryRecord("m=gold&w=small")).toEqual({ m: "gold", w: "small" });
     expect(queryRecord("m=gold&m=silver")).toEqual({ m: ["gold", "silver"] });
     expect(queryRecord("")).toEqual({});
+  });
+});
+
+describe("which queries get a cached page (TEC-02)", () => {
+  it("accepts only the queries the site links to", () => {
+    for (const q of ["m=gold", "m=silver&w=small", "c=gold-coins", "page=2", "page=99", "c=coin&page=3"]) expect(isSiteQuery(q), q).toBe(true);
+  });
+  it("refuses invented keys, values and repeats, so they cannot add cache entries", () => {
+    for (const q of ["zz=1", "m=platinum", "w=huge", "c=UPPER", "c=" + "a".repeat(41), "page=1", "page=100", "page=2.5", "page=abc", "m=gold&m=silver", "c=coin&x=1", "c="])
+      expect(isSiteQuery(q), q).toBe(false);
   });
 });

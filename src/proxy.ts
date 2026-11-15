@@ -1,5 +1,5 @@
 import { type NextFetchEvent, type NextRequest, NextResponse } from "next/server";
-import { applyRedirect, canonicalQuery, localeSegment, PRIVATE, type RedirectRule } from "@/lib/seo";
+import { applyRedirect, canonicalQuery, isSiteQuery, localeSegment, PRIVATE, type RedirectRule } from "@/lib/seo";
 
 // Locale routing, redirect rules and the canonical query. Arabic is served at the root (no prefix);
 // English lives under /en. The app's pages live in the internal [locale] tree, so root paths are
@@ -115,15 +115,21 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
   headers.set("x-gg-query", canonical);
 
   // The internal language segment: the language, plus the canonical query of a public page.
-  const segment = localeSegment(isEn ? "en" : "ar", PRIVATE.test(bare) ? "" : canonical);
+  // A query the site does not link to gets the clean page, kept out of the index by a header.
+  const invented = !PRIVATE.test(bare) && canonical !== "" && !isSiteQuery(canonical);
+  const segment = localeSegment(isEn ? "en" : "ar", PRIVATE.test(bare) || invented ? "" : canonical);
+  const noindex = (response: NextResponse) => {
+    if (invented) response.headers.set("X-Robots-Tag", "noindex, follow");
+    return response;
+  };
 
   // English keeps its /en prefix; its paths already match the [locale] tree.
-  if (segment === "en") return NextResponse.next({ request: { headers } });
+  if (segment === "en") return noindex(NextResponse.next({ request: { headers } }));
 
   // Everything else is rendered from the internal tree: Arabic at the root from /ar, a query's own page from its segment.
   const url = request.nextUrl.clone();
   url.pathname = `/${segment}${bare === "/" ? "" : bare}`;
-  return NextResponse.rewrite(url, { request: { headers } });
+  return noindex(NextResponse.rewrite(url, { request: { headers } }));
 }
 
 // Pages: everything except the API proxy, the dashboard's built-in wording feed, the revalidation hook,

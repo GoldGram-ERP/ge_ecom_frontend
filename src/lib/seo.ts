@@ -48,6 +48,22 @@ export function canonicalQuery(search: string): string {
   return new URLSearchParams(kept).toString();
 }
 
+/**
+ * Whether a canonical query gets a cached page of its own. Only the queries the site itself links
+ * to do: the shop presets (m, w), a category (c) and a listing page 2 to 99. Any visitor can
+ * invent endless other queries; those are served the clean page with a noindex header instead,
+ * so they never add a cache entry.
+ */
+export function isSiteQuery(query: string): boolean {
+  const shape: Record<string, RegExp> = { m: /^(gold|silver)$/, w: /^(small|large)$/, c: /^[a-z0-9-]{1,40}$/, page: /^([2-9]|[1-9][0-9])$/ };
+  const seen = new Set<string>();
+  for (const [key, value] of new URLSearchParams(query)) {
+    if (!shape[key]?.test(value) || seen.has(key)) return false;
+    seen.add(key);
+  }
+  return true;
+}
+
 /** The page number of a listing (?page=N), 1 when absent or not a whole number above 1. */
 export function pageNumber(query: string): number {
   const n = Number(new URLSearchParams(query).get("page"));

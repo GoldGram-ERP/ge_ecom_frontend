@@ -84,7 +84,18 @@ describe("pages are cached by their path (TEC-02)", () => {
     expect(readLocaleSegment(page2.to!.split("/")[1])).toEqual({ locale: "en", query: "page=2" });
     const shop = await rendered("/shop?w=small&m=gold");
     expect(readLocaleSegment(shop.to!.split("/")[1])).toEqual({ locale: "ar", query: "m=gold&w=small" });
-    expect(readLocaleSegment((await rendered("/?x=1")).to!.slice(1))).toEqual({ locale: "ar", query: "x=1" });
+  });
+
+  it("an invented query gets the clean page and a noindex header, never a cached copy of its own", async () => {
+    expect((await rendered("/?x=1")).to).toBe("/ar");
+    expect((await rendered("/gold-bars?zz=junk&page=2")).to).toBe("/ar/gold-bars");
+    expect((await rendered("/en/shop?c=coin&id=7")).to).toBeNull();
+    const junk = await proxy(new NextRequest("https://goldgram.eg/gold-bars?zz=junk"));
+    expect(junk.headers.get("x-robots-tag")).toBe("noindex, follow");
+    const real = await proxy(new NextRequest("https://goldgram.eg/shop?m=gold"));
+    expect(real.headers.get("x-robots-tag")).toBeNull();
+    const clean = await proxy(new NextRequest("https://goldgram.eg/gold-bars?utm_source=x"));
+    expect(clean.headers.get("x-robots-tag")).toBeNull();
   });
 
   it("a private page is never a cached copy: its query stays in the request", async () => {
