@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Locale } from "@/i18n";
 import type { Dict } from "@/i18n";
 import { cairoDate } from "@/lib/format";
-import type { Article, Product } from "@/lib/types";
+import type { Article } from "@/lib/types";
 
 /** Article bodies are HTML; this flattens one to plain text for a card excerpt. */
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
@@ -14,12 +14,6 @@ export const articleBody = (a: Article, locale: Locale) => (locale === "ar" ? a.
 
 /** A guide's address (PG-12): its slug, or its id on a backend that has no slugs yet. */
 export const guidePath = (a: Article) => `/guides/${a.slug || a.id}`;
-
-/** Featured pieces first, filled up to four with the rest of the catalogue in its own order. */
-export function starterProducts(products: Product[]): Product[] {
-  const featured = products.filter((p) => p.featured);
-  return (featured.length >= 4 ? featured : [...featured, ...products.filter((p) => !p.featured)].slice(0, 4)).slice(0, 8);
-}
 
 /** The article body is plain text: one paragraph per blank-line block, never HTML. */
 export const paragraphs = (body: string) => body.split(/\r?\n\s*\r?\n/).map((p) => p.trim()).filter(Boolean);

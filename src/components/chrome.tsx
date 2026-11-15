@@ -2,7 +2,7 @@ import Image from "next/image";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
-import { getBusiness } from "@/lib/seo-data";
+import { getBusiness, getWeightList } from "@/lib/seo-data";
 import { SHOP_LINKS } from "@/lib/shop-links";
 import { socialHref, storeHref } from "@/lib/site-links";
 import type { Category } from "@/lib/types";
@@ -183,6 +183,9 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
     whatsappUrl: socialHref(b.whatsapp, true),
   };
   const to = (path: string) => localePath(locale, `${path}`);
+  // Every weight page, linked from every page (NAV-03). The backend's own list: no catalogue read here.
+  const weights = await getWeightList([]);
+  const hours = b.openingHours[locale];
   const columns: { title: string; links: [string, string][] }[] = [
     {
       title: t.footer.shop,
@@ -241,6 +244,12 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
                 </dd>
               </div>
               )}
+              {hours && (
+              <div>
+                <dt>{t.contact.hours}</dt>
+                <dd>{hours}</dd>
+              </div>
+              )}
             </dl>
             <StoreButtons t={t} placement="footer" />
           </div>
@@ -257,6 +266,18 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
             </nav>
           ))}
         </div>
+        {weights.length > 0 && (
+        <nav className="sf-col sf-weights" aria-label={t.footer.weights}>
+          <h2>{t.footer.weights}</h2>
+          <ul>
+            {weights.map((w) => (
+              <li key={w.slug}>
+                <Link href={to(`/gold-bars/${w.slug}`)}>{w.label[locale]}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        )}
         <div className="sf-base">
           {(links.instagramUrl || links.facebookUrl || links.tiktokUrl || links.whatsappUrl) && (
           <div className="social">

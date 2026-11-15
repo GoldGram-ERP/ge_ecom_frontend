@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { QrCode } from "@/components/app-qr";
 import { StoreButtons } from "@/components/chrome";
 import { ContentPage, contentMetadata } from "@/components/content-page";
 import { fmt, hasLocale } from "@/i18n";
 import { karatLabel, pounds, poundsParts, weightText } from "@/lib/format";
+import { appQrUrl } from "@/lib/home-rules";
 import { mobileAppJsonLd } from "@/lib/seo";
 import { getBusiness } from "@/lib/seo-data";
 import { getPricesOrNull } from "@/lib/server-api";
@@ -24,6 +26,13 @@ export default async function AppPage({ params }: PageProps<"/[locale]/app">) {
   return (
     <ContentPage locale={locale} pageKey="app" path="/app" title={t.pages.appTitle} fallback={t.pages.appText} jsonLd={[mobileAppJsonLd(business, locale)]}>
       <StoreButtons t={t} placement="app" />
+      {/* Desktop only (CSS), and only once a store link is set: the code opens this page on the phone. */}
+      {business.appStoreUrl || business.googlePlayUrl ? (
+        <div className="app-qr">
+          <QrCode value={appQrUrl(locale)} label={t.pages.appQrLabel} />
+          <p>{t.pages.appQr}</p>
+        </div>
+      ) : null}
       {prices ? (
         <section className="pr-sec">
           <h2>{t.pages.appBuyback}</h2>

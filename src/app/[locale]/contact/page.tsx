@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContactRows } from "@/components/chrome";
+import { ContactForm, ContactMap } from "@/components/contact-form";
 import { ContentPage, contentMetadata } from "@/components/content-page";
 import { hasLocale } from "@/i18n";
+import { mapEmbedUrl } from "@/lib/home-rules";
 import { jewelryStoreJsonLd } from "@/lib/seo";
 import { getBusiness } from "@/lib/seo-data";
 import { getTexts } from "@/lib/site-texts";
@@ -18,11 +20,17 @@ export default async function ContactPage({ params }: PageProps<"/[locale]/conta
   const { locale } = await params;
   if (!hasLocale(locale)) notFound();
   const [t, business] = await Promise.all([getTexts(locale), getBusiness()]);
+  const map = mapEmbedUrl(business.mapLat, business.mapLng);
   return (
     <ContentPage locale={locale} pageKey="contact" path="/contact" title={t.pages.contactTitle} fallback={t.pages.contactText} jsonLd={[jewelryStoreJsonLd(business, locale)]}>
       <section className="pr-sec">
         <h2>{t.contact.title}</h2>
         <ContactRows t={t} locale={locale} />
+        {map ? <ContactMap src={map} /> : null}
+      </section>
+      <section className="pr-sec">
+        <h2>{t.contactForm.title}</h2>
+        <ContactForm />
       </section>
     </ContentPage>
   );

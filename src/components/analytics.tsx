@@ -7,7 +7,7 @@ import type { Product } from "@/lib/types";
 
 const STORE: Record<string, string> = { ios: "app_store", android: "google_play" };
 // The store links keep their campaign names (ct=website-home); the event uses the spec's placements.
-const STORE_PLACEMENT: Record<string, string> = { home: "home_app_band", product: "product_buyback", app: "app_page", footer: "footer", header: "header" };
+const STORE_PLACEMENT: Record<string, string> = { home: "home_app_band", "home-hero": "home_hero", product: "product_buyback", app: "app_page", footer: "footer", header: "header" };
 const MAP_LINK = /^https?:\/\/(?:www\.)?(?:google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/;
 
 /** Which contact a link is: phone, WhatsApp, email or map; null for any other link. */
