@@ -8,7 +8,8 @@ import { articleBody, articleTitle, guidePath } from "@/components/home-sections
 import { EntryFaq, EntryHeadCode, entryH1, JsonLd } from "@/components/seo-blocks";
 import { hasLocale } from "@/i18n";
 import { cairoDate } from "@/lib/format";
-import { SITE_URL, absoluteUrl, breadcrumbList } from "@/lib/seo";
+import { articleBodyHtml, articleImage } from "@/lib/images";
+import { SITE_URL, absoluteUrl, breadcrumbList, routeParams } from "@/lib/seo";
 import { getArticleBySlug, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getArticle, getArticles } from "@/lib/server-api";
@@ -29,14 +30,21 @@ const findGuide = cache(async (slug: string): Promise<Article | null> => {
 
 const excerpt = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/guides/[slug]">): Promise<Metadata> {
-  const { locale, slug } = await params;
+  const { locale, query, slug } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const article = await findGuide(slug);
   if (!article) return {};
-  const image = article.imageIds[0] ? `${SITE_URL}/api/articles/${article.id}/images/${article.imageIds[0]}` : undefined;
+  const image = article.imageIds[0] ? SITE_URL + articleImage(article, article.imageIds[0]) : undefined;
   return seoMetadata({
     locale,
+    query,
     path: guidePath(article),
     type: "guide",
     entryType: "guide",
@@ -48,7 +56,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/guides/[
 }
 
 export default async function GuidePage({ params }: PageProps<"/[locale]/guides/[slug]">) {
-  const { locale, slug } = await params;
+  const { locale, slug } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const article = await findGuide(slug);
   if (!article) notFound();
@@ -70,7 +78,7 @@ export default async function GuidePage({ params }: PageProps<"/[locale]/guides/
             dateModified: entry?.updatedAt && entry.updatedAt > article.publishedAt ? entry.updatedAt : article.publishedAt,
             inLanguage: locale === "ar" ? "ar-EG" : "en",
             mainEntityOfPage: absoluteUrl(locale, guidePath(article)),
-            ...(article.imageIds[0] ? { image: [`${SITE_URL}/api/articles/${article.id}/images/${article.imageIds[0]}`] } : {}),
+            ...(article.imageIds[0] ? { image: [SITE_URL + articleImage(article, article.imageIds[0])] } : {}),
             author: brand,
             publisher: { ...brand, logo: { "@type": "ImageObject", url: business.logoPngUrl || `${SITE_URL}/logo.png` } },
           },
@@ -91,7 +99,7 @@ export default async function GuidePage({ params }: PageProps<"/[locale]/guides/
             <time dateTime={article.publishedAt}>{cairoDate(article.publishedAt, locale)}</time>
             {/* Images live inline inside the body; no separate gallery, so nothing shows twice. */}
             {/* Body is sanitized on the server (fixed tag/style allowlist); safe to render. */}
-            <div className="art-html" dangerouslySetInnerHTML={{ __html: articleBody(article, locale) }} />
+            <div className="art-html" dangerouslySetInnerHTML={{ __html: articleBodyHtml(articleBody(article, locale), article) }} />
           </article>
           <EntryFaq entry={entry} locale={locale} title={t.pages.faqTitle} />
         </div>

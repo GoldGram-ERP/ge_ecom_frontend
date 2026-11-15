@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { routeParams } from "@/lib/seo";
 import { notFound } from "next/navigation";
 import { ContentPage, contentMetadata } from "@/components/content-page";
 import { hasLocale } from "@/i18n";
@@ -9,15 +10,21 @@ const POLICIES = { shipping: "policies-shipping", buyback: "policies-buyback" } 
 type Policy = keyof typeof POLICIES;
 const isPolicy = (value: string): value is Policy => value in POLICIES;
 
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/policies/[policy]">): Promise<Metadata> {
-  const { locale, policy } = await params;
+  const { locale, query, policy } = await routeParams(params);
   if (!hasLocale(locale) || !isPolicy(policy)) return {};
   const t = await getTexts(locale);
-  return contentMetadata(locale, POLICIES[policy], `/policies/${policy}`, t.seoNames[policy]);
+  return contentMetadata(locale, query, POLICIES[policy], `/policies/${policy}`, t.seoNames[policy]);
 }
 
 export default async function PolicyPage({ params }: PageProps<"/[locale]/policies/[policy]">) {
-  const { locale, policy } = await params;
+  const { locale, policy } = await routeParams(params);
   if (!hasLocale(locale) || !isPolicy(policy)) notFound();
   const t = await getTexts(locale);
   return (

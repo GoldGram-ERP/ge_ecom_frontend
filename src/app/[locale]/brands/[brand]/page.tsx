@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { routeParams } from "@/lib/seo";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -13,18 +14,24 @@ import { seoMetadata } from "@/lib/seo-page";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro } from "@/components/seo-blocks";
 
 // A brand's own page: every piece that brand makes. /en/brands/btc, /ar/brands/btc.
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/brands/[brand]">): Promise<Metadata> {
-  const { locale, brand } = await params;
+  const { locale, query, brand } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const product = (await getProducts()).find((p) => p.manufacturerSlug === brand);
   if (!product) return {};
   const name = locale === "ar" ? product.manufacturerAr : product.manufacturerEn;
   const prices = await getPricesOrNull();
-  return seoMetadata({ locale, path: `/brands/${brand}`, type: "brand", entryType: "brand", key: brand, vars: { ...priceVars(prices, locale), name, brand: name } });
+  return seoMetadata({ locale, query, path: `/brands/${brand}`, type: "brand", entryType: "brand", key: brand, vars: { ...priceVars(prices, locale), name, brand: name } });
 }
 
 export default async function BrandPage({ params }: PageProps<"/[locale]/brands/[brand]">) {
-  const { locale, brand } = await params;
+  const { locale, brand } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const [t, entry] = await Promise.all([getTexts(locale), getSeoEntry("brand", brand)]);
   const products = (await getProducts()).filter((p) => p.manufacturerSlug === brand);

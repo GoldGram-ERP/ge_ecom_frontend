@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { queryRecord, routeParams } from "@/lib/seo";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,20 +32,20 @@ function presetName(preset: Preset, t: Awaited<ReturnType<typeof getTexts>>): st
   return null;
 }
 
-export async function generateMetadata({ params, searchParams }: PageProps<"/[locale]/shop">): Promise<Metadata> {
-  const { locale } = await params;
+export async function generateMetadata({ params }: PageProps<"/[locale]/shop">): Promise<Metadata> {
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
-  const preset = presetName(presetOf(await searchParams), t);
+  const preset = presetName(presetOf(queryRecord(query)), t);
   // A preset or filter (?m=, ?w=, ?c=) is noindex with a self canonical (IDX-07, in pageMetadata).
-  return seoMetadata({ locale, path: "/shop", type: "static", entryType: "static", key: "shop", vars: { ...priceVars(prices, locale), name: preset ?? t.seoNames.shop } });
+  return seoMetadata({ locale, query, path: "/shop", type: "static", entryType: "static", key: "shop", vars: { ...priceVars(prices, locale), name: preset ?? t.seoNames.shop } });
 }
 
-export default async function ShopPage({ params, searchParams }: PageProps<"/[locale]/shop">) {
-  const { locale } = await params;
+export default async function ShopPage({ params }: PageProps<"/[locale]/shop">) {
+  const { locale, query: canonical } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const [t, entry] = await Promise.all([getTexts(locale), getSeoEntry("static", "shop")]);
-  const query = await searchParams;
+  const query = queryRecord(canonical);
   const preset = presetOf(query);
   const c = typeof query.c === "string" ? query.c : undefined;
   // No catch: if the catalogue cannot be loaded, error.tsx offers a retry.

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { productImage } from "@/lib/images";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -173,8 +174,8 @@ export function ShopGrid({
                 <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)} onClick={() => list && selectItem(p, list, index)}>
                   {photo ? (
                     <div className="pc-frame">
-                      {/* The name follows as text, so the picture adds nothing for a screen reader. Served as stored: it is small already. */}
-                      <Image unoptimized className="pc-photo" src={`/api/products/${p.id}/images/${photo}`} alt="" width={328} height={328} loading="lazy" />
+                      {/* The name follows as text, so the picture adds nothing for a screen reader. The first row is in view on arrival. */}
+                      <Image className="pc-photo" src={productImage(p, photo)} alt="" width={328} height={328} sizes="(max-width: 900px) 45vw, 280px" loading={index < 3 ? "eager" : "lazy"} fetchPriority={index === 0 ? "high" : undefined} />
                     </div>
                   ) : (
                     <div className="niche">

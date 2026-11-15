@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { productImage } from "@/lib/images";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
@@ -13,11 +14,11 @@ import { CarouselScroller } from "./carousel-scroller";
 import { AddButton } from "./ShopGrid";
 
 /** Horizontal scroll-snap row of the shop's product cards, priced from the live catalogue. */
-export function StarterCarousel({ products: rendered, locale, t }: { products: Product[]; locale: Locale; t: Dict }) {
+export function StarterCarousel({ products: rendered, locale, t, label }: { products: Product[]; locale: Locale; t: Dict; label: string }) {
   const products = useLiveProducts(rendered);
   useListView(LISTS.homePicks, products);
   return (
-    <CarouselScroller label={t.starter.title} locale={locale}>
+    <CarouselScroller label={label} locale={locale}>
       {products.map((p, index) => {
         const photo = p.imageIds?.[0];
         return (
@@ -25,7 +26,7 @@ export function StarterCarousel({ products: rendered, locale, t }: { products: P
             <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)} onClick={() => selectItem(p, LISTS.homePicks, index)}>
               {photo ? (
                 <div className="pc-frame">
-                  <Image unoptimized className="pc-photo" src={`/api/products/${p.id}/images/${photo}`} alt="" width={328} height={328} loading="lazy" />
+                  <Image className="pc-photo" src={productImage(p, photo)} alt="" width={328} height={328} sizes="210px" loading="lazy" />
                 </div>
               ) : (
                 <div className="niche">

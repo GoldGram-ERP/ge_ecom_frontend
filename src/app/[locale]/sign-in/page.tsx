@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
+import { routeParams } from "@/lib/seo";
+import { requestMetadata } from "@/lib/seo-page";
 import { notFound } from "next/navigation";
 import { SignInForm } from "@/components/auth-forms";
 import { AuthShell } from "@/components/AuthShell";
 import { hasLocale } from "@/i18n";
 import { getTexts } from "@/lib/site-texts";
 
+// Rendered per request (it reads the visitor's request), never cached.
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/sign-in">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) return {};
-  return { title: `${(await getTexts(locale)).auth.signInTitle} · GoldGram` };
+  return { ...(await requestMetadata(locale)), title: `${(await getTexts(locale)).auth.signInTitle} · GoldGram` };
 }
 
 export default async function SignInPage({ params, searchParams }: PageProps<"/[locale]/sign-in">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const t = await getTexts(locale);
   // Set when checkout sent the visitor here: go back there afterwards.

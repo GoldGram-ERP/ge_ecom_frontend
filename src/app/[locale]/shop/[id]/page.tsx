@@ -14,7 +14,8 @@ import { ProductGallery } from "@/components/ProductGallery";
 import { ProductTabs } from "@/components/ProductTabs";
 import { fmt, hasLocale } from "@/i18n";
 import { artClass, artStyle, buybackPiastres, karatLabel, pounds, poundsParts, productName, productPurity, productSub, weightLabel, weightText } from "@/lib/format";
-import { absoluteUrl, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
+import { productImage } from "@/lib/images";
+import { SITE_URL, absoluteUrl, breadcrumbList, jsonLd, productJsonLd, routeParams } from "@/lib/seo";
 import { cairoToday, egp, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { filterPath } from "@/lib/shop-links";
@@ -43,8 +44,14 @@ const findProduct = cache(async (handle: string) => {
   return { product, rank, sameWeight, related };
 });
 
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id]">): Promise<Metadata> {
-  const { locale, id } = await params;
+  const { locale, query, id } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const found = await findProduct(id);
   if (!found) return {};
@@ -54,6 +61,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id
   // The template's values are the ones the page shows: the total, and the making charge per gram (DSH-02).
   return seoMetadata({
     locale,
+    query,
     path: `/shop/${p.slug}`,
     type: "product",
     entryType: "product",
@@ -68,7 +76,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id
       karat: (p.karat as number) === 999 ? "999" : String(p.karat),
       brand: locale === "ar" ? p.manufacturerAr : p.manufacturerEn,
     },
-    image: first ? absoluteUrl("ar", `/api/products/${p.id}/images/${first}`) : undefined,
+    image: first ? SITE_URL + productImage(p, first) : undefined,
     imageAlt: altOf(p, first, locale, 0),
   });
 }
@@ -87,7 +95,7 @@ function altOf(p: Product, imageId: number | undefined, locale: "ar" | "en", ind
 const money = (piastres: number) => poundsParts(piastres).full;
 
 export default async function ProductPage({ params }: PageProps<"/[locale]/shop/[id]">) {
-  const { locale, id } = await params;
+  const { locale, id } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const found = await findProduct(id);
   if (!found) notFound();
@@ -125,7 +133,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
               name,
               description: (description || productSub(p, t)).replace(/\s+/g, " ").trim(),
               url: absoluteUrl(locale, `/shop/${p.slug}`),
-              images: p.imageIds.map((imageId) => absoluteUrl("ar", `/api/products/${p.id}/images/${imageId}`)),
+              images: p.imageIds.map((imageId) => SITE_URL + productImage(p, imageId)),
               brand: maker ?? "",
               weightGrams: p.weightGrams,
               pricePiastres: p.pricePiastres,
@@ -169,7 +177,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
 
           <article className="pdp">
             {p.imageIds.length > 0 ? (
-              <ProductGallery productId={p.id} imageIds={p.imageIds} name={name} alts={p.imageIds.map((imageId, i) => altOf(p, imageId, locale, i))} />
+              <ProductGallery imageIds={p.imageIds} srcs={p.imageIds.map((imageId) => productImage(p, imageId))} name={name} alts={p.imageIds.map((imageId, i) => altOf(p, imageId, locale, i))} />
             ) : (
               <div className="pdp-gallery">
                 <div className="niche pdp-niche">

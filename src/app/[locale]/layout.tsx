@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Analytics } from "@/components/analytics";
 import { CONSENT_DEFAULTS } from "@/lib/analytics";
 import { Footer } from "@/components/chrome";
 import { PriceTicker } from "@/components/PriceTicker";
 import { Providers } from "@/components/Providers";
-import { dirOf, hasLocale, locales } from "@/i18n";
-import { SITE_URL, absoluteUrl, alternatesFor, isFilterQuery, jsonLd, organizationJsonLd, PRIVATE } from "@/lib/seo";
+import { dirOf, hasLocale } from "@/i18n";
+import { SITE_URL, jsonLd, organizationJsonLd, routeParams } from "@/lib/seo";
 import { getBusiness, getSeoSite } from "@/lib/seo-data";
 import { getPricesOrNull } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
@@ -19,42 +18,27 @@ import "../styles/app.css";
 import "../styles/controls.css";
 import "../styles/ticker.css";
 
-// Only /en and /ar exist. The layout below answers any other first segment with a 404.
+// Cacheable HTML (TEC-02): every public page is built on its first visit and then shared, refreshed
+// at least every minute and at once by the tags the backend revalidates on a save. Nothing is built at
+// build time, so a deploy never waits on the backend. Pages that read the request (account, checkout,
+// sign-in...) say `dynamic = "force-dynamic"` themselves.
+export const revalidate = 60;
 export function generateStaticParams() {
-  return locales.map((locale) => ({ locale }));
+  return [];
 }
 
 /**
- * The shared parts of every page's head. Each page sets its own title and description (never the
- * home page's, DSH-01); utility pages and filtered views get noindex, follow here (IDX-05, IDX-07).
+ * The shared parts of every page's head. Each page sets its own title, description, canonical and
+ * robots (never the home page's, DSH-01), from its path and the canonical query in its params.
  */
 export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) return {};
-  const request = await headers();
-  const path = request.get("x-gg-path") || "/";
-  const query = request.get("x-gg-query") ?? "";
-  const business = await getBusiness();
-  const noindex = PRIVATE.test(path) || isFilterQuery(query);
-  return {
-    metadataBase: new URL(SITE_URL),
-    applicationName: business.siteName[locale],
-    // Absolute canonical (never with tracking parameters) and hreflang (the proxy sets x-gg-path).
-    alternates: noindex ? { canonical: absoluteUrl(locale, path) + (query ? `?${query}` : "") } : alternatesFor(locale, path),
-    ...(noindex ? { robots: { index: false, follow: true } } : {}),
-    openGraph: {
-      type: "website",
-      siteName: business.siteName[locale],
-      url: absoluteUrl(locale, path),
-      locale: locale === "ar" ? "ar_EG" : "en_US",
-      alternateLocale: locale === "ar" ? "en_US" : "ar_EG",
-    },
-    twitter: { card: "summary" },
-  };
+  return { metadataBase: new URL(SITE_URL), applicationName: (await getBusiness()).siteName[locale] };
 }
 
 export default async function LocaleLayout({ children, params }: LayoutProps<"/[locale]">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const [t, business, seo] = await Promise.all([getTexts(locale), getBusiness(), getSeoSite()]);
 

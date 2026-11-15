@@ -5,9 +5,9 @@ import { SiteHeader } from "@/components/header-client";
 import { ArticleCards, articleTitle, guidePath } from "@/components/home-sections";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
 import { fmt, hasLocale, localePath } from "@/i18n";
-import { breadcrumbList, itemListJsonLd, pageNumber } from "@/lib/seo";
+import { breadcrumbList, itemListJsonLd, pageNumber, routeParams } from "@/lib/seo";
 import { getSeoEntry, priceVars } from "@/lib/seo-data";
-import { requestQuery, seoMetadata } from "@/lib/seo-page";
+import { seoMetadata } from "@/lib/seo-page";
 import { getArticles } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 
@@ -15,16 +15,16 @@ import { getTexts } from "@/lib/site-texts";
 const PER_PAGE = 12;
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/guides">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const t = await getTexts(locale);
-  return seoMetadata({ locale, path: "/guides", type: "guides", entryType: "static", key: "guides", vars: { ...priceVars(null, locale), name: t.nav.guides } });
+  return seoMetadata({ locale, query, path: "/guides", type: "guides", entryType: "static", key: "guides", vars: { ...priceVars(null, locale), name: t.nav.guides } });
 }
 
 export default async function GuidesPage({ params }: PageProps<"/[locale]/guides">) {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
-  const [t, articles, entry, query] = await Promise.all([getTexts(locale), getArticles(), getSeoEntry("static", "guides"), requestQuery()]);
+  const [t, articles, entry] = await Promise.all([getTexts(locale), getArticles(), getSeoEntry("static", "guides")]);
   const page = pageNumber(query);
   const pages = Math.max(1, Math.ceil(articles.length / PER_PAGE));
   if (page > pages) notFound();

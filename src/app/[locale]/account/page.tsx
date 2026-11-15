@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { routeParams } from "@/lib/seo";
+import { requestMetadata } from "@/lib/seo-page";
 import { localePath } from "@/i18n";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -59,17 +61,20 @@ function OrderList({ orders, locale, t }: { orders: MyOrder[]; locale: Locale; t
   );
 }
 
+// Rendered per request (it reads the visitor's request), never cached.
+export const dynamic = "force-dynamic";
+
 // The prototype's "app" screen: what a customer lands on after signing in, or in guest mode
 // after "Continue as a guest". Market and Price Chart lead somewhere on the site; Gift, Save
 // and the lower tabs belong to the mobile app and are drawn as the prototype drew them.
 export async function generateMetadata({ params }: PageProps<"/[locale]/account">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) return {};
-  return { title: { absolute: `${(await textsForTitle(locale)).seoNames.account} | GoldGram` } };
+  return { ...(await requestMetadata(locale)), title: { absolute: `${(await textsForTitle(locale)).seoNames.account} | GoldGram` } };
 }
 
 export default async function AccountPage({ params, searchParams }: PageProps<"/[locale]/account">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   const wanted = (await searchParams).tab;
   const tab = TABS.find((key) => key === wanted) ?? "home";
   if (!hasLocale(locale)) notFound();

@@ -8,8 +8,24 @@ const nextConfig: NextConfig = {
   // Hosts that run the app as one self-contained server (Hostinger) need the standalone output.
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   poweredByHeader: false,
+  // Cached pages answer `s-maxage=60, stale-while-revalidate=300` (TEC-02): a CDN may serve a page
+  // for a minute, and a stale copy for five more while it fetches the new one, never longer.
+  expireTime: 360,
   // Title, canonical and hreflang must be in <head> for every user agent, never streamed into <body> (TEC-06).
   htmlLimitedBots: /.*/,
+  // Pictures (MED-02): AVIF first, WebP for browsers without it. Only our own picture paths may be
+  // resized: /images/* (and the old /api addresses an older backend still lists), the logo and
+  // files imported in code; anything else under /_next/image is refused.
+  images: {
+    formats: ["image/avif", "image/webp"],
+    localPatterns: [
+      { pathname: "/images/**", search: "" },
+      { pathname: "/api/products/*/images/*", search: "" },
+      { pathname: "/api/articles/*/images/*", search: "" },
+      { pathname: "/logo.png", search: "" },
+      { pathname: "/_next/static/media/**", search: "" },
+    ],
+  },
   async headers() {
     return [
       {
@@ -33,7 +49,11 @@ const nextConfig: NextConfig = {
   },
   // Arabic is served at the root and English under /en; middleware.ts handles the routing.
   async rewrites() {
-    return [{ source: "/api/:path*", destination: `${API_URL}/api/:path*` }];
+    return [
+      { source: "/api/:path*", destination: `${API_URL}/api/:path*` },
+      // Pictures at their public, slug-based address (MED-03); the backend sets the year-long cache.
+      { source: "/images/:path*", destination: `${API_URL}/api/images/:path*` },
+    ];
   },
 };
 

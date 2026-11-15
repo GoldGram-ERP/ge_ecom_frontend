@@ -9,21 +9,22 @@ import { getTexts } from "@/lib/site-texts";
 import { getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { EntryFaq, EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
-import { breadcrumbList } from "@/lib/seo";
+import { breadcrumbList, queryRecord, routeParams } from "@/lib/seo";
 import "../../styles/compare.css";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/making-charges">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
-  return seoMetadata({ locale, path: "/making-charges", type: "static", entryType: "static", key: "making-charges", vars: { ...priceVars(prices, locale), name: t.seoNames.makingCharges } });
+  return seoMetadata({ locale, query, path: "/making-charges", type: "static", entryType: "static", key: "making-charges", vars: { ...priceVars(prices, locale), name: t.seoNames.makingCharges } });
 }
 
-export default async function MakingChargesPage({ params, searchParams }: PageProps<"/[locale]/making-charges">) {
-  const { locale } = await params;
+export default async function MakingChargesPage({ params }: PageProps<"/[locale]/making-charges">) {
+  const { locale, query: canonical } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   // No catch on the catalogue: if it cannot be loaded, error.tsx offers a retry.
-  const [t, products, prices, query, entry] = await Promise.all([getTexts(locale), getProducts(), getPricesOrNull(), searchParams, getSeoEntry("static", "making-charges")]);
+  const [t, products, prices, entry] = await Promise.all([getTexts(locale), getProducts(), getPricesOrNull(), getSeoEntry("static", "making-charges")]);
+  const query = queryRecord(canonical);
 
   return (
     <div className="page">

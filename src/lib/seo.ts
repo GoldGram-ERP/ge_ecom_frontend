@@ -48,6 +48,22 @@ export function canonicalQuery(search: string): string {
   return new URLSearchParams(kept).toString();
 }
 
+/**
+ * Whether a canonical query gets a cached page of its own. Only the queries the site itself links
+ * to do: the shop presets (m, w), a category (c) and a listing page 2 to 99. Any visitor can
+ * invent endless other queries; those are served the clean page with a noindex header instead,
+ * so they never add a cache entry.
+ */
+export function isSiteQuery(query: string): boolean {
+  const shape: Record<string, RegExp> = { m: /^(gold|silver)$/, w: /^(small|large)$/, c: /^[a-z0-9-]{1,40}$/, page: /^([2-9]|[1-9][0-9])$/ };
+  const seen = new Set<string>();
+  for (const [key, value] of new URLSearchParams(query)) {
+    if (!shape[key]?.test(value) || seen.has(key)) return false;
+    seen.add(key);
+  }
+  return true;
+}
+
 /** The page number of a listing (?page=N), 1 when absent or not a whole number above 1. */
 export function pageNumber(query: string): number {
   const n = Number(new URLSearchParams(query).get("page"));
@@ -56,6 +72,66 @@ export function pageNumber(query: string): number {
 
 /** A canonical query that only paginates stays indexable; a filter or sort is noindex, follow. */
 export const isFilterQuery = (query: string) => [...new URLSearchParams(query).keys()].some((key) => key !== "page");
+
+/** The query as a page reads it: one value per key, a list when the key repeats (like searchParams). */
+export function queryRecord(query: string): Record<string, string | string[] | undefined> {
+  const out: Record<string, string | string[]> = {};
+  for (const [key, value] of new URLSearchParams(query)) {
+    const had = out[key];
+    out[key] = had === undefined ? value : [...(Array.isArray(had) ? had : [had]), value];
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cacheable pages (TEC-02): a page's HTML depends only on its path, so it is built once and shared.
+// A canonical query (a filter, ?page=N) is its own page: the proxy puts it in the language segment
+// (`en~<base64url of the query>`) and pages read it from params, never from the request.
+
+const VARIANT = /^(ar|en)~([A-Za-z0-9_-]+)$/;
+
+/** The internal language segment of a request: `ar`, or `ar~…` when it has a canonical query. */
+export function localeSegment(locale: Locale, query: string): string {
+  // canonicalQuery output is ASCII (URLSearchParams percent-encodes), which is all btoa takes.
+  return query ? `${locale}~${btoa(query).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}` : locale;
+}
+
+/** The language and canonical query of a language segment. An unreadable segment is returned as it is (a 404). */
+export function readLocaleSegment(segment: string): { locale: string; query: string } {
+  const variant = VARIANT.exec(segment);
+  if (!variant) return { locale: segment, query: "" };
+  try {
+    return { locale: variant[1], query: atob(variant[2].replace(/-/g, "+").replace(/_/g, "/")) };
+  } catch {
+    return { locale: segment, query: "" };
+  }
+}
+
+/** A page's params with the language segment read: `locale` is the language, `query` the canonical query. */
+export async function routeParams<P extends { locale: string }>(params: Promise<P>): Promise<P & { query: string }> {
+  const all = await params;
+  return { ...all, ...readLocaleSegment(all.locale) };
+}
+
+/**
+ * The head of a utility page (account, checkout, sign-in...): noindex, follow, with a self canonical
+ * that keeps its canonical query (never a tracking parameter) and no hreflang (IDX-05).
+ */
+export function utilityMetadata(p: { locale: Locale; path: string; query: string; siteName: string }): Metadata {
+  const { locale, path, query } = p;
+  return {
+    alternates: { canonical: absoluteUrl(locale, path) + (query ? `?${query}` : "") },
+    robots: { index: false, follow: true },
+    openGraph: {
+      type: "website",
+      siteName: p.siteName,
+      url: absoluteUrl(locale, path),
+      locale: locale === "ar" ? "ar_EG" : "en_US",
+      alternateLocale: locale === "ar" ? "en_US" : "ar_EG",
+    },
+    twitter: { card: "summary" },
+  };
+}
 
 // ---------------------------------------------------------------------------------------------
 // SEO panel data (the contract in SEO-BUILD-BRIEF.md): a value per language is { ar, en }.
@@ -326,7 +402,8 @@ export function applyRedirect(rules: RedirectRule[], pathname: string, search: s
 const escapeXml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
-export type SitemapEntry = { path: string; lastModified?: string };
+/** `images`: absolute picture URLs of the page (MED-03), listed as image:image under each language. */
+export type SitemapEntry = { path: string; lastModified?: string; images?: string[] };
 
 /** One sitemap file: every path is listed in both languages, each with its alternates (IDX-02). */
 export function sitemapXml(entries: SitemapEntry[]): string {
@@ -336,10 +413,11 @@ export function sitemapXml(entries: SitemapEntry[]): string {
         .map((l) => `<xhtml:link rel="alternate" hreflang="${l.hreflang}" href="${escapeXml(l.href)}"/>`)
         .join("");
       const lastmod = e.lastModified ? `<lastmod>${escapeXml(e.lastModified.slice(0, 10))}</lastmod>` : "";
-      return `<url><loc>${escapeXml(absoluteUrl(locale, e.path))}</loc>${lastmod}${alternates}</url>`;
+      const images = (e.images ?? []).map((url) => `<image:image><image:loc>${escapeXml(url)}</image:loc></image:image>`).join("");
+      return `<url><loc>${escapeXml(absoluteUrl(locale, e.path))}</loc>${lastmod}${alternates}${images}</url>`;
     }),
   );
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls.join("")}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${urls.join("")}</urlset>`;
 }
 
 export function sitemapIndexXml(names: string[]): string {
@@ -356,9 +434,8 @@ export function robotsTxt(saved?: string | null): string {
   if (text && /^sitemap:\s*\S+/im.test(text) && !/^disallow:\s*\/\s*$/im.test(text)) return `${text}\n`;
   return [
     "User-agent: *",
+    // Pictures live under /images/ (MED-03), outside /api/, so they need no Allow line.
     "Disallow: /api/",
-    "Allow: /api/products/*/images/",
-    "Allow: /api/articles/*/images/",
     "",
     `Sitemap: ${SITE_URL}/sitemap.xml`,
     "",
@@ -497,9 +574,9 @@ export function filterSitemap<T extends SitemapEntry & { key: string }>(items: T
       const flag = byKey.get(item.key);
       return !flag || (flag.index && flag.inSitemap);
     })
-    .map(({ path, lastModified, key }) => {
+    .map(({ path, lastModified, key, images }) => {
       const date = lastModified ?? byKey.get(key)?.updatedAt;
-      return date ? { path, lastModified: date } : { path };
+      return { path, ...(date ? { lastModified: date } : {}), ...(images ? { images } : {}) };
     });
 }
 

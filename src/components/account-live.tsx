@@ -37,7 +37,7 @@ export function AccountPopular({ products: rendered, prices: initial }: { produc
       {products.map((p) => {
         const move = changeParts(prices?.karats.find((k) => k.karat === p.karat)?.changePct ?? 0);
         return (
-          <Link className="pc" href={`${shop}/${p.id}`} key={p.id}>
+          <Link className="pc" href={`${shop}/${p.slug}`} key={p.id}>
             <MiniArt category={p.category} />
             <b>{productShortName(p, t)}</b>
             <i>
