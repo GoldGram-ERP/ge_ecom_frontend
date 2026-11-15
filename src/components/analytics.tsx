@@ -1,7 +1,9 @@
 "use client";
 
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { isViewed, PROMOTION_SELECTOR, readPromotion, selectPromotion, viewPromotion } from "@/lib/promotions";
 import { fromProduct, itemFor, markNotFound, onPage, pageOf, trackEcommerce, trackEvent, viewItemList, type ListRef } from "@/lib/analytics";
 import type { Product } from "@/lib/types";
 
@@ -24,8 +26,12 @@ export function contactMethod(href: string): "phone" | "whatsapp" | "email" | "m
  * store badge (data-store, data-placement) and a hotline, WhatsApp, email or map link.
  */
 export function Analytics({ gtmId }: { gtmId: string }) {
+  usePromotionViews();
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
+      const promo = (event.target as Element | null)?.closest?.(PROMOTION_SELECTOR);
+      const promotion = promo && readPromotion((name) => promo.getAttribute(name));
+      if (promotion) selectPromotion(promotion);
       const link = (event.target as Element | null)?.closest?.("a");
       if (!link) return;
       const store = link.getAttribute("data-store");
@@ -48,6 +54,45 @@ export function Analytics({ gtmId }: { gtmId: string }) {
       {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');`}
     </Script>
   );
+}
+
+/**
+ * view_promotion for every <Promotion> element: seen when half of it is on screen. The elements are
+ * watched again on each route change (a banner kept by the layout counts once per page view; the
+ * per-page-view dedupe is onPage's) and when new ones are added to the page later.
+ */
+function usePromotionViews(): void {
+  const pathname = usePathname();
+  useEffect(() => {
+    const seen = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const el = entry.target;
+          const promotion = isViewed(entry) ? readPromotion((name) => el.getAttribute(name)) : null;
+          if (promotion) viewPromotion(promotion);
+        }
+      },
+      { threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] },
+    );
+    const watch = (root: ParentNode) => root.querySelectorAll(PROMOTION_SELECTOR).forEach((el) => seen.observe(el));
+    watch(document);
+    // Only additions matter; observing an element twice is harmless.
+    const added = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node.nodeType !== Node.ELEMENT_NODE) continue;
+          const el = node as Element;
+          if (el.matches(PROMOTION_SELECTOR)) seen.observe(el);
+          watch(el);
+        }
+      }
+    });
+    added.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      seen.disconnect();
+      added.disconnect();
+    };
+  }, [pathname]);
 }
 
 /** view_item on the product page, once per page view, with the price it rendered with (R8, R15). */
