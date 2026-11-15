@@ -11,15 +11,21 @@ import { SHOP_LINKS } from "@/lib/shop-links";
 import { CartDrawer } from "./cart-drawer";
 import { Brand, Icon, ICONS } from "./chrome";
 import { localePath } from "@/i18n";
-import { useI18n, useSession } from "./Providers";
+import { useI18n, useMenu, useSession } from "./Providers";
 import { Button } from "./controls";
 
-type NavItem = { label: string; href?: string; onSelect?: () => void };
+type NavItem = { label: string; href?: string; external?: boolean; onSelect?: () => void };
 
 function NavMenuItem({ item }: { item: NavItem }) {
   return item.href ? (
     <DropdownMenu.Item asChild>
-      <Link href={item.href}>{item.label}</Link>
+      {item.external ? (
+        <a href={item.href} target="_blank" rel="noopener noreferrer">
+          {item.label}
+        </a>
+      ) : (
+        <Link href={item.href}>{item.label}</Link>
+      )}
     </DropdownMenu.Item>
   ) : (
     <DropdownMenu.Item onSelect={item.onSelect}>{item.label}</DropdownMenu.Item>
@@ -134,6 +140,7 @@ export function SignOutButton() {
  */
 export function SiteHeader({ end }: { end?: React.ReactNode }) {
   const { locale, t, href } = useI18n();
+  const menu = useMenu();
   const [open, setOpen] = useState(false);
   // The same page in the other language. Each language is named in its own words, whatever the page's language.
   const other = locale === "en" ? "ar" : "en";
@@ -179,15 +186,34 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
     <header>
       <div className="wrap bar">
         <Brand locale={locale} />
-        <Link className="navlink nav-home" href={localePath(locale, ``)}>
-          {t.nav.home}
-        </Link>
-        <Link className="navlink nav-prices" href={href("/gold-price-today")}>
-          {t.prices.nav}
-        </Link>
-        <NavDropdown className="nav-shop" label={t.nav.shop} items={shopItems} href={href("/shop")} />
-        <NavDropdown className="nav-dd" label={t.nav.service} items={serviceItems} />
-        <NavDropdown className="nav-dd" label={t.nav.about} items={aboutItems} />
+        {menu.length > 0 ? (
+          // The dashboard's own menu (NAV-03): a link, or a dropdown when the entry has links under it.
+          menu.map((entry) =>
+            entry.children.length > 0 ? (
+              <NavDropdown key={entry.label} className="nav-dd" label={entry.label} items={entry.children} href={entry.href && !entry.external ? entry.href : undefined} />
+            ) : entry.external ? (
+              <a key={entry.label} className="navlink nav-dd" href={entry.href} target="_blank" rel="noopener noreferrer">
+                {entry.label}
+              </a>
+            ) : (
+              <Link key={entry.label} className="navlink nav-dd" href={entry.href}>
+                {entry.label}
+              </Link>
+            ),
+          )
+        ) : (
+          <>
+            <Link className="navlink nav-home" href={localePath(locale, ``)}>
+              {t.nav.home}
+            </Link>
+            <Link className="navlink nav-prices" href={href("/gold-price-today")}>
+              {t.prices.nav}
+            </Link>
+            <NavDropdown className="nav-shop" label={t.nav.shop} items={shopItems} href={href("/shop")} />
+            <NavDropdown className="nav-dd" label={t.nav.service} items={serviceItems} />
+            <NavDropdown className="nav-dd" label={t.nav.about} items={aboutItems} />
+          </>
+        )}
         <CartDrawer />
         {end ?? <AccountLink />}
         <Link className="navlink lang-switch" href={otherHref} lang={other} hrefLang={other} onClick={switchLanguage}>
@@ -199,27 +225,45 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
           </DropdownMenu.Trigger>
           <DropdownMenu.Portal>
             <DropdownMenu.Content className="nav-menu" align="end" sideOffset={8}>
-              <DropdownMenu.Item asChild>
-                <Link href={localePath(locale, ``)}>{t.nav.home}</Link>
-              </DropdownMenu.Item>
-              <DropdownMenu.Item asChild>
-                <Link href={href("/gold-price-today")}>{t.prices.nav}</Link>
-              </DropdownMenu.Item>
-              {[
-                [t.nav.shop, shopItems],
-                [t.nav.service, serviceItems],
-                [t.nav.about, aboutItems],
-              ].map(([label, items]) => (
-                <DropdownMenu.Group key={label as string}>
-                  <DropdownMenu.Label className="nav-grp">{label as string}</DropdownMenu.Label>
-                  {(items as NavItem[]).map((item) => (
-                    <NavMenuItem key={item.label} item={item} />
+              {menu.length > 0 ? (
+                // On a phone the dashboard's menu is one list: a dropdown becomes a named group.
+                menu.map((entry) =>
+                  entry.children.length > 0 ? (
+                    <DropdownMenu.Group key={entry.label}>
+                      <DropdownMenu.Label className="nav-grp">{entry.label}</DropdownMenu.Label>
+                      {entry.children.map((item) => (
+                        <NavMenuItem key={item.label} item={item} />
+                      ))}
+                    </DropdownMenu.Group>
+                  ) : (
+                    <NavMenuItem key={entry.label} item={entry} />
+                  ),
+                )
+              ) : (
+                <>
+                  <DropdownMenu.Item asChild>
+                    <Link href={localePath(locale, ``)}>{t.nav.home}</Link>
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item asChild>
+                    <Link href={href("/gold-price-today")}>{t.prices.nav}</Link>
+                  </DropdownMenu.Item>
+                  {[
+                    [t.nav.shop, shopItems],
+                    [t.nav.service, serviceItems],
+                    [t.nav.about, aboutItems],
+                  ].map(([label, items]) => (
+                    <DropdownMenu.Group key={label as string}>
+                      <DropdownMenu.Label className="nav-grp">{label as string}</DropdownMenu.Label>
+                      {(items as NavItem[]).map((item) => (
+                        <NavMenuItem key={item.label} item={item} />
+                      ))}
+                    </DropdownMenu.Group>
                   ))}
-                </DropdownMenu.Group>
-              ))}
-              <DropdownMenu.Item asChild>
-                <Link href={href("/faq")}>{t.nav.help}</Link>
-              </DropdownMenu.Item>
+                  <DropdownMenu.Item asChild>
+                    <Link href={href("/faq")}>{t.nav.help}</Link>
+                  </DropdownMenu.Item>
+                </>
+              )}
             </DropdownMenu.Content>
           </DropdownMenu.Portal>
         </DropdownMenu.Root>

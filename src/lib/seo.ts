@@ -138,6 +138,9 @@ export function utilityMetadata(p: { locale: Locale; path: string; query: string
 
 export type L = { ar: string; en: string };
 
+/** A picture address from the dashboard, absolute: an uploaded one is a path on this site (`/images/site/...`). */
+export const siteImage = (url: string): string => (url.startsWith("/") ? SITE_URL + url : url);
+
 export interface SeoEntry {
   type: string;
   key: string;
@@ -328,7 +331,7 @@ export function pageMetadata(input: PageSeoInput): Metadata {
     : undefined;
   const ogTitle = entry?.ogTitle?.[locale] || title;
   const ogDescription = entry?.ogDescription?.[locale] || description;
-  const image = entry?.ogImageUrl || input.image || input.defaultImage;
+  const image = siteImage(entry?.ogImageUrl || input.image || input.defaultImage || "") || undefined;
   const images = image ? [{ url: image, ...(input.imageAlt ? { alt: input.imageAlt } : { alt: ogTitle }) }] : undefined;
   return {
     title: { absolute: title },
@@ -503,7 +506,7 @@ export function organizationJsonLd(b: Business, locale: Locale) {
     alternateName: [b.siteName.ar, b.siteName.en].filter((n) => n && n !== b.siteName[locale]),
     ...(b.legalName?.[locale] ? { legalName: b.legalName[locale] } : {}),
     url: SITE_URL,
-    logo: b.logoPngUrl || b.logoUrl || `${SITE_URL}/logo.png`,
+    logo: siteImage(b.logoPngUrl || b.logoUrl) || `${SITE_URL}/logo.png`,
     ...(b.email ? { email: b.email } : {}),
     ...(b.hotline ? { contactPoint: [{ "@type": "ContactPoint", telephone: b.hotline, contactType: "customer service", availableLanguage: ["ar", "en"] }] } : {}),
     ...(sameAs.length ? { sameAs } : {}),
@@ -525,7 +528,7 @@ export function jewelryStoreJsonLd(b: Business, locale: Locale) {
     "@type": "JewelryStore",
     name: b.siteName[locale],
     url: SITE_URL,
-    image: b.defaultOgImageUrl || b.logoPngUrl || `${SITE_URL}/logo.png`,
+    image: siteImage(b.defaultOgImageUrl || b.logoPngUrl) || `${SITE_URL}/logo.png`,
     address: { "@type": "PostalAddress", streetAddress: address, addressCountry: "EG" },
     ...(b.mapLat && b.mapLng && Number.isFinite(lat) && Number.isFinite(lng) ? { geo: { "@type": "GeoCoordinates", latitude: lat, longitude: lng } } : {}),
     ...(b.hotline ? { telephone: b.hotline } : {}),
