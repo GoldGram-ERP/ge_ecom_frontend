@@ -5,7 +5,7 @@ import type { Locale } from "@/i18n";
 import type { Dict } from "@/i18n";
 import { cairoDate } from "@/lib/format";
 import { articleImage } from "@/lib/images";
-import type { Article, Product } from "@/lib/types";
+import type { Article } from "@/lib/types";
 
 /** Article bodies are HTML; this flattens one to plain text for a card excerpt. */
 const stripHtml = (html: string) => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
