@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { productImage } from "@/lib/images";
 import Link from "next/link";
 import { MiniArt } from "@/components/chrome";
 import { FaqList } from "@/components/home-client";
@@ -111,7 +112,7 @@ export function PdpRelated({ related }: { related: Product[] }) {
         <Link className="pdp-card" href={`${shop}/${other.slug}`} key={other.id} onClick={() => selectItem(other, LISTS.pdpOtherWeights, index)}>
           <div className="pdp-card-art">
             {other.imageIds[0] ? (
-              <Image unoptimized src={`/api/products/${other.id}/images/${other.imageIds[0]}`} alt="" width={240} height={240} loading="lazy" />
+              <Image src={productImage(other, other.imageIds[0])} alt="" width={240} height={240} sizes="(max-width: 900px) 45vw, 210px" loading="lazy" />
             ) : (
               <MiniArt category={other.category} />
             )}

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { productImage } from "@/lib/images";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { MiniArt } from "@/components/chrome";
@@ -217,7 +218,7 @@ export function GoldPricesView({
                   <Link className="pr-pick" href={localePath(locale, `/shop/${p.slug}`)} key={p.id} onClick={() => selectItem(p, LISTS.pricesBars, index)}>
                     {photo ? (
                       <span className="pr-pick-art">
-                        <Image unoptimized src={`/api/products/${p.id}/images/${photo}`} alt="" width={160} height={160} loading="lazy" />
+                        <Image src={productImage(p, photo)} alt="" width={160} height={160} sizes="(max-width: 900px) 45vw, 210px" loading="lazy" />
                       </span>
                     ) : (
                       <MiniArt category={p.category} className="pr-pick-art" />

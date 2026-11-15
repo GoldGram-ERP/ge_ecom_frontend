@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { productImage } from "@/lib/images";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
@@ -25,7 +26,7 @@ export function StarterCarousel({ products: rendered, locale, t }: { products: P
             <Link className="pc-link" href={localePath(locale, `/shop/${p.slug}`)} onClick={() => selectItem(p, LISTS.homePicks, index)}>
               {photo ? (
                 <div className="pc-frame">
-                  <Image unoptimized className="pc-photo" src={`/api/products/${p.id}/images/${photo}`} alt="" width={328} height={328} loading="lazy" />
+                  <Image className="pc-photo" src={productImage(p, photo)} alt="" width={328} height={328} sizes="210px" loading="lazy" />
                 </div>
               ) : (
                 <div className="niche">

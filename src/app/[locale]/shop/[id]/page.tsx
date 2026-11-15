@@ -14,7 +14,8 @@ import { ProductGallery } from "@/components/ProductGallery";
 import { ProductTabs } from "@/components/ProductTabs";
 import { fmt, hasLocale } from "@/i18n";
 import { artClass, artStyle, buybackPiastres, karatLabel, pounds, poundsParts, productName, productPurity, productSub, weightLabel, weightText } from "@/lib/format";
-import { absoluteUrl, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
+import { productImage } from "@/lib/images";
+import { SITE_URL, absoluteUrl, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
 import { cairoToday, egp, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { filterPath } from "@/lib/shop-links";
@@ -68,7 +69,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id
       karat: (p.karat as number) === 999 ? "999" : String(p.karat),
       brand: locale === "ar" ? p.manufacturerAr : p.manufacturerEn,
     },
-    image: first ? absoluteUrl("ar", `/api/products/${p.id}/images/${first}`) : undefined,
+    image: first ? SITE_URL + productImage(p, first) : undefined,
     imageAlt: altOf(p, first, locale, 0),
   });
 }
@@ -125,7 +126,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
               name,
               description: (description || productSub(p, t)).replace(/\s+/g, " ").trim(),
               url: absoluteUrl(locale, `/shop/${p.slug}`),
-              images: p.imageIds.map((imageId) => absoluteUrl("ar", `/api/products/${p.id}/images/${imageId}`)),
+              images: p.imageIds.map((imageId) => SITE_URL + productImage(p, imageId)),
               brand: maker ?? "",
               weightGrams: p.weightGrams,
               pricePiastres: p.pricePiastres,
@@ -169,7 +170,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
 
           <article className="pdp">
             {p.imageIds.length > 0 ? (
-              <ProductGallery productId={p.id} imageIds={p.imageIds} name={name} alts={p.imageIds.map((imageId, i) => altOf(p, imageId, locale, i))} />
+              <ProductGallery imageIds={p.imageIds} srcs={p.imageIds.map((imageId) => productImage(p, imageId))} name={name} alts={p.imageIds.map((imageId, i) => altOf(p, imageId, locale, i))} />
             ) : (
               <div className="pdp-gallery">
                 <div className="niche pdp-niche">

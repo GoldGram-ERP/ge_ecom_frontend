@@ -20,7 +20,7 @@ const MINI_ART: Record<Category, React.ReactNode> = {
 export function MiniArt({ category, photo, className }: { category: Category; photo?: string; className?: string }) {
   return (
     <div className={`pc-stage${photo ? " has-photo" : ""}${className ? ` ${className}` : ""}`} aria-hidden="true">
-      {photo ? <Image unoptimized className="pc-stage-photo" src={photo} alt="" width={88} height={88} /> : (MINI_ART[category] ?? MINI_ART.bar)}
+      {photo ? <Image className="pc-stage-photo" src={photo} alt="" width={88} height={88} /> : (MINI_ART[category] ?? MINI_ART.bar)}
     </div>
   );
 }
