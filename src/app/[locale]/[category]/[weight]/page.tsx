@@ -7,7 +7,7 @@ import { ShopGrid } from "@/components/ShopGrid";
 import { weightList } from "@/lib/analytics";
 import { fmt, hasLocale, type Locale, localePath } from "@/i18n";
 import { buybackPiastres, cairoDate, cairoTime, pounds, poundsParts, productName, weightText } from "@/lib/format";
-import { breadcrumbList, itemListJsonLd } from "@/lib/seo";
+import { breadcrumbList, itemListJsonLd, routeParams } from "@/lib/seo";
 import { getSeoEntry, getWeightList, isBar, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getPricesOrNull, getProducts } from "@/lib/server-api";
@@ -30,14 +30,21 @@ async function load(locale: Locale, category: string, slug: string) {
   return { weight, bars, from, neighbours: [weights[index - 1], weights[index + 1]].filter(Boolean), label: weight.label[locale] };
 }
 
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/[category]/[weight]">): Promise<Metadata> {
-  const { locale, category, weight: slug } = await params;
+  const { locale, query, category, weight: slug } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const [found, prices] = await Promise.all([load(locale, category, slug), getPricesOrNull()]);
   if (!found) return {};
   const fromPrice = pounds(found.from.pricePiastres);
   return seoMetadata({
     locale,
+    query,
     path: `/gold-bars/${slug}`,
     type: "weight",
     entryType: "weight",
@@ -48,7 +55,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/[categor
 }
 
 export default async function WeightPage({ params }: PageProps<"/[locale]/[category]/[weight]">) {
-  const { locale, category, weight: slug } = await params;
+  const { locale, category, weight: slug } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const found = await load(locale, category, slug);
   if (!found) notFound();

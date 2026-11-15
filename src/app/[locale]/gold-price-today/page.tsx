@@ -4,18 +4,19 @@ import { SiteHeader } from "@/components/header-client";
 import { GoldPricesView } from "@/components/prices-live";
 import { EntryHeadCode, entryH1, EntryIntro, JsonLd } from "@/components/seo-blocks";
 import { hasLocale } from "@/i18n";
-import { breadcrumbList, faqPageJsonLd, webPageJsonLd } from "@/lib/seo";
+import { breadcrumbList, faqPageJsonLd, webPageJsonLd, routeParams } from "@/lib/seo";
 import { getSeoEntry, getWeightList, isBar, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getPrices, getPricesOrNull, getPriceHistory, getProducts } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/gold-price-today">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const [t, prices] = await Promise.all([getTexts(locale), getPricesOrNull()]);
   return seoMetadata({
     locale,
+    query,
     path: "/gold-price-today",
     type: "price",
     entryType: "static",
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/gold-pri
 }
 
 export default async function GoldPricesPage({ params }: PageProps<"/[locale]/gold-price-today">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   // No catch: if the prices cannot be loaded, error.tsx offers a retry.
   const [t, entry, prices, history, silverHistory, products] = await Promise.all([

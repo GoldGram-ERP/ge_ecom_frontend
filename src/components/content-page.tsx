@@ -13,8 +13,8 @@ import { getTexts } from "@/lib/site-texts";
 
 export type ContentKey = "about" | "contact" | "app" | "policies-shipping" | "policies-buyback";
 
-export async function contentMetadata(locale: Locale, key: ContentKey, path: string, name: string): Promise<Metadata> {
-  return seoMetadata({ locale, path, type: "static", entryType: "static", key, vars: { ...priceVars(null, locale), name } });
+export async function contentMetadata(locale: Locale, query: string, key: ContentKey, path: string, name: string): Promise<Metadata> {
+  return seoMetadata({ locale, query, path, type: "static", entryType: "static", key, vars: { ...priceVars(null, locale), name } });
 }
 
 export async function ContentPage({

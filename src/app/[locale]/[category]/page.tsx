@@ -8,7 +8,7 @@ import { type Dict, fmt, hasLocale, type Locale, localePath } from "@/i18n";
 import { categoryList } from "@/lib/analytics";
 import { pounds, productName } from "@/lib/format";
 import { isSilver } from "@/lib/kinds";
-import { itemListJsonLd } from "@/lib/seo";
+import { itemListJsonLd, routeParams } from "@/lib/seo";
 import { getSeoEntry, getWeightList, isBar, priceVars, type Weight } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getPricesOrNull, getProducts } from "@/lib/server-api";
@@ -40,13 +40,20 @@ function pageName(t: Dict, locale: Locale, url: string, slugs: readonly string[]
   return link ? t.nav[link.label] : t.nav.shop;
 }
 
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/[category]">): Promise<Metadata> {
-  const { locale, category } = await params;
+  const { locale, query, category } = await routeParams(params);
   if (!hasLocale(locale) || !CATEGORY_URLS[category]) return {};
   const [t, products, prices] = await Promise.all([getTexts(locale), getProducts(), getPricesOrNull()]);
   const shown = pick(products, CATEGORY_URLS[category]);
   return seoMetadata({
     locale,
+    query,
     path: `/${category}`,
     type: "category",
     entryType: "category",
@@ -76,7 +83,7 @@ function WeightTiles({ weights, bars, locale, t }: { weights: Weight[]; bars: Pr
 }
 
 export default async function CategoryPage({ params }: PageProps<"/[locale]/[category]">) {
-  const { locale, category } = await params;
+  const { locale, category } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const slugs = CATEGORY_URLS[category];
   if (!slugs) notFound();

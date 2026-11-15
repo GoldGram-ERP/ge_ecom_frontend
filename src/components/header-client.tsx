@@ -138,9 +138,10 @@ export function SiteHeader({ end }: { end?: React.ReactNode }) {
   // The same page in the other language. Each language is named in its own words, whatever the page's language.
   const other = locale === "en" ? "ar" : "en";
   const otherName = other === "ar" ? "العربية" : "English";
-  // Arabic has no prefix; English lives under /en. Strip any /en, then re-prefix for the other language.
-  const path = usePathname();
-  const bare = path === "/en" || path.startsWith("/en/") ? path.slice(3) || "/" : path;
+  // Arabic has no prefix; English lives under /en. Strip the language, then re-prefix for the other one.
+  // A cached page is built under its internal address (/ar/..., or /en~<query>/... for a query's own
+  // copy), so that segment goes too and the server and the browser agree on the link.
+  const bare = usePathname().replace(/^\/(ar|en)(~[^/]*)?(?=\/|$)/, "") || "/";
   const otherHref = localePath(other, bare);
   const router = useRouter();
   // The query (an account tab, a shop filter) goes along, so the switch lands on exactly this view.

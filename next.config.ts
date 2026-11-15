@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   // Hosts that run the app as one self-contained server (Hostinger) need the standalone output.
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   poweredByHeader: false,
+  // Cached pages answer `s-maxage=60, stale-while-revalidate=300` (TEC-02): a CDN may serve a page
+  // for a minute, and a stale copy for five more while it fetches the new one, never longer.
+  expireTime: 360,
   // Title, canonical and hreflang must be in <head> for every user agent, never streamed into <body> (TEC-06).
   htmlLimitedBots: /.*/,
   async headers() {

@@ -14,7 +14,7 @@ import { ProductGallery } from "@/components/ProductGallery";
 import { ProductTabs } from "@/components/ProductTabs";
 import { fmt, hasLocale } from "@/i18n";
 import { artClass, artStyle, buybackPiastres, karatLabel, pounds, poundsParts, productName, productPurity, productSub, weightLabel, weightText } from "@/lib/format";
-import { absoluteUrl, breadcrumbList, jsonLd, productJsonLd } from "@/lib/seo";
+import { absoluteUrl, breadcrumbList, jsonLd, productJsonLd, routeParams } from "@/lib/seo";
 import { cairoToday, egp, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { filterPath } from "@/lib/shop-links";
@@ -43,8 +43,14 @@ const findProduct = cache(async (handle: string) => {
   return { product, rank, sameWeight, related };
 });
 
+// Built on the first visit and cached like every public page (TEC-02): without this list the page
+// would be rendered on every request.
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id]">): Promise<Metadata> {
-  const { locale, id } = await params;
+  const { locale, query, id } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const found = await findProduct(id);
   if (!found) return {};
@@ -54,6 +60,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/shop/[id
   // The template's values are the ones the page shows: the total, and the making charge per gram (DSH-02).
   return seoMetadata({
     locale,
+    query,
     path: `/shop/${p.slug}`,
     type: "product",
     entryType: "product",
@@ -87,7 +94,7 @@ function altOf(p: Product, imageId: number | undefined, locale: "ar" | "en", ind
 const money = (piastres: number) => poundsParts(piastres).full;
 
 export default async function ProductPage({ params }: PageProps<"/[locale]/shop/[id]">) {
-  const { locale, id } = await params;
+  const { locale, id } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const found = await findProduct(id);
   if (!found) notFound();

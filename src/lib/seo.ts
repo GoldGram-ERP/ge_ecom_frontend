@@ -57,6 +57,66 @@ export function pageNumber(query: string): number {
 /** A canonical query that only paginates stays indexable; a filter or sort is noindex, follow. */
 export const isFilterQuery = (query: string) => [...new URLSearchParams(query).keys()].some((key) => key !== "page");
 
+/** The query as a page reads it: one value per key, a list when the key repeats (like searchParams). */
+export function queryRecord(query: string): Record<string, string | string[] | undefined> {
+  const out: Record<string, string | string[]> = {};
+  for (const [key, value] of new URLSearchParams(query)) {
+    const had = out[key];
+    out[key] = had === undefined ? value : [...(Array.isArray(had) ? had : [had]), value];
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cacheable pages (TEC-02): a page's HTML depends only on its path, so it is built once and shared.
+// A canonical query (a filter, ?page=N) is its own page: the proxy puts it in the language segment
+// (`en~<base64url of the query>`) and pages read it from params, never from the request.
+
+const VARIANT = /^(ar|en)~([A-Za-z0-9_-]+)$/;
+
+/** The internal language segment of a request: `ar`, or `ar~…` when it has a canonical query. */
+export function localeSegment(locale: Locale, query: string): string {
+  // canonicalQuery output is ASCII (URLSearchParams percent-encodes), which is all btoa takes.
+  return query ? `${locale}~${btoa(query).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}` : locale;
+}
+
+/** The language and canonical query of a language segment. An unreadable segment is returned as it is (a 404). */
+export function readLocaleSegment(segment: string): { locale: string; query: string } {
+  const variant = VARIANT.exec(segment);
+  if (!variant) return { locale: segment, query: "" };
+  try {
+    return { locale: variant[1], query: atob(variant[2].replace(/-/g, "+").replace(/_/g, "/")) };
+  } catch {
+    return { locale: segment, query: "" };
+  }
+}
+
+/** A page's params with the language segment read: `locale` is the language, `query` the canonical query. */
+export async function routeParams<P extends { locale: string }>(params: Promise<P>): Promise<P & { query: string }> {
+  const all = await params;
+  return { ...all, ...readLocaleSegment(all.locale) };
+}
+
+/**
+ * The head of a utility page (account, checkout, sign-in...): noindex, follow, with a self canonical
+ * that keeps its canonical query (never a tracking parameter) and no hreflang (IDX-05).
+ */
+export function utilityMetadata(p: { locale: Locale; path: string; query: string; siteName: string }): Metadata {
+  const { locale, path, query } = p;
+  return {
+    alternates: { canonical: absoluteUrl(locale, path) + (query ? `?${query}` : "") },
+    robots: { index: false, follow: true },
+    openGraph: {
+      type: "website",
+      siteName: p.siteName,
+      url: absoluteUrl(locale, path),
+      locale: locale === "ar" ? "ar_EG" : "en_US",
+      alternateLocale: locale === "ar" ? "en_US" : "ar_EG",
+    },
+    twitter: { card: "summary" },
+  };
+}
+
 // ---------------------------------------------------------------------------------------------
 // SEO panel data (the contract in SEO-BUILD-BRIEF.md): a value per language is { ar, en }.
 

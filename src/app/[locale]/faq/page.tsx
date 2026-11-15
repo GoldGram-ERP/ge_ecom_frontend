@@ -6,20 +6,20 @@ import { HelpCentre } from "@/components/HelpCentre";
 import { EntryHeadCode, entryH1, JsonLd } from "@/components/seo-blocks";
 import { getHelp } from "@/content/help";
 import { hasLocale } from "@/i18n";
-import { breadcrumbList, faqPageJsonLd } from "@/lib/seo";
+import { breadcrumbList, faqPageJsonLd, routeParams } from "@/lib/seo";
 import { getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getTexts } from "@/lib/site-texts";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/faq">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const t = await getTexts(locale);
-  return seoMetadata({ locale, path: "/faq", type: "faq", entryType: "static", key: "faq", vars: { ...priceVars(null, locale), name: t.help.kicker } });
+  return seoMetadata({ locale, query, path: "/faq", type: "faq", entryType: "static", key: "faq", vars: { ...priceVars(null, locale), name: t.help.kicker } });
 }
 
 export default async function FaqPage({ params }: PageProps<"/[locale]/faq">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const [t, entry] = await Promise.all([getTexts(locale), getSeoEntry("static", "faq")]);
   const content = getHelp(locale);

@@ -1,10 +1,12 @@
 import { type NextFetchEvent, type NextRequest, NextResponse } from "next/server";
-import { applyRedirect, canonicalQuery, type RedirectRule } from "@/lib/seo";
+import { applyRedirect, canonicalQuery, localeSegment, PRIVATE, type RedirectRule } from "@/lib/seo";
 
 // Locale routing, redirect rules and the canonical query. Arabic is served at the root (no prefix);
 // English lives under /en. The app's pages live in the internal [locale] tree, so root paths are
-// rewritten to /ar. The path without its language goes on to the layout as x-gg-path, and the query
-// without tracking parameters as x-gg-query (canonical, robots and pagination read them).
+// rewritten to /ar. Public pages are cached by their path (TEC-02), so a query that changes the page
+// (a filter, ?page=N; never a tracking parameter) is rewritten into the language segment and is its
+// own cached page. The pages rendered per request (account, checkout, sign-in...) get the path as
+// x-gg-path and the canonical query as x-gg-query instead.
 const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
 // The dashboard's redirect rules (DSH-12), kept for a minute so a page view never waits on them.
@@ -48,6 +50,11 @@ const GONE_HTML = (isEn: boolean) =>
 // (the dashboard has its own address); the backend matches routes case-insensitively, hence /i.
 function toApi(request: NextRequest) {
   if (/^\/api\/admin(\/|$)/i.test(request.nextUrl.pathname)) return new NextResponse(null, { status: 404 });
+  // A visitor without a session cookie is a guest: answered here, so no signed-in call reaches the
+  // backend and the browser logs no 401 on every page (TEC-02, PRF-03).
+  if (request.method === "GET" && request.nextUrl.pathname === "/api/auth/me" && !request.cookies.has("gg_session")) {
+    return NextResponse.json({ user: null }, { headers: { "Cache-Control": "private, no-store" } });
+  }
   const headers = new Headers(request.headers);
   headers.delete("x-gg-client-ip");
   headers.delete("x-gg-proxy-key");
@@ -102,16 +109,20 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
     url.search = "";
     return NextResponse.redirect(url, 308);
   }
+  const canonical = canonicalQuery(search);
   const headers = new Headers(request.headers);
   headers.set("x-gg-path", bare === "/" ? "" : bare);
-  headers.set("x-gg-query", canonicalQuery(search));
+  headers.set("x-gg-query", canonical);
+
+  // The internal language segment: the language, plus the canonical query of a public page.
+  const segment = localeSegment(isEn ? "en" : "ar", PRIVATE.test(bare) ? "" : canonical);
 
   // English keeps its /en prefix; its paths already match the [locale] tree.
-  if (isEn) return NextResponse.next({ request: { headers } });
+  if (segment === "en") return NextResponse.next({ request: { headers } });
 
-  // Everything else is Arabic at the root: render it from the internal /ar tree.
+  // Everything else is rendered from the internal tree: Arabic at the root from /ar, a query's own page from its segment.
   const url = request.nextUrl.clone();
-  url.pathname = `/ar${pathname === "/" ? "" : pathname}`;
+  url.pathname = `/${segment}${bare === "/" ? "" : bare}`;
   return NextResponse.rewrite(url, { request: { headers } });
 }
 

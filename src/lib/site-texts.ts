@@ -6,7 +6,8 @@ const API_URL = process.env.API_URL ?? "http://localhost:4000";
 
 /**
  * The dictionary of a language with the texts rewritten in the dashboard ("Website texts").
- * The rewritten ones are read from the backend at most every 30 seconds; if it does not answer,
+ * The rewritten ones are read from the backend at most every 60 seconds (the pages' own cache
+ * time, TEC-02); if it does not answer,
  * the site shows its built-in wording.
  */
 export const getTexts = cache(async (locale: Locale): Promise<Dict> => {
@@ -14,7 +15,7 @@ export const getTexts = cache(async (locale: Locale): Promise<Dict> => {
   try {
     const response = await fetch(`${API_URL}/api/site-texts`, {
       headers: { Accept: "application/json" },
-      next: { revalidate: 30 },
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(3000),
     });
     if (!response.ok) return dict;

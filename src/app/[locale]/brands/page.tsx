@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { routeParams } from "@/lib/seo";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -11,14 +12,14 @@ import { priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/brands">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const t = await getTexts(locale);
-  return seoMetadata({ locale, path: "/brands", type: "static", entryType: "static", key: "brands", vars: { ...priceVars(null, locale), name: t.brands.title } });
+  return seoMetadata({ locale, query, path: "/brands", type: "static", entryType: "static", key: "brands", vars: { ...priceVars(null, locale), name: t.brands.title } });
 }
 
 export default async function BrandsPage({ params }: PageProps<"/[locale]/brands">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const t = await getTexts(locale);
   const products = await getProducts();

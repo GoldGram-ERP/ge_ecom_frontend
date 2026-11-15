@@ -36,9 +36,10 @@ export const useSession = () => useContext(SessionContext);
 export function Providers({ locale, dict, children }: { locale: Locale; dict: Dict; children: React.ReactNode }) {
   const [user, setUser] = useState<User | null | undefined>(undefined);
 
+  // A guest's answer is `{ user: null }`, given by this site itself (proxy.ts) without asking the backend.
   const refresh = useCallback(async () => {
     try {
-      setUser((await api<{ user: User }>("/auth/me")).user);
+      setUser((await api<{ user: User | null }>("/auth/me")).user);
     } catch {
       setUser(null); // signed out, or the backend is unreachable: either way, act as a guest
     }
@@ -46,7 +47,7 @@ export function Providers({ locale, dict, children }: { locale: Locale; dict: Di
 
   useEffect(() => {
     let alive = true;
-    api<{ user: User }>("/auth/me").then(
+    api<{ user: User | null }>("/auth/me").then(
       (res) => alive && setUser(res.user),
       () => alive && setUser(null),
     );

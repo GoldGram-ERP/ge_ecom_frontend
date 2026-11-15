@@ -9,14 +9,18 @@ import {
   filterSitemap,
   itemListJsonLd,
   jewelryStoreJsonLd,
+  localeSegment,
   mobileAppJsonLd,
   organizationJsonLd,
   pageMetadata,
   pageNumber,
+  queryRecord,
+  readLocaleSegment,
   resolveTemplate,
   robotsTxt,
   seoTexts,
   trimAtWord,
+  utilityMetadata,
   webPageJsonLd,
   weightSlug,
   type Business,
@@ -323,5 +327,52 @@ describe("app links and buyback (SELL-02, SELL-04)", () => {
     expect(buybackPiastres(bar, prices, "without")).toBe(7_000_000 + 5_000);
     expect(buybackPiastres({ ...bar, cashback: null }, prices)).toBe(7_000_000);
     expect(buybackPiastres(bar, null)).toBeNull();
+  });
+});
+
+describe("the head of a utility page, from its path and query (TEC-02)", () => {
+  const head = (path: string, search = "", locale: "ar" | "en" = "ar") => utilityMetadata({ locale, path, query: canonicalQuery(search), siteName: "GoldGram" });
+
+  it("is noindex, follow with a self canonical, no hreflang, and og:url without the query", () => {
+    expect(head("/sign-in", "?next=checkout", "en")).toEqual({
+      alternates: { canonical: "https://goldgram.eg/en/sign-in?next=checkout" },
+      robots: { index: false, follow: true },
+      openGraph: { type: "website", siteName: "GoldGram", url: "https://goldgram.eg/en/sign-in", locale: "en_US", alternateLocale: "ar_EG" },
+      twitter: { card: "summary" },
+    });
+    expect(head("/account").alternates).toEqual({ canonical: "https://goldgram.eg/account" });
+  });
+
+  it("tracking parameters never reach the canonical", () => {
+    expect(head("/checkout", "?utm_source=x&gclid=1&fbclid=2")).toEqual(head("/checkout"));
+    expect(head("/account", "?utm_medium=cpc&tab=profile").alternates).toEqual({ canonical: "https://goldgram.eg/account?tab=profile" });
+  });
+});
+
+describe("the language segment carries a page's canonical query (TEC-02)", () => {
+  it("is the bare language without a query", () => {
+    expect(localeSegment("ar", "")).toBe("ar");
+    expect(readLocaleSegment("en")).toEqual({ locale: "en", query: "" });
+  });
+
+  it("gives the same query back, whatever it holds", () => {
+    for (const search of ["?page=2", "?m=gold&w=small", "?q=%D8%B0%D9%87%D8%A8&x=a%2Fb%3Fc%26d", "?a=" + "~".repeat(300), "?c=1&c=2"]) {
+      const query = canonicalQuery(search);
+      const segment = localeSegment("en", query);
+      expect(segment).toMatch(/^en~[A-Za-z0-9_-]+$/);
+      expect(readLocaleSegment(segment)).toEqual({ locale: "en", query });
+    }
+  });
+
+  it("anything else is no language at all (the page answers 404)", () => {
+    for (const segment of ["fr", "ar~", "de~cGFnZT0y", "en~a/b", "en~a b", "en~a"]) {
+      expect(readLocaleSegment(segment)).toEqual({ locale: segment, query: "" });
+    }
+  });
+
+  it("pages read the query like searchParams: one value, or a list when a key repeats", () => {
+    expect(queryRecord("m=gold&w=small")).toEqual({ m: "gold", w: "small" });
+    expect(queryRecord("m=gold&m=silver")).toEqual({ m: ["gold", "silver"] });
+    expect(queryRecord("")).toEqual({});
   });
 });

@@ -14,15 +14,15 @@ import { getArticles, getFaq, getPricesOrNull, getProducts, getSpotOrNull } from
 import { Reveal } from "@/components/controls";
 import { EntryHeadCode, entryH1, JsonLd } from "@/components/seo-blocks";
 import type { Metadata } from "next";
-import { faqPageJsonLd, jewelryStoreJsonLd } from "@/lib/seo";
+import { faqPageJsonLd, jewelryStoreJsonLd, routeParams } from "@/lib/seo";
 import { getBusiness, getSeoEntry, getSeoSite, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
-  const { locale } = await params;
+  const { locale, query } = await routeParams(params);
   if (!hasLocale(locale)) return {};
   const [prices, seo] = await Promise.all([getPricesOrNull(), getSeoSite()]);
-  const meta = await seoMetadata({ locale, path: "/", type: "home", entryType: "static", key: "home", vars: priceVars(prices, locale) });
+  const meta = await seoMetadata({ locale, query, path: "/", type: "home", entryType: "static", key: "home", vars: priceVars(prices, locale) });
   // Search Console, Bing and Meta verification on the home page only (DSH-13).
   const v = seo?.verification;
   const other = { ...(v?.bing ? { "msvalidate.01": v.bing } : {}), ...(v?.meta ? { "facebook-domain-verification": v.meta } : {}) };
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]">): Prom
 }
 
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
-  const { locale } = await params;
+  const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
   const [t, entry, business] = await Promise.all([getTexts(locale), getSeoEntry("static", "home"), getBusiness()]);
   // The home page still renders if the backend is down; the price phone says so.
