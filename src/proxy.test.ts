@@ -90,11 +90,11 @@ describe("pages are cached by their path (TEC-02)", () => {
     expect((await rendered("/?x=1")).to).toBe("/ar");
     expect((await rendered("/gold-bars?zz=junk&page=2")).to).toBe("/ar/gold-bars");
     expect((await rendered("/en/shop?c=coin&id=7")).to).toBeNull();
-    const junk = await proxy(new NextRequest("https://goldgram.eg/gold-bars?zz=junk"));
+    const junk = await proxy(new NextRequest("https://goldgram.eg/gold-bars?zz=junk"), {} as NextFetchEvent);
     expect(junk.headers.get("x-robots-tag")).toBe("noindex, follow");
-    const real = await proxy(new NextRequest("https://goldgram.eg/shop?m=gold"));
+    const real = await proxy(new NextRequest("https://goldgram.eg/shop?m=gold"), {} as NextFetchEvent);
     expect(real.headers.get("x-robots-tag")).toBeNull();
-    const clean = await proxy(new NextRequest("https://goldgram.eg/gold-bars?utm_source=x"));
+    const clean = await proxy(new NextRequest("https://goldgram.eg/gold-bars?utm_source=x"), {} as NextFetchEvent);
     expect(clean.headers.get("x-robots-tag")).toBeNull();
   });
 
