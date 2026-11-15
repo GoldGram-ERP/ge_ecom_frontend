@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Locale } from "@/i18n";
 import type { Dict } from "@/i18n";
 import { cairoDate } from "@/lib/format";
+import { articleImage } from "@/lib/images";
 import type { Article, Product } from "@/lib/types";
 
 /** Article bodies are HTML; this flattens one to plain text for a card excerpt. */
@@ -33,7 +34,7 @@ export function ArticleCards({ articles, locale, t }: { articles: Article[]; loc
         return (
           <Link className="art-card" key={a.id} href={localePath(locale, guidePath(a))}>
             {photo ? (
-              <Image unoptimized className="art-img" src={`/api/articles/${a.id}/images/${photo}`} alt="" width={400} height={225} loading="lazy" />
+              <Image className="art-img" src={articleImage(a, photo)} alt="" width={400} height={225} sizes="(max-width: 900px) 100vw, 280px" loading="lazy" />
             ) : null}
             <time dateTime={a.publishedAt}>{cairoDate(a.publishedAt, locale)}</time>
             <h3>{articleTitle(a, locale)}</h3>

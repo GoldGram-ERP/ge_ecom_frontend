@@ -386,7 +386,8 @@ export function applyRedirect(rules: RedirectRule[], pathname: string, search: s
 const escapeXml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
-export type SitemapEntry = { path: string; lastModified?: string };
+/** `images`: absolute picture URLs of the page (MED-03), listed as image:image under each language. */
+export type SitemapEntry = { path: string; lastModified?: string; images?: string[] };
 
 /** One sitemap file: every path is listed in both languages, each with its alternates (IDX-02). */
 export function sitemapXml(entries: SitemapEntry[]): string {
@@ -396,10 +397,11 @@ export function sitemapXml(entries: SitemapEntry[]): string {
         .map((l) => `<xhtml:link rel="alternate" hreflang="${l.hreflang}" href="${escapeXml(l.href)}"/>`)
         .join("");
       const lastmod = e.lastModified ? `<lastmod>${escapeXml(e.lastModified.slice(0, 10))}</lastmod>` : "";
-      return `<url><loc>${escapeXml(absoluteUrl(locale, e.path))}</loc>${lastmod}${alternates}</url>`;
+      const images = (e.images ?? []).map((url) => `<image:image><image:loc>${escapeXml(url)}</image:loc></image:image>`).join("");
+      return `<url><loc>${escapeXml(absoluteUrl(locale, e.path))}</loc>${lastmod}${alternates}${images}</url>`;
     }),
   );
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">${urls.join("")}</urlset>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">${urls.join("")}</urlset>`;
 }
 
 export function sitemapIndexXml(names: string[]): string {
@@ -416,9 +418,8 @@ export function robotsTxt(saved?: string | null): string {
   if (text && /^sitemap:\s*\S+/im.test(text) && !/^disallow:\s*\/\s*$/im.test(text)) return `${text}\n`;
   return [
     "User-agent: *",
+    // Pictures live under /images/ (MED-03), outside /api/, so they need no Allow line.
     "Disallow: /api/",
-    "Allow: /api/products/*/images/",
-    "Allow: /api/articles/*/images/",
     "",
     `Sitemap: ${SITE_URL}/sitemap.xml`,
     "",
@@ -557,9 +558,9 @@ export function filterSitemap<T extends SitemapEntry & { key: string }>(items: T
       const flag = byKey.get(item.key);
       return !flag || (flag.index && flag.inSitemap);
     })
-    .map(({ path, lastModified, key }) => {
+    .map(({ path, lastModified, key, images }) => {
       const date = lastModified ?? byKey.get(key)?.updatedAt;
-      return date ? { path, lastModified: date } : { path };
+      return { path, ...(date ? { lastModified: date } : {}), ...(images ? { images } : {}) };
     });
 }
 

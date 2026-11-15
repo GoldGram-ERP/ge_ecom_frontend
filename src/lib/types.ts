@@ -79,6 +79,8 @@ export interface Product {
   descriptionAr: string;
   /** Its photos, first one first: `/api/products/:id/images/:imageId`. */
   imageIds: number[];
+  /** The same photos as public file names (MED-03): `/images/products/<file>`; absent on an older backend. */
+  imageFiles?: string[];
   /** Alt text per photo (MED-01), set in the dashboard; absent on an older backend. */
   imageAlts?: { id: number; ar: string; en: string; decorative: boolean }[];
   manufacturerId: number;
@@ -217,6 +219,8 @@ export type Article = {
   bodyAr: string;
   publishedAt: string;
   imageIds: number[];
+  /** The same pictures as public file names (MED-03): `/images/articles/<file>`; absent on an older backend. */
+  imageFiles?: string[];
 };
 
 export type FaqEntry = { id: number; questionEn: string; questionAr: string; answerEn: string; answerAr: string };

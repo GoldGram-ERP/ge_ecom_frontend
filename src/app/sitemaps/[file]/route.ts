@@ -1,6 +1,7 @@
 import { guidePath } from "@/components/home-sections";
 import { isSilver } from "@/lib/kinds";
-import { filterSitemap, sitemapXml, type SitemapEntry } from "@/lib/seo";
+import { productImage } from "@/lib/images";
+import { SITE_URL, filterSitemap, sitemapXml, type SitemapEntry } from "@/lib/seo";
 import { getSeoEntryFlags, getWeightList } from "@/lib/seo-data";
 import { getArticles, getPricesOrNull, getProducts } from "@/lib/server-api";
 import { CATEGORY_URLS, SILVER } from "@/lib/shop-links";
@@ -52,7 +53,10 @@ const builders: Record<string, () => Promise<SitemapEntry[]>> = {
   products: async () => {
     const [all, prices, flags] = await Promise.all([products(), getPricesOrNull(), getSeoEntryFlags("product")]);
     // Out-of-stock products stay in (IDX-02); their price still moves with each publish.
-    return filterSitemap(all.map((p) => ({ key: p.slug, path: `/shop/${p.slug}`, lastModified: prices?.updatedAt })), flags);
+    return filterSitemap(
+      all.map((p) => ({ key: p.slug, path: `/shop/${p.slug}`, lastModified: prices?.updatedAt, images: p.imageIds.map((imageId) => SITE_URL + productImage(p, imageId)) })),
+      flags,
+    );
   },
   brands: async () => {
     const [all, flags] = await Promise.all([products(), getSeoEntryFlags("brand")]);

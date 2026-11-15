@@ -7,7 +7,8 @@ import { ShopGrid } from "@/components/ShopGrid";
 import { weightList } from "@/lib/analytics";
 import { fmt, hasLocale, type Locale, localePath } from "@/i18n";
 import { buybackPiastres, cairoDate, cairoTime, pounds, poundsParts, productName, weightText } from "@/lib/format";
-import { breadcrumbList, itemListJsonLd, routeParams } from "@/lib/seo";
+import { productImage } from "@/lib/images";
+import { SITE_URL, breadcrumbList, itemListJsonLd, routeParams } from "@/lib/seo";
 import { getSeoEntry, getWeightList, isBar, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getPricesOrNull, getProducts } from "@/lib/server-api";
@@ -50,7 +51,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/[categor
     entryType: "weight",
     key: slug,
     vars: { ...priceVars(prices, locale), name: found.label, weight: weightText(found.weight.grams), price_buy: fromPrice, price_from: fromPrice, karat: "24" },
-    image: found.from.imageIds[0] ? `/api/products/${found.from.id}/images/${found.from.imageIds[0]}` : undefined,
+    image: found.from.imageIds[0] ? SITE_URL + productImage(found.from, found.from.imageIds[0]) : undefined,
   });
 }
 
