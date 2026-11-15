@@ -2,7 +2,8 @@ import Image from "next/image";
 import { localePath } from "@/i18n";
 import Link from "next/link";
 import type { Dict, Locale } from "@/i18n";
-import { getBusiness, getWeightList } from "@/lib/seo-data";
+import { footerColumns } from "@/lib/home-rules";
+import { getBusiness, getLayout, getWeightList } from "@/lib/seo-data";
 import { SHOP_LINKS } from "@/lib/shop-links";
 import { socialHref, storeHref } from "@/lib/site-links";
 import type { Category } from "@/lib/types";
@@ -186,7 +187,9 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
   // Every weight page, linked from every page (NAV-03). The backend's own list: no catalogue read here.
   const weights = await getWeightList([]);
   const hours = b.openingHours[locale];
-  const columns: { title: string; links: [string, string][] }[] = [
+  // The dashboard's own columns when it has built some (NAV-03); the built-in three otherwise.
+  const custom = footerColumns(await getLayout(), locale);
+  const columns: { title: string; links: [string, string, boolean?][] }[] = custom?.map((column) => ({ title: column.title, links: column.links.map((link): [string, string, boolean] => [link.label, link.href, link.external]) })) ?? [
     {
       title: t.footer.shop,
       // The same kinds, names and links as the header's Shop menu.
@@ -257,9 +260,15 @@ export async function Footer({ t, locale }: { t: Dict; locale: Locale }) {
             <nav className="sf-col" key={column.title} aria-label={column.title}>
               <h2>{column.title}</h2>
               <ul>
-                {column.links.map(([label, href]) => (
-                  <li key={href}>
-                    <Link href={href}>{label}</Link>
+                {column.links.map(([label, href, external]) => (
+                  <li key={href + label}>
+                    {external ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer">
+                        {label}
+                      </a>
+                    ) : (
+                      <Link href={href}>{label}</Link>
+                    )}
                   </li>
                 ))}
               </ul>

@@ -7,7 +7,8 @@ import { PriceTicker } from "@/components/PriceTicker";
 import { Providers } from "@/components/Providers";
 import { dirOf, hasLocale } from "@/i18n";
 import { SITE_URL, jsonLd, organizationJsonLd, routeParams } from "@/lib/seo";
-import { getBusiness, getSeoSite } from "@/lib/seo-data";
+import { headerMenu } from "@/lib/home-rules";
+import { getBusiness, getLayout, getSeoSite } from "@/lib/seo-data";
 import { getPricesOrNull } from "@/lib/server-api";
 import { getTexts } from "@/lib/site-texts";
 import { fontVariables } from "../fonts";
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
 export default async function LocaleLayout({ children, params }: LayoutProps<"/[locale]">) {
   const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
-  const [t, business, seo] = await Promise.all([getTexts(locale), getBusiness(), getSeoSite()]);
+  const [t, business, seo, layout] = await Promise.all([getTexts(locale), getBusiness(), getSeoSite(), getLayout()]);
 
   return (
     // data-scroll-behavior: the stylesheet sets smooth scrolling for in-page anchors, and
@@ -67,7 +68,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
             ]),
           }}
         />
-        <Providers locale={locale} dict={t}>
+        <Providers locale={locale} dict={t} menu={headerMenu(layout, locale)}>
           {/* Seeded on the server so the strip is never empty; the price stream keeps it live. */}
           <PriceTicker initial={await getPricesOrNull()} />
           {children}

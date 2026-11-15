@@ -19,7 +19,7 @@ import type { Metadata } from "next";
 import { Fragment, type ReactNode } from "react";
 import { faqPageJsonLd, jewelryStoreJsonLd, routeParams } from "@/lib/seo";
 import { brandComparison, goldForms, type HomeSection, homeSections, popularProducts } from "@/lib/home-rules";
-import { getBusiness, getSeoEntry, getSeoSite, getWeightList, isBar, priceVars } from "@/lib/seo-data";
+import { getBusiness, getLayout, getSeoEntry, getSeoSite, getWeightList, isBar, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]">): Promise<Metadata> {
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps<"/[locale]">): Prom
 export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const { locale } = await routeParams(params);
   if (!hasLocale(locale)) notFound();
-  const [t, entry, business] = await Promise.all([getTexts(locale), getSeoEntry("static", "home"), getBusiness()]);
+  const [t, entry, business, layout] = await Promise.all([getTexts(locale), getSeoEntry("static", "home"), getBusiness(), getLayout()]);
   // The home page still renders if the backend is down; the price phone says so.
   const [prices, spot, faq, articles, products] = await Promise.all([
     getPricesOrNull(),
@@ -49,7 +49,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const h1 = entryH1(entry, locale, "");
   const bars = products.filter(isBar);
   const weights = await getWeightList(products);
-  const popular = popularProducts(products);
+  const popular = popularProducts(products, layout?.home.popularIds);
   const compare = brandComparison(bars, weights, locale);
   // PG-01: which sections today's data fills, in their fixed order.
   const show = homeSections({
@@ -59,9 +59,9 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     popular: popular.length,
     compared: compare?.rows.length ?? 0,
     articles: articles.length,
-  });
+  }, layout?.home);
   // A section that follows another in the same band sits closer to it.
-  const after = (previous: HomeSection) => (show.includes(previous) ? { paddingTop: 0 } : undefined);
+  const after = (previous: HomeSection, section: HomeSection) => (show[show.indexOf(section) - 1] === previous ? { paddingTop: 0 } : undefined);
 
   const sections: Record<HomeSection, ReactNode> = {
     hero: (
@@ -121,7 +121,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     forms: (
       <div className="band-off">
         <div className="wrap">
-          <Reveal as="section" id="forms" style={after("weights")}>
+          <Reveal as="section" id="forms" style={after("weights", "forms")}>
             <h2 className="ask">{goldForms(products).length === 3 ? t.home.formsTitle : t.home.formsTitleTwo}</h2>
             <GoldForms products={products} locale={locale} t={t} />
           </Reveal>
@@ -170,7 +170,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     compare: compare ? (
       <div className="band-white">
         <div className="wrap">
-          <Reveal as="section" id="compare" style={after("brands")}>
+          <Reveal as="section" id="compare" style={after("brands", "compare")}>
             <h2 className="ask">{t.home.compareTitle}</h2>
             <BrandCompare table={compare} locale={locale} t={t} />
           </Reveal>
@@ -224,7 +224,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     about: (
       <div className="band-white">
         <div className="wrap">
-          <Reveal as="section" id="about" style={after("faq")}>
+          <Reveal as="section" id="about" style={after("faq", "about")}>
             <h2 className="ask">{t.who.title}</h2>
             <p style={{ margin: "var(--s3) 0 0 0", color: "var(--muted)", maxWidth: "62ch" }}>{t.who.text}</p>
             <p style={{ marginTop: "var(--s2)" }}>
@@ -240,7 +240,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
     contact: (
       <div className="band-white">
         <div className="wrap">
-          <Reveal as="section" id="contact" style={after("about")}>
+          <Reveal as="section" id="contact" style={after("about", "contact")}>
             <h2 className="ask">{t.contact.title}</h2>
             <ContactRows t={t} locale={locale} />
           </Reveal>

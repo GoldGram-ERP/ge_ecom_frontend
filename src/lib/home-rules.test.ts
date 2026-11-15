@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appQrUrl, brandComparison, contactFormError, goldForms, homeSections, mapEmbedUrl, popularProducts } from "./home-rules";
+import { appQrUrl, brandComparison, contactFormError, footerColumns, goldForms, headerMenu, homeSections, mapEmbedUrl, menuHref, popularProducts } from "./home-rules";
 import type { Product } from "./types";
 
 let nextId = 1;
@@ -137,5 +137,77 @@ describe("contact page (PG-15)", () => {
     expect(contactFormError({ ...ok, contact: "mona" })).toBe("contact");
     expect(contactFormError({ ...ok, contact: "12345" })).toBe("contact");
     expect(contactFormError({ ...ok, message: "Hi" })).toBe("message");
+  });
+});
+
+describe("the dashboard's home arrangement (PG-01)", () => {
+  it("follows the saved order with the hero first, and adds sections the save does not name", () => {
+    const shown = homeSections(FULL, { order: ["faq", "hero", "popular", "nope", "faq"], hidden: [], popularIds: [] });
+    expect(shown.slice(0, 4)).toEqual(["hero", "faq", "popular", "prices"]);
+    expect(shown).toHaveLength(17);
+    expect(new Set(shown).size).toBe(17);
+  });
+
+  it("leaves out a hidden section, but never the hero, and still hides a block with no data", () => {
+    const shown = homeSections({ ...FULL, compared: 0 }, { order: [], hidden: ["hero", "record", "why"], popularIds: [] });
+    expect(shown[0]).toBe("hero");
+    for (const gone of ["record", "why", "compare"]) expect(shown).not.toContain(gone);
+  });
+
+  it("is the built-in page when nothing is saved", () => {
+    expect(homeSections(FULL, null)).toEqual(homeSections(FULL));
+    expect(homeSections(FULL, { order: [], hidden: [], popularIds: [] })).toEqual(homeSections(FULL));
+  });
+
+  it("shows the picked products in the picked order, skipping one that left the shop", () => {
+    const list = [product({ id: 501 }), product({ id: 502, inStock: false }), product({ id: 503, featured: true })];
+    expect(popularProducts(list, [502, 999, 501]).map((p) => p.id)).toEqual([502, 501]);
+    // No pick left in the shop: the built-in rule (in stock and featured first).
+    expect(popularProducts(list, [999]).map((p) => p.id)).toEqual([503, 501, 502]);
+    expect(popularProducts(list, []).map((p) => p.id)).toEqual([503, 501, 502]);
+  });
+});
+
+describe("the dashboard's menus (NAV-03)", () => {
+  const link = (ar: string, en: string, path: string, external = false) => ({ label: { ar, en }, path, external });
+  const layout = {
+    menus: {
+      header: [
+        { ...link("الرئيسية", "Home", "/"), children: [] },
+        { ...link("المتجر", "Shop", ""), children: [link("سبائك", "Bars", "/gold-bars"), link("واتساب", "WhatsApp", "https://wa.me/2010", true)] },
+      ],
+      footer: [{ title: { ar: "الشركة", en: "Company" }, links: [link("من نحن", "About", "/about")] }],
+    },
+  };
+
+  it("gives a site path its language and leaves any other address alone", () => {
+    expect(menuHref({ path: "/gold-bars", external: false }, "ar")).toBe("/gold-bars");
+    expect(menuHref({ path: "/gold-bars", external: false }, "en")).toBe("/en/gold-bars");
+    expect(menuHref({ path: "/", external: false }, "en")).toBe("/en");
+    expect(menuHref({ path: "https://wa.me/2010", external: true }, "en")).toBe("https://wa.me/2010");
+    expect(menuHref({ path: "", external: false }, "en")).toBe("");
+  });
+
+  it("builds the header in the page's language", () => {
+    expect(headerMenu(layout, "en")).toEqual([
+      { label: "Home", href: "/en", external: false, children: [] },
+      {
+        label: "Shop",
+        href: "",
+        external: false,
+        children: [
+          { label: "Bars", href: "/en/gold-bars", external: false },
+          { label: "WhatsApp", href: "https://wa.me/2010", external: true },
+        ],
+      },
+    ]);
+    expect(headerMenu(layout, "ar")[1].children[0]).toEqual({ label: "سبائك", href: "/gold-bars", external: false });
+  });
+
+  it("is empty while nothing is saved, so the built-in menu and footer show", () => {
+    expect(headerMenu(null, "ar")).toEqual([]);
+    expect(footerColumns(null, "ar")).toBeNull();
+    expect(footerColumns({ menus: { footer: [] } }, "ar")).toBeNull();
+    expect(footerColumns(layout, "ar")).toEqual([{ title: "الشركة", links: [{ label: "من نحن", href: "/about", external: false }] }]);
   });
 });
