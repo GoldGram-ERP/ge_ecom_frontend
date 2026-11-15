@@ -1,4 +1,4 @@
-import type { Locale } from "@/i18n";
+import { type Locale, localePath } from "@/i18n";
 import { SITE_URL } from "./seo";
 import { isWearable, type Product } from "./types";
 
@@ -36,22 +36,36 @@ export function homeSections(data: {
   /** Rows of the brand comparison: weights that more than one brand sells. */
   compared: number;
   articles: number;
-}): HomeSection[] {
-  const hidden = new Set<HomeSection>();
+}, saved?: HomeLayout | null): HomeSection[] {
+  // The dashboard's choices (PG-01): its order, and the sections it switched off. The hero stays first.
+  const known = (list: readonly string[] | undefined) => (list ?? []).filter((s): s is HomeSection => (HOME_ORDER as readonly string[]).includes(s));
+  const named = known(saved?.order).filter((s, i, all) => s !== "hero" && all.indexOf(s) === i);
+  const order: HomeSection[] = ["hero", ...named, ...HOME_ORDER.filter((s) => s !== "hero" && !named.includes(s))];
+  const hidden = new Set<HomeSection>(known(saved?.hidden).filter((s) => s !== "hero"));
   if (!data.prices) hidden.add("prices");
   if (!data.weights) hidden.add("weights");
   if (!data.products) hidden.add("brands");
   if (!data.popular) hidden.add("popular");
   if (!data.compared) hidden.add("compare");
   if (!data.articles) hidden.add("articles");
-  return HOME_ORDER.filter((section) => !hidden.has(section));
+  return order.filter((section) => !hidden.has(section));
+}
+
+/** The home page as the dashboard arranged it (GET /seo/layout). */
+export interface HomeLayout {
+  order: string[];
+  hidden: string[];
+  popularIds: number[];
 }
 
 /**
  * The popular products: eight, the ones in stock first, and among those the featured ones first.
  * Each group keeps the catalogue's own order.
  */
-export function popularProducts(products: Product[]): Product[] {
+export function popularProducts(products: Product[], pickedIds: readonly number[] = []): Product[] {
+  // The dashboard's own picks, in its order; one that left the shop is skipped. None left: the rule below.
+  const picked = pickedIds.map((id) => products.find((p) => p.id === id)).filter((p): p is Product => p !== undefined);
+  if (picked.length > 0) return picked.slice(0, 8);
   const rank = (p: Product) => (p.inStock === false ? 2 : 0) + (p.featured ? 0 : 1);
   return products
     .map((p, i) => [p, i] as const)
@@ -126,4 +140,30 @@ export function contactFormError(form: { name: string; contact: string; message:
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact) && contact.replace(/\D/g, "").length < 10) return "contact";
   if (form.message.trim().length < 10) return "message";
   return null;
+}
+
+/** A link of a saved menu (GET /seo/layout): a page's path without its language, or any address. */
+interface SavedLink {
+  label: Record<Locale, string>;
+  path: string;
+  external: boolean;
+}
+
+/** Where a saved link goes in this language: a site path gets its language prefix, any other address stays as it is. */
+export function menuHref(link: { path: string; external: boolean }, locale: Locale): string {
+  if (!link.path) return "";
+  return link.external ? link.path : localePath(locale, link.path);
+}
+
+/** The dashboard's header menu in this page's language (NAV-03). Empty while none is saved: the built-in menu shows. */
+export function headerMenu(layout: { menus: { header: (SavedLink & { children: SavedLink[] })[] } } | null, locale: Locale) {
+  const entry = (link: SavedLink) => ({ label: link.label[locale], href: menuHref(link, locale), external: link.external });
+  return (layout?.menus.header ?? []).map((group) => ({ ...entry(group), children: group.children.map(entry) }));
+}
+
+/** The dashboard's footer columns in this page's language; null while none is saved. */
+export function footerColumns(layout: { menus: { footer: { title: Record<Locale, string>; links: SavedLink[] }[] } } | null, locale: Locale) {
+  const columns = layout?.menus.footer ?? [];
+  if (columns.length === 0) return null;
+  return columns.map((column) => ({ title: column.title[locale], links: column.links.map((link) => ({ label: link.label[locale], href: menuHref(link, locale), external: link.external })) }));
 }

@@ -38,6 +38,20 @@ async function cachedJson<T>(path: string, tags: string[], revalidate = 300): Pr
 
 const BRAND: L = { ar: "جولدجرام", en: "GoldGram" };
 
+/** A menu link as the backend resolved it: a page's current path, or any address. */
+export interface ShownLink {
+  label: L;
+  path: string;
+  external: boolean;
+}
+/** The home page's arrangement and the menus, saved in the dashboard (PG-01, NAV-03). */
+export interface SiteLayout {
+  home: { order: string[]; hidden: string[]; popularIds: number[] };
+  menus: { header: (ShownLink & { children: ShownLink[] })[]; footer: { title: L; links: ShownLink[] }[] };
+}
+/** GET /seo/layout, or null while the backend does not have it: the built-in home order and menus stand in. */
+export const getLayout = cache(() => cachedJson<SiteLayout>("/seo/layout", ["seo-site", "products", "articles"]));
+
 /** GET /seo/site, or null while the backend does not have it. */
 export const getSeoSite = cache(() => cachedJson<SeoSite>("/seo/site", ["seo-site"]));
 

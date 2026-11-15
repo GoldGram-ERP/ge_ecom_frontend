@@ -9,7 +9,7 @@ import { EntryFaq, EntryHeadCode, entryH1, JsonLd } from "@/components/seo-block
 import { hasLocale } from "@/i18n";
 import { cairoDate } from "@/lib/format";
 import { articleBodyHtml, articleImage } from "@/lib/images";
-import { SITE_URL, absoluteUrl, breadcrumbList, routeParams } from "@/lib/seo";
+import { SITE_URL, absoluteUrl, breadcrumbList, routeParams, siteImage } from "@/lib/seo";
 import { getArticleBySlug, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
 import { getArticle, getArticles } from "@/lib/server-api";
@@ -80,7 +80,7 @@ export default async function GuidePage({ params }: PageProps<"/[locale]/guides/
             mainEntityOfPage: absoluteUrl(locale, guidePath(article)),
             ...(article.imageIds[0] ? { image: [SITE_URL + articleImage(article, article.imageIds[0])] } : {}),
             author: brand,
-            publisher: { ...brand, logo: { "@type": "ImageObject", url: business.logoPngUrl || `${SITE_URL}/logo.png` } },
+            publisher: { ...brand, logo: { "@type": "ImageObject", url: siteImage(business.logoPngUrl) || `${SITE_URL}/logo.png` } },
           },
           breadcrumbList([
             { name: t.pdp.home, path: "/", locale },

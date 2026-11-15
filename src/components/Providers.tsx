@@ -18,6 +18,18 @@ interface I18n {
 
 const I18nContext = createContext<I18n | null>(null);
 
+/** One entry of the header menu the dashboard built (NAV-03): already in this page's language. */
+export interface MenuEntry {
+  label: string;
+  /** Empty for a dropdown label that is not a link itself. */
+  href: string;
+  external: boolean;
+  children: Omit<MenuEntry, "children">[];
+}
+const MenuContext = createContext<MenuEntry[]>([]);
+/** The dashboard's header menu; empty while none is saved, and the built-in menu shows. */
+export const useMenu = () => useContext(MenuContext);
+
 export function useI18n(): I18n {
   const value = useContext(I18nContext);
   if (!value) throw new Error("useI18n must be used inside <Providers>");
@@ -33,7 +45,7 @@ interface Session {
 const SessionContext = createContext<Session>({ user: undefined, refresh: async () => {} });
 export const useSession = () => useContext(SessionContext);
 
-export function Providers({ locale, dict, children }: { locale: Locale; dict: Dict; children: React.ReactNode }) {
+export function Providers({ locale, dict, menu = [], children }: { locale: Locale; dict: Dict; menu?: MenuEntry[]; children: React.ReactNode }) {
   const [user, setUser] = useState<User | null | undefined>(undefined);
 
   // A guest's answer is `{ user: null }`, given by this site itself (proxy.ts) without asking the backend.
@@ -64,6 +76,7 @@ export function Providers({ locale, dict, children }: { locale: Locale; dict: Di
 
   return (
     <I18nContext.Provider value={i18n}>
+      <MenuContext.Provider value={menu}>
       <SessionContext.Provider value={session}>
         {/* Radix pieces default to left-to-right and motion ignores "reduce motion" unless told */}
         <Direction.Provider dir={locale === "ar" ? "rtl" : "ltr"}>
@@ -73,6 +86,7 @@ export function Providers({ locale, dict, children }: { locale: Locale; dict: Di
           </MotionConfig>
         </Direction.Provider>
       </SessionContext.Provider>
+      </MenuContext.Provider>
     </I18nContext.Provider>
   );
 }
