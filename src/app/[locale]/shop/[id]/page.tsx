@@ -227,7 +227,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
                       <h2>{t.pdp.about}</h2>
                       {/* The dashboard's editor saves HTML, cleaned by the server; older descriptions are plain text. */}
                       {isHtmlDescription(description) ? (
-                        <div className="art-html pdp-desc" dangerouslySetInnerHTML={{ __html: description }} />
+                        <div className="art-html pdp-rich" dangerouslySetInnerHTML={{ __html: description }} />
                       ) : (
                         <p>{description || productSub(p, t)}</p>
                       )}

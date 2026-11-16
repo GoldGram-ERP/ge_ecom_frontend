@@ -578,12 +578,12 @@ html[lang|="ar"] .pdp-maker{ letter-spacing:0; font-size:12.5px; }
 .pdp-details h2,.pdp-section h2{ font-size:22px; margin-bottom:var(--s2); }
 .pdp-details p,.pdp-text{ font-size:14.5px; line-height:1.8; color:var(--ink); white-space:pre-line; max-width:62ch; }
 /* A description written in the dashboard's editor: the guide's text styles, at the page's size. */
-.pdp-desc{ margin-top:0; font-size:14.5px; max-width:62ch; }
-.pdp-details .pdp-desc p{ white-space:normal; }
-.pdp-details .pdp-desc h2{ font-size:18px; margin:var(--s4) 0 var(--s2); }
-.pdp-details .pdp-desc h3{ font-size:16px; margin:var(--s3) 0 var(--s2); }
-.pdp-desc > :first-child{ margin-top:0; }
-.pdp-desc > :last-child{ margin-bottom:0; }
+.pdp-rich{ margin-top:0; font-size:14.5px; max-width:62ch; }
+.pdp-details .pdp-rich p{ white-space:normal; }
+.pdp-details .pdp-rich h2{ font-size:18px; margin:var(--s4) 0 var(--s2); }
+.pdp-details .pdp-rich h3{ font-size:16px; margin:var(--s3) 0 var(--s2); }
+.pdp-details .pdp-rich > :first-child{ margin-top:0; }
+.pdp-details .pdp-rich > :last-child{ margin-bottom:0; }
 .pdp-specs > div{ display:flex; justify-content:space-between; gap:var(--s2); padding:11px 0; border-top:1px solid var(--line); font-size:13.5px; }
 .pdp-specs > div:first-child{ border-top:0; }
 .pdp-specs dt{ color:var(--muted); }
