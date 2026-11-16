@@ -15,6 +15,7 @@ import { ProductTabs } from "@/components/ProductTabs";
 import { fmt, hasLocale } from "@/i18n";
 import { artClass, artStyle, buybackPiastres, karatLabel, pounds, poundsParts, productName, productPurity, productSub, weightLabel, weightText } from "@/lib/format";
 import { productImage } from "@/lib/images";
+import { descriptionText, isHtmlDescription } from "@/lib/description";
 import { SITE_URL, absoluteUrl, breadcrumbList, jsonLd, productJsonLd, routeParams } from "@/lib/seo";
 import { cairoToday, egp, getBusiness, getSeoEntry, priceVars } from "@/lib/seo-data";
 import { seoMetadata } from "@/lib/seo-page";
@@ -131,7 +132,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
           __html: jsonLd([
             productJsonLd({
               name,
-              description: (description || productSub(p, t)).replace(/\s+/g, " ").trim(),
+              description: descriptionText(description || productSub(p, t)),
               url: absoluteUrl(locale, `/shop/${p.slug}`),
               images: p.imageIds.map((imageId) => SITE_URL + productImage(p, imageId)),
               brand: maker ?? "",
@@ -224,7 +225,12 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/shop/
                   <div className="pdp-details">
                     <div>
                       <h2>{t.pdp.about}</h2>
-                      <p>{description || productSub(p, t)}</p>
+                      {/* The dashboard's editor saves HTML, cleaned by the server; older descriptions are plain text. */}
+                      {isHtmlDescription(description) ? (
+                        <div className="art-html pdp-desc" dangerouslySetInnerHTML={{ __html: description }} />
+                      ) : (
+                        <p>{description || productSub(p, t)}</p>
+                      )}
                     </div>
                     <div>
                       <h2>{t.pdp.specs}</h2>
