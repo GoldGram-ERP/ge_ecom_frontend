@@ -12,6 +12,7 @@ import { useLiveProducts } from "@/lib/live-products";
 import { filterPath } from "@/lib/shop-links";
 import { artClass, artStyle, pounds, productName, productSub } from "@/lib/format";
 import type { Category, Product } from "@/lib/types";
+import { descriptionText } from "@/lib/description";
 import { useI18n } from "./Providers";
 import { useListView } from "./analytics";
 import { Button, Reveal } from "./controls";
@@ -167,7 +168,7 @@ export function ShopGrid({
           {shown.map((p, index) => {
             // The staff's own photo when the product has one; the drawn piece otherwise.
             const photo = p.imageIds?.[0];
-            const description = locale === "ar" ? p.descriptionAr : p.descriptionEn;
+            const description = descriptionText(locale === "ar" ? p.descriptionAr : p.descriptionEn);
             return (
             <Reveal as="article" className="pcard" key={p.id} delay={Math.min(index, 5) * 40}>
                 {/* The picture, name and description open the piece's own page; the button stays outside the link. */}
