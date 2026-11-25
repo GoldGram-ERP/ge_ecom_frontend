@@ -3,3 +3,5 @@ allowBuilds:
   unrs-resolver: false
   esbuild: true
   workerd: true
+overrides:
+  "@opennextjs/aws>cookie": 0.7.2
