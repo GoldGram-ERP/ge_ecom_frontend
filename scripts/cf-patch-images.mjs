@@ -10,5 +10,11 @@ const after =
 const source = readFileSync(file, "utf8");
 const count = source.split(before).length - 1;
 if (count === 0) throw new Error(`cf-patch-images: pattern not found in ${file} (OpenNext changed?)`);
-writeFileSync(file, source.replaceAll(before, after));
-console.log(`cf-patch-images: patched ${count} place(s) in ${file}`);
+// Cloudflare's AVIF/WebP encoder is much harsher than sharp (what Next uses on Vercel) at the same
+// number: q=75 turned the gold product shots soft. Floor the output quality at 90.
+const qBefore = "quality: parseResult.quality,";
+const qAfter = "quality: Math.max(parseResult.quality, 90),";
+const qCount = source.split(qBefore).length - 1;
+if (qCount === 0) throw new Error(`cf-patch-images: quality pattern not found in ${file} (OpenNext changed?)`);
+writeFileSync(file, source.replaceAll(before, after).replaceAll(qBefore, qAfter));
+console.log(`cf-patch-images: patched ${count} source fetch(es) and ${qCount} quality setting(s) in ${file}`);
