@@ -58,19 +58,46 @@ function toApi(request: NextRequest) {
   const headers = new Headers(request.headers);
   headers.delete("x-gg-client-ip");
   headers.delete("x-gg-proxy-key");
+  // The backend has its own host name: never forward the storefront's Host (Cloudflare refuses a
+  // request whose Host is another site, error 1003; Vercel used to overwrite it for us).
+  headers.delete("host");
   const key = process.env.PROXY_SHARED_SECRET;
-  // Vercel's edge sets x-forwarded-for (and x-real-ip) itself; the first entry is the visitor.
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || request.headers.get("x-real-ip")?.trim();
+  // The visitor's IP: Cloudflare sets cf-connecting-ip; Vercel sets x-forwarded-for (first entry) and x-real-ip.
+  const ip = request.headers.get("cf-connecting-ip")?.trim() || request.headers.get("x-forwarded-for")?.split(",")[0].trim() || request.headers.get("x-real-ip")?.trim();
   if (key && ip) {
     headers.set("x-gg-client-ip", ip);
     headers.set("x-gg-proxy-key", key);
   }
-  return NextResponse.next({ request: { headers } });
+  return forward(request, headers, request.nextUrl.pathname);
+}
+
+// The backend call itself, made here rather than by a next.config rewrite: on Cloudflare Workers a
+// rewrite re-sends the visitor's own Host and cf-* headers, which Cloudflare refuses for another
+// zone (error 1003). Only end-to-end headers go out; redirects and Set-Cookie come back untouched.
+const HOP = /^(host|connection|keep-alive|transfer-encoding|upgrade|te|trailer|proxy-.*|cf-.*|cdn-loop|x-forwarded-.*)$/i;
+async function forward(request: NextRequest, incoming: Headers, path: string): Promise<Response> {
+  const headers = new Headers();
+  incoming.forEach((value, name) => { if (!HOP.test(name)) headers.set(name, value); });
+  const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const target = new URL(path + request.nextUrl.search, API_URL);
+  const init: RequestInit & { duplex?: "half" } = { method: request.method, headers, redirect: "manual" };
+  if (hasBody) { init.body = request.body; init.duplex = "half"; }
+  return fetch(target, init);
+}
+
+// Pictures at their public, slug-based address (MED-03) map to the backend's /api/images/*.
+function toImages(request: NextRequest) {
+  return forward(request, new Headers(request.headers), "/api/images" + request.nextUrl.pathname.slice("/images".length));
 }
 
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname, search } = request.nextUrl;
+  // www is an alias: one permanent hop to the bare domain, path and query kept (Vercel did this at its edge).
+  if (request.headers.get("host")?.toLowerCase() === "www.goldgram.eg") {
+    return NextResponse.redirect(`https://goldgram.eg${pathname}${search}`, 308);
+  }
   if (pathname === "/api" || pathname.startsWith("/api/")) return toApi(request);
+  if (pathname.startsWith("/images/")) return toImages(request);
 
   // Old Arabic URLs (/ar/...) are gone: Arabic is at the root now. Send them there, once.
   if (pathname === "/ar" || pathname.startsWith("/ar/")) {
@@ -134,4 +161,4 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
 
 // Pages: everything except the API proxy, the dashboard's built-in wording feed, the revalidation hook,
 // Next internals and files with an extension. Then the API proxy itself, for toApi.
-export const config = { matcher: ["/((?!api|site-texts|revalidate|_next|.*\\.).*)", "/api/:path*"] };
+export const config = { matcher: ["/((?!api|site-texts|revalidate|_next|.*\\.).*)", "/api/:path*", "/images/:path*"] };

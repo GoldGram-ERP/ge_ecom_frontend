@@ -42,3 +42,8 @@ next-env.d.ts
 
 # local dev server log
 .run.log
+
+# Cloudflare build output
+.open-next
+.wrangler
+.dev.vars

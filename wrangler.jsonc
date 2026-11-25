@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "goldgram-ecom-frontend",
+  "account_id": "7eef115c06c9f2a00efccb7b8e92ceb6",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-20",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "goldgram-ecom-frontend" }],
+  "kv_namespaces": [{ "binding": "NEXT_INC_CACHE_KV", "id": "8fda89d4a82442c59f05797efeac34d1" }],
+  "durable_objects": { "bindings": [{ "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["DOQueueHandler"] }],
+  "images": { "binding": "IMAGES" },
+  // Same backend as on Vercel (API_URL). PROXY_SHARED_SECRET is a Worker secret (wrangler secret put), never here.
+  "vars": { "API_URL": "https://backend.goldgram.eg" },
+  // Production hosts: zone routes. They take effect when the goldgram.eg / www records are proxied (orange cloud);
+  // www redirects to the bare domain in src/proxy.ts. Rollback = grey cloud again (Vercel answers directly).
+  "routes": [
+    { "pattern": "goldgram.eg/*", "zone_name": "goldgram.eg" },
+    { "pattern": "www.goldgram.eg/*", "zone_name": "goldgram.eg" }
+  ],
+  "observability": { "enabled": true }
+}
